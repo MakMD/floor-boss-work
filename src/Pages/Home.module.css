@@ -1,0 +1,84 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+.homePage {
+  font-family: "Inter", sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f0f0f0;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.calendarContainer {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.dateInput {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  background-color: #ffffff;
+  transition: box-shadow 0.2s;
+}
+
+.dateInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+.tableList {
+  width: 100%;
+  max-width: 800px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.tableCard {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s;
+}
+
+.tableCard:hover {
+  transform: translateY(-4px);
+}
+
+.tableHeader {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.tableSub {
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+@media (max-width: 480px) {
+  .calendarContainer {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+  .dateInput {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+  }
+  .tableList {
+    gap: 1rem;
+  }
+}
