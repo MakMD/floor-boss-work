@@ -7,11 +7,21 @@ export default function JobDetails() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("photos");
 
+  const handleLogout = () => {
+    // TODO: clear auth
+    navigate("/", { replace: true });
+  };
+
   return (
     <div className={styles.jobDetails}>
-      <button className={styles.backButton} onClick={() => navigate(-1)}>
-        &#8592; Back
-      </button>
+      <div className={styles.actionButtons}>
+        <button className={styles.backButton} onClick={() => navigate(-1)}>
+          &#8592; Back
+        </button>
+        <button className={styles.logoutButton} onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
       <div className={styles.header}>
         <div className={styles.title}>Job Details — ID {id}</div>
       </div>
