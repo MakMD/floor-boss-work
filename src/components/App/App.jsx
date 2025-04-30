@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  BrowserRouter as Router,
+  HashRouter as Router,
   Routes,
   Route,
   Navigate,
@@ -13,12 +13,9 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Public: Login */}
         <Route path="/" element={<Login />} />
-        {/* Після успішного логіну перенаправлення має вести на /home */}
         <Route path="/home" element={<Home />} />
         <Route path="/job/:id" element={<JobDetails />} />
-        {/* Все інше — на логін */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
