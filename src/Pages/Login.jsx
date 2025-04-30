@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"; // restored import for animations
 import styles from "./Login.module.css";
-import logo from "../../public/Flooring.Boss.svg";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -25,9 +24,13 @@ export default function Login() {
         className={styles.loginCard}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <img src={logo} alt="Company Logo" className={styles.logo} />
-        {/* <h2 className={styles.loginTitle}>Welcome</h2> */}
+        <img
+          src="/Flooring.Boss.svg" // load directly from public folder
+          alt="Company Logo"
+          className={styles.logo}
+        />
 
         <form onSubmit={handleSubmit}>
           {error && (
@@ -35,6 +38,7 @@ export default function Login() {
               className={styles.loginError}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
               {error}
             </motion.p>

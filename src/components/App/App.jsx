@@ -13,13 +13,12 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Login Page */}
+        {/* Public: Login */}
         <Route path="/" element={<Login />} />
-        {/* Main dashboard displaying available jobs by date */}
+        {/* Після успішного логіну перенаправлення має вести на /home */}
         <Route path="/home" element={<Home />} />
-        {/* Job details page with tabs for photos and invoices */}
         <Route path="/job/:id" element={<JobDetails />} />
-        {/* Redirect unknown routes to login */}
+        {/* Все інше — на логін */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
