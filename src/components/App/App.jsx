@@ -13,9 +13,11 @@ export default function App() {
   return (
     <Router>
       <Routes>
+        {/* Index route for HashRouter */}
+        <Route index element={<Login />} />
         <Route path="/" element={<Login />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/job/:id" element={<JobDetails />} />
+        <Route path="home" element={<Home />} />
+        <Route path="job/:id" element={<JobDetails />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

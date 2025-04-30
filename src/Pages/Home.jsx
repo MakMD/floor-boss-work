@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import styles from "./Home.module.css";
 
 // API resource for job tables
-const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/invoices"; // Use invoices resource as jobs
+const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
 
 export default function Home() {
   const [jobs, setJobs] = useState([]);
