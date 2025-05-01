@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion"; // restored import for animations
 import styles from "./Login.module.css";
 
 export default function Login() {

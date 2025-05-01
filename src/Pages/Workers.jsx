@@ -1,4 +1,3 @@
-// src/Pages/Workers.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styles from "./Workers.module.css";
@@ -25,7 +24,9 @@ export default function Workers() {
   return (
     <div className={styles.page}>
       <h2 className={styles.title}>Workers</h2>
+
       {error && <p className={styles.error}>{error}</p>}
+
       {loading ? (
         <p>Loading...</p>
       ) : (
@@ -33,8 +34,9 @@ export default function Workers() {
           {workers.length > 0 ? (
             workers.map((worker) => (
               <li key={worker.id} className={styles.item}>
-                <Link to={`/worker/${worker.id}`} className={styles.link}>
-                  {worker.name}
+                <Link to={`/workers/${worker.id}`} className={styles.link}>
+                  <div className={styles.workerName}>{worker.name}</div>
+                  <div className={styles.workerRole}>{worker.role}</div>
                 </Link>
               </li>
             ))
