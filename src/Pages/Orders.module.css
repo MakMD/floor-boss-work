@@ -1,26 +1,24 @@
+/* src/Pages/Orders.module.css */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
 
-.homePage {
+.ordersPage {
   font-family: "Inter", sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #f0f0f0;
   padding: 2rem;
+  background: #f0f0f0;
   min-height: 100vh;
 }
 
 .addForm {
-  width: 100%;
-  max-width: 800px;
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  justify-content: center;
-  margin-bottom: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto 2rem;
+  align-items: flex-start;
 }
 
-.formInput {
+.formInput,
+.formTextarea {
   flex: 1;
   min-width: 200px;
   padding: 0.75rem 1rem;
@@ -28,14 +26,18 @@
   border-radius: 0.5rem;
 }
 
+.formTextarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
 .formButton {
   padding: 0.75rem 1.5rem;
-  background-color: #10b981;
-  color: #ffffff;
+  background: #10b981;
+  color: #fff;
   border: none;
   border-radius: 0.5rem;
   font-weight: 600;
-  text-transform: uppercase;
   cursor: pointer;
   transition: transform 0.2s;
 }
@@ -45,47 +47,32 @@
 }
 
 .calendarContainer {
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1.5rem;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .dateInput {
-  width: 100%;
   padding: 0.75rem 1rem;
-  font-size: 1rem;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
-  background-color: #ffffff;
-  transition: box-shadow 0.2s;
-}
-
-.dateInput:focus,
-.formInput:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+  background: #fff;
 }
 
 .tableList {
-  width: 100%;
-  max-width: 800px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
-  margin-top: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .tableCard {
-  text-decoration: none;
-  color: inherit;
-  background: #ffffff;
+  background: #fff;
+  padding: 1rem;
   border-radius: 0.75rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  padding: 1rem 1.5rem;
-  display: flex;
-  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
   transition: transform 0.2s;
 }
 
@@ -94,23 +81,16 @@
 }
 
 .tableHeader {
-  font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
   margin-bottom: 0.5rem;
 }
 
 .tableSub {
-  font-size: 0.95rem;
   color: #4b5563;
+  font-size: 0.9rem;
 }
 
-@media (max-width: 480px) {
-  .addForm {
-    flex-direction: column;
-  }
-  .calendarContainer,
-  .addForm {
-    padding: 0 1rem;
-  }
+.error {
+  color: red;
+  text-align: center;
 }

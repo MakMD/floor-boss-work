@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import styles from "./JobDetails.module.css";
 
-// Cloudinary configuration via Vite env variables (fallback to defaults if undefined)
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dklxyxftr";
-const UPLOAD_PRESET =
-  import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "floorboss_unsigned";
-const FOLDER = import.meta.env.VITE_CLOUDINARY_FOLDER || "job_photos";
-
-const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs"; // use jobs resource for job objects  // use invoices resource for job objects
+// API for jobs
+const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
 
 export default function JobDetails() {
   const { id } = useParams();
@@ -30,7 +25,7 @@ export default function JobDetails() {
 
   const handleLogout = () => navigate("/", { replace: true });
 
-  // Fetch job with photos/invoices
+  // Fetch job details
   useEffect(() => {
     setLoading(true);
     fetch(`${API_URL}/${id}`)
@@ -56,35 +51,17 @@ export default function JobDetails() {
   const handleAddPhoto = async (e) => {
     e.preventDefault();
     if (!photoFile) return;
-    try {
-      const formData = new FormData();
-      formData.append("file", photoFile);
-      formData.append("upload_preset", UPLOAD_PRESET);
-      formData.append("folder", FOLDER);
-
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || "Upload failed");
-
-      const newPhoto = { id: data.public_id, url: data.secure_url };
-      const updated = { ...job, photos: [...(job.photos || []), newPhoto] };
-      setJob(updated);
-      await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      setPhotoFile(null);
-      setPhotoPreview(null);
-    } catch (err) {
-      setError(err.message);
-    }
+    // simulate upload to backend
+    const newPhoto = { id: Date.now().toString(), url: photoPreview };
+    const updated = { ...job, photos: [...(job.photos || []), newPhoto] };
+    setJob(updated);
+    await fetch(`${API_URL}/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updated),
+    }).catch((err) => setError(err.message));
+    setPhotoFile(null);
+    setPhotoPreview(null);
   };
 
   const handleAddInvoice = async (e) => {
@@ -136,6 +113,16 @@ export default function JobDetails() {
         >
           Invoices
         </div>
+        <Link
+          to="materials"
+          className={`${styles.tabButton} ${
+            window.location.hash.endsWith("/materials")
+              ? styles.tabButtonActive
+              : ""
+          }`}
+        >
+          Materials
+        </Link>
       </div>
       <div className={styles.content}>
         {activeTab === "photos" && (

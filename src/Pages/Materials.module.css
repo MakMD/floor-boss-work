@@ -1,0 +1,72 @@
+/* src/Pages/Materials.module.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+.materialsPage {
+  font-family: "Inter", sans-serif;
+  max-width: 600px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.backButton {
+  background: #e5e7eb;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.title {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.uploadForm {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.fileInput {
+  flex: 1;
+}
+
+.uploadButton {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+
+.uploadButton:hover {
+  transform: scale(1.05);
+}
+
+.error {
+  color: #dc2626;
+  margin-bottom: 1rem;
+}
+
+.materialList {
+  list-style: none;
+  padding: 0;
+}
+
+.materialItem {
+  margin-bottom: 0.75rem;
+}
+
+.materialItem a {
+  color: #2563eb;
+  text-decoration: none;
+}
