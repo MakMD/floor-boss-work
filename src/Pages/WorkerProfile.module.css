@@ -1,0 +1,65 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+.page {
+  font-family: "Inter", sans-serif;
+  max-width: 700px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.backButton {
+  background: #e5e7eb;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+detail {
+  margin-bottom: 1rem;
+  color: #4b5563;
+}
+
+.jobsSection {
+  margin-top: 1.5rem;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.jobList {
+  list-style: none;
+  padding: 0;
+}
+
+.jobItem {
+  margin-bottom: 0.75rem;
+}
+
+.jobLink {
+  text-decoration: none;
+  color: #2563eb;
+  transition: color 0.2s;
+}
+.jobLink:hover {
+  color: #1e40af;
+}
+
+.error {
+  color: #dc2626;
+  font-weight: 600;
+}

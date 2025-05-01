@@ -1,29 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, NavLink, Outlet } from "react-router-dom";
 import styles from "./JobDetails.module.css";
 
-// API for jobs
 const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
 
 export default function JobDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("photos");
   const [job, setJob] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Photo upload state
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-
-  // Invoice state
-  const [invDate, setInvDate] = useState(
-    new Date().toISOString().substring(0, 10)
-  );
-  const [amount, setAmount] = useState("");
-
-  const handleLogout = () => navigate("/", { replace: true });
 
   // Fetch job details
   useEffect(() => {
@@ -38,50 +24,9 @@ export default function JobDetails() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setPhotoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setPhotoPreview(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAddPhoto = async (e) => {
-    e.preventDefault();
-    if (!photoFile) return;
-    // simulate upload to backend
-    const newPhoto = { id: Date.now().toString(), url: photoPreview };
-    const updated = { ...job, photos: [...(job.photos || []), newPhoto] };
-    setJob(updated);
-    await fetch(`${API_URL}/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updated),
-    }).catch((err) => setError(err.message));
-    setPhotoFile(null);
-    setPhotoPreview(null);
-  };
-
-  const handleAddInvoice = async (e) => {
-    e.preventDefault();
-    const newInv = {
-      id: Date.now().toString(),
-      date: invDate,
-      amount: parseFloat(amount),
-    };
-    const updated = { ...job, invoices: [...(job.invoices || []), newInv] };
-    setJob(updated);
-    await fetch(`${API_URL}/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updated),
-    }).catch((err) => setError(err.message));
-    setAmount("");
-  };
-
-  if (loading || !job) return <p>Loading...</p>;
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (!job) return <p>Job not found.</p>;
 
   return (
     <div className={styles.jobDetails}>
@@ -89,114 +34,48 @@ export default function JobDetails() {
         <button className={styles.backButton} onClick={() => navigate(-1)}>
           &larr; Back
         </button>
-        <button className={styles.logoutButton} onClick={handleLogout}>
+        <button
+          className={styles.logoutButton}
+          onClick={() => navigate("/", { replace: true })}
+        >
           Logout
         </button>
       </div>
       <div className={styles.header}>
-        <div className={styles.title}>Job Details — ID {id}</div>
+        <h1 className={styles.title}>Order #{id}</h1>
       </div>
       <div className={styles.tabs}>
-        <div
-          className={`${styles.tabButton} ${
-            activeTab === "photos" ? styles.tabButtonActive : ""
-          }`}
-          onClick={() => setActiveTab("photos")}
-        >
-          Photos
-        </div>
-        <div
-          className={`${styles.tabButton} ${
-            activeTab === "invoices" ? styles.tabButtonActive : ""
-          }`}
-          onClick={() => setActiveTab("invoices")}
-        >
-          Invoices
-        </div>
-        <Link
-          to="materials"
-          className={`${styles.tabButton} ${
-            window.location.hash.endsWith("/materials")
-              ? styles.tabButtonActive
-              : ""
-          }`}
-        >
-          Materials
-        </Link>
+        {["", "invoices", "materials", "photos-after", "company-invoices"].map(
+          (path) => {
+            const label = {
+              "": "Photos",
+              invoices: "Invoices",
+              materials: "Materials",
+              "photos-after": "After Photos",
+              "company-invoices": "Company Invoices",
+            }[path];
+            return (
+              <NavLink
+                key={path}
+                to={path}
+                end={path === ""}
+                className={({ isActive }) =>
+                  isActive
+                    ? `${styles.tabButton} ${styles.tabButtonActive}`
+                    : styles.tabButton
+                }
+              >
+                {label}
+              </NavLink>
+            );
+          }
+        )}
       </div>
+
+      {/* Nested route outlet renders the selected tab component */}
       <div className={styles.content}>
-        {activeTab === "photos" && (
-          <>
-            <form className={styles.addPhotoForm} onSubmit={handleAddPhoto}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-              />
-              {photoPreview && (
-                <img
-                  src={photoPreview}
-                  alt="Preview"
-                  className={styles.photoPreview}
-                />
-              )}
-              <button type="submit" className={styles.formButton}>
-                Upload Photo
-              </button>
-            </form>
-            <div className={styles.photoList}>
-              {job.photos?.map((photo) => (
-                <div key={photo.id} className={styles.photoItem}>
-                  <img src={photo.url} alt="Job" />
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-        {activeTab === "invoices" && (
-          <>
-            <form className={styles.addInvoiceForm} onSubmit={handleAddInvoice}>
-              <input
-                type="date"
-                value={invDate}
-                onChange={(e) => setInvDate(e.target.value)}
-                className={styles.dateInput}
-                required
-              />
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Amount"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className={styles.invoiceAmountInput}
-                required
-              />
-              <button type="submit" className={styles.formButton}>
-                Add Invoice
-              </button>
-            </form>
-            <ul className={styles.invoiceList}>
-              {job.invoices?.length ? (
-                job.invoices.map((inv) => (
-                  <li key={inv.id} className={styles.invoiceItem}>
-                    <div className={styles.invoiceInfo}>
-                      <span className={styles.invoiceId}>
-                        Invoice #{inv.id}
-                      </span>
-                      <span className={styles.invoiceDate}>{inv.date}</span>
-                    </div>
-                    <div className={styles.invoiceAmount}>${inv.amount}</div>
-                  </li>
-                ))
-              ) : (
-                <p>No invoices available for this job.</p>
-              )}
-            </ul>
-          </>
-        )}
+        <Outlet />
       </div>
-      {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   );
 }

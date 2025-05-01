@@ -1,0 +1,56 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+.calendarPage {
+  font-family: "Inter", sans-serif;
+  max-width: 800px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.dateGroup {
+  margin-bottom: 2rem;
+}
+
+.dateHeader {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 0.5rem;
+}
+
+.jobList {
+  list-style: none;
+  padding: 0;
+}
+
+.jobItem {
+  margin-bottom: 0.5rem;
+}
+
+.jobLink {
+  text-decoration: none;
+  color: #4b5563;
+  padding: 0.5rem;
+  display: block;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
+}
+
+.jobLink:hover {
+  background: #f3f4f6;
+}
+
+.error {
+  color: #dc2626;
+  text-align: center;
+}
