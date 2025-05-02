@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import Lightbox from "react-image-lightbox";
+import "react-image-lightbox/style.css";
 import styles from "./Photos.module.css";
 
 const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dklxyxftr/upload";
+const UPLOAD_PRESET = "floorboss_unsigned";
 
 export default function Photos() {
   const { id } = useParams();
@@ -11,6 +15,8 @@ export default function Photos() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
 
   useEffect(() => {
     fetch(`${API_URL}/${id}`)
@@ -33,8 +39,23 @@ export default function Photos() {
     e.preventDefault();
     if (!file) return;
     setLoading(true);
+    setError(null);
     try {
-      const newPhoto = { id: Date.now().toString(), url: preview };
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      const resp = await fetch(CLOUDINARY_URL, {
+        method: "POST",
+        body: formData,
+      });
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error?.message || "Upload failed");
+      }
+      const data = await resp.json();
+      const newPhoto = { id: data.public_id, url: data.secure_url };
+
       const updated = { ...job, photos: [...(job.photos || []), newPhoto] };
       await fetch(`${API_URL}/${id}`, {
         method: "PUT",
@@ -44,8 +65,8 @@ export default function Photos() {
       setJob(updated);
       setFile(null);
       setPreview(null);
-    } catch (e) {
-      setError(e.message);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -65,19 +86,55 @@ export default function Photos() {
         {preview && (
           <img src={preview} alt="Preview" className={styles.preview} />
         )}
-        <button type="submit" className={styles.uploadButton}>
+        <button
+          type="submit"
+          className={styles.uploadButton}
+          disabled={loading}
+        >
           {loading ? "Uploading..." : "Upload Photo"}
         </button>
       </form>
+
       {error && <p className={styles.error}>{error}</p>}
+
       <div className={styles.gallery}>
-        {(job.photos || []).map((p) => (
-          <div key={p.id} className={styles.photoItem}>
-            <img src={p.url} alt="Job" />
-          </div>
-        ))}
-        {!job.photos?.length && <p>No photos uploaded yet.</p>}
+        {job.photos?.length ? (
+          job.photos.map((p, idx) => (
+            <img
+              key={p.id}
+              src={p.url}
+              alt="Job"
+              className={styles.photoItem}
+              onClick={() => {
+                setPhotoIndex(idx);
+                setLightboxOpen(true);
+              }}
+            />
+          ))
+        ) : (
+          <p>No photos uploaded yet.</p>
+        )}
       </div>
+
+      {lightboxOpen && (
+        <Lightbox
+          mainSrc={job.photos[photoIndex].url}
+          nextSrc={job.photos[(photoIndex + 1) % job.photos.length].url}
+          prevSrc={
+            job.photos[(photoIndex + job.photos.length - 1) % job.photos.length]
+              .url
+          }
+          onCloseRequest={() => setLightboxOpen(false)}
+          onMovePrevRequest={() =>
+            setPhotoIndex(
+              (photoIndex + job.photos.length - 1) % job.photos.length
+            )
+          }
+          onMoveNextRequest={() =>
+            setPhotoIndex((photoIndex + 1) % job.photos.length)
+          }
+        />
+      )}
     </div>
   );
 }
