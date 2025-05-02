@@ -1,3 +1,4 @@
+// src/components/App/App.jsx
 import React from "react";
 import {
   HashRouter as Router,
@@ -20,9 +21,10 @@ import WorkerProfile from "../../Pages/WorkerProfile";
 import Calendar from "../../Pages/Calendar";
 import styles from "./App.module.css";
 
+// Layout for protected routes
 function Layout() {
   return (
-    <div>
+    <>
       <nav className={styles.nav}>
         <Link to="/home" className={styles.navLink}>
           Home
@@ -37,7 +39,7 @@ function Layout() {
       <main className={styles.content}>
         <Outlet />
       </main>
-    </div>
+    </>
   );
 }
 
@@ -45,10 +47,13 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Public */}
+        {/* Public login route */}
         <Route path="/" element={<Login />} />
-        {/* Protected Layout */}
-        <Route path="/" element={<Layout />}>
+
+        {/* Protected routes wrapped in Layout */}
+        <Route element={<Layout />}>
+          {" "}
+          {/* no path, wraps nested */}
           <Route path="home" element={<Orders />} />
           <Route path="job/:id" element={<JobDetails />}>
             <Route index element={<Photos />} />
@@ -61,7 +66,8 @@ export default function App() {
           <Route path="workers/:workerId" element={<WorkerProfile />} />
           <Route path="calendar" element={<Calendar />} />
         </Route>
-        {/* Fallback */}
+
+        {/* Redirect any unknown path to login */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
