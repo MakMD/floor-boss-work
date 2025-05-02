@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import Lightbox from "react-image-lightbox";
-import "react-image-lightbox/style.css";
 import styles from "./Photos.module.css";
 
 const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
@@ -15,8 +13,8 @@ export default function Photos() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [photoIndex, setPhotoIndex] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     fetch(`${API_URL}/${id}`)
@@ -72,6 +70,16 @@ export default function Photos() {
     }
   };
 
+  const openModal = (idx) => {
+    setCurrentIndex(idx);
+    setModalOpen(true);
+  };
+  const closeModal = () => setModalOpen(false);
+  const showPrev = () =>
+    setCurrentIndex((currentIndex + job.photos.length - 1) % job.photos.length);
+  const showNext = () =>
+    setCurrentIndex((currentIndex + 1) % job.photos.length);
+
   if (!job) return <p>Loading photos...</p>;
 
   return (
@@ -105,10 +113,7 @@ export default function Photos() {
               src={p.url}
               alt="Job"
               className={styles.photoItem}
-              onClick={() => {
-                setPhotoIndex(idx);
-                setLightboxOpen(true);
-              }}
+              onClick={() => openModal(idx)}
             />
           ))
         ) : (
@@ -116,24 +121,28 @@ export default function Photos() {
         )}
       </div>
 
-      {lightboxOpen && (
-        <Lightbox
-          mainSrc={job.photos[photoIndex].url}
-          nextSrc={job.photos[(photoIndex + 1) % job.photos.length].url}
-          prevSrc={
-            job.photos[(photoIndex + job.photos.length - 1) % job.photos.length]
-              .url
-          }
-          onCloseRequest={() => setLightboxOpen(false)}
-          onMovePrevRequest={() =>
-            setPhotoIndex(
-              (photoIndex + job.photos.length - 1) % job.photos.length
-            )
-          }
-          onMoveNextRequest={() =>
-            setPhotoIndex((photoIndex + 1) % job.photos.length)
-          }
-        />
+      {modalOpen && (
+        <div className={styles.modalOverlay} onClick={closeModal}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className={styles.closeButton} onClick={closeModal}>
+              &times;
+            </button>
+            <img
+              src={job.photos[currentIndex].url}
+              alt="Large view"
+              className={styles.modalImage}
+            />
+            <button className={styles.navButtonLeft} onClick={showPrev}>
+              &#10094;
+            </button>
+            <button className={styles.navButtonRight} onClick={showNext}>
+              &#10095;
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
