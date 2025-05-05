@@ -1,3 +1,4 @@
+// src/Pages/Workers.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styles from "./Workers.module.css";
@@ -16,7 +17,12 @@ export default function Workers() {
         if (!res.ok) throw new Error("Network error");
         return res.json();
       })
-      .then((data) => setWorkers(data))
+      .then((data) =>
+        // Фільтруємо, залишаючи лише працівників
+        setWorkers(
+          Array.isArray(data) ? data.filter((w) => w.role === "worker") : []
+        )
+      )
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);

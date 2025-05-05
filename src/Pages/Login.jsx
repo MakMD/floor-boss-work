@@ -1,20 +1,46 @@
-import React, { useState } from "react";
+// src/Pages/Login.jsx
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion"; // restored import for animations
+import { motion } from "framer-motion";
 import styles from "./Login.module.css";
+import { AppContext } from "../components/App/App";
+
+const USERS_API = "https://680eea7067c5abddd1934af2.mockapi.io/users";
 
 export default function Login() {
+  const { login } = useContext(AppContext);
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username === "admin" && password === "1234") {
-      navigate("/home", { replace: true });
-    } else {
-      setError("Invalid username or password");
+    setError("");
+    setLoading(true);
+    try {
+      const resp = await fetch(
+        `${USERS_API}?username=${encodeURIComponent(
+          username
+        )}&password=${encodeURIComponent(password)}`
+      );
+      if (!resp.ok) {
+        setError("Server error, please try again later");
+        return;
+      }
+      const data = await resp.json();
+      const user = data[0];
+      if (!user) {
+        setError("Invalid username or password");
+      } else {
+        login(user);
+        navigate("/home", { replace: true });
+      }
+    } catch (err) {
+      setError("Unable to connect to server");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -27,7 +53,7 @@ export default function Login() {
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         <img
-          src="/Flooring.Boss.svg" // load directly from public folder
+          src="/Flooring.Boss.svg"
           alt="Company Logo"
           className={styles.logo}
         />
@@ -75,8 +101,9 @@ export default function Login() {
             className={styles.loginButton}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            disabled={loading}
           >
-            Sign In
+            {loading ? "Signing in..." : "Sign In"}
           </motion.button>
         </form>
       </motion.div>

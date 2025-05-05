@@ -18,6 +18,42 @@
   color: #1f2937;
 }
 
+.form {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+}
+
+.preview {
+  max-width: 150px;
+  border-radius: 0.5rem;
+  object-fit: cover;
+}
+
+.uploadButton {
+  padding: 0.5rem 1rem;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.uploadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -31,9 +67,17 @@
   object-fit: cover;
   border-radius: 0.5rem;
   cursor: pointer;
+  transition: transform 0.2s;
+}
+.photoItem:hover {
+  transform: scale(1.05);
 }
 
-/* Modal styles - same as Photos */
+.error {
+  color: #dc2626;
+  margin-top: 1rem;
+}
+
 .modalOverlay {
   position: fixed;
   top: 0;

@@ -1,56 +1,101 @@
+/* src/Pages/Calendar.module.css */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
 
 .calendarPage {
   font-family: "Inter", sans-serif;
-  max-width: 800px;
+  max-width: 900px;
   margin: 2rem auto;
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
-.title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 1rem;
+.calendarContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.dateInput {
+  padding: 0.6rem 1.2rem;
+  font-family: "Inter", sans-serif;
+  font-size: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: #f9fafb;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dateInput:hover {
+  border-color: #6366f1;
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
 }
 
 .dateGroup {
   margin-bottom: 2rem;
+  background-color: #f7f9fc;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
 }
 
 .dateHeader {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #2563eb;
-  margin-bottom: 0.5rem;
+  color: #4f46e5;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
 }
 
 .jobList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
   list-style: none;
   padding: 0;
 }
 
 .jobItem {
-  margin-bottom: 0.5rem;
+  /* за потреби додаткові налаштування */
 }
 
 .jobLink {
-  text-decoration: none;
-  color: #4b5563;
-  padding: 0.5rem;
   display: block;
-  border-radius: 0.5rem;
-  transition: background 0.2s;
+  padding: 0.75rem 1rem;
+  background-image: linear-gradient(135deg, #e0e7ff 0%, #f0f5ff 100%);
+  border-radius: 0.75rem;
+  text-decoration: none;
+  color: #1f2937;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .jobLink:hover {
-  background: #f3f4f6;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
 }
 
 .error {
   color: #dc2626;
   text-align: center;
+  margin-top: 1rem;
+}
+
+@media (max-width: 640px) {
+  .calendarPage {
+    padding: 1rem;
+  }
+  .jobList {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  .calendarContainer {
+    justify-content: center;
+  }
 }

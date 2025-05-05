@@ -1,42 +1,117 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
 
+/* src/components/App/App.module.css */
+
+/* Global font */
+:root {
+  --font-family: "Inter", sans-serif;
+  --color-bg-primary: #1f2937; /* Dark Blue */
+  --color-text-light: #f9fafb;
+  --color-accent: #6366f1; /* Indigo */
+  --color-error: #dc2626; /* Red */
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+}
+
+/* Navigation Bar */
 .nav {
   display: flex;
-  justify-content: center;
-  background: #ffffff;
-  padding: 1rem 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-bg-primary);
+  padding: 0.75rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* Menu links container */
+.navMenu {
+  display: flex;
+  gap: 1.5rem;
 }
 
 .navLink {
-  margin: 0 1.5rem;
   text-decoration: none;
-  color: #4b5563;
-  font-family: "Inter", sans-serif;
+  color: var(--color-text-light);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  text-transform: uppercase;
   position: relative;
-  padding: 0.25rem 0;
+  padding: 0.5rem 0;
+  transition: background-color 0.2s;
 }
 
-.navLink::after {
+.navLink:hover,
+.navLink:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+  outline: none;
+  border-radius: 4px;
+}
+
+.navLink.active::after {
   content: "";
-  display: block;
-  width: 0;
-  height: 3px;
-  background: #6366f1;
-  transition: width 0.3s ease;
   position: absolute;
   bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.navLink:hover::after,
-.navLink.active::after {
+  left: 0;
   width: 100%;
+  height: 3px;
+  background-color: var(--color-accent);
+  border-radius: 2px 2px 0 0;
 }
 
+/* Logout button styling */
+.logoutBtn {
+  background-color: var(--color-error);
+  color: var(--color-text-light);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logoutBtn:hover,
+.logoutBtn:focus {
+  background-color: darken(var(--color-error), 10%);
+  outline: none;
+}
+
+/* Main Content Area */
 .content {
   padding: 2rem;
+  background-color: #f3f4f6;
+  min-height: calc(100vh - 64px);
+}
+
+/* Responsive: collapse menu on narrower screens */
+@media (max-width: 768px) {
+  .nav {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.5rem 1rem;
+  }
+  .navMenu {
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  .logoutBtn {
+    align-self: flex-end;
+    margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navLink,
+  .logoutBtn {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
 }

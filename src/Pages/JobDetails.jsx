@@ -1,20 +1,66 @@
+// src/Pages/JobDetails.jsx
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, NavLink, Outlet } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  NavLink,
+  Outlet,
+  useLocation,
+} from "react-router-dom";
 import styles from "./JobDetails.module.css";
 
-const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
+const JOBS_API = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
+const WORKERS_API = "https://680eea7067c5abddd1934af2.mockapi.io/workers";
+
+function WorkersTab({ workerIds }) {
+  const [workers, setWorkers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!Array.isArray(workerIds) || workerIds.length === 0) {
+      setWorkers([]);
+      setLoading(false);
+      return;
+    }
+    // Завантажуємо усіх працівників та фільтруємо за workerIds
+    fetch(WORKERS_API)
+      .then((res) => {
+        if (!res.ok) throw new Error("Network error");
+        return res.json();
+      })
+      .then((data) => {
+        setWorkers(data.filter((w) => workerIds.includes(w.id)));
+      })
+      .catch(() => setWorkers([]))
+      .finally(() => setLoading(false));
+  }, [workerIds]);
+
+  if (loading) return <p>Loading workers…</p>;
+  if (workers.length === 0) return <p>No workers assigned.</p>;
+
+  return (
+    <ul className={styles.workersList}>
+      {workers.map((w) => (
+        <li key={w.id} className={styles.workerItem}>
+          {w.name}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export default function JobDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch job details
+  // Завантажуємо деталі job
   useEffect(() => {
     setLoading(true);
-    fetch(`${API_URL}/${id}`)
+    fetch(`${JOBS_API}/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Network error");
         return res.json();
@@ -25,13 +71,28 @@ export default function JobDetails() {
   }, [id]);
 
   if (loading) return <p>Loading...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (error) return <p className={styles.error}>{error}</p>;
   if (!job) return <p>Job not found.</p>;
+
+  // Визначаємо поточний “tab” по шляху
+  const currentTab = location.pathname.split("/").pop();
+
+  const tabs = [
+    { path: "", label: "Photos" },
+    { path: "workers", label: "Workers" },
+    { path: "invoices", label: "Invoices" },
+    { path: "materials", label: "Materials" },
+    { path: "photos-after", label: "After Photos" },
+    { path: "company-invoices", label: "Company Invoices" },
+  ];
 
   return (
     <div className={styles.jobDetails}>
       <div className={styles.actionButtons}>
-        <button className={styles.backButton} onClick={() => navigate(-1)}>
+        <button
+          className={styles.backButton}
+          onClick={() => navigate("/home", { replace: true })}
+        >
           &larr; Back
         </button>
         <button
@@ -41,40 +102,32 @@ export default function JobDetails() {
           Logout
         </button>
       </div>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Order #{id}</h1>
-      </div>
+
+      <h1 className={styles.title}>Order #{id}</h1>
+
       <div className={styles.tabs}>
-        {["", "invoices", "materials", "photos-after", "company-invoices"].map(
-          (path) => {
-            const label = {
-              "": "Photos",
-              invoices: "Invoices",
-              materials: "Materials",
-              "photos-after": "After Photos",
-              "company-invoices": "Company Invoices",
-            }[path];
-            return (
-              <NavLink
-                key={path}
-                to={path}
-                end={path === ""}
-                className={({ isActive }) =>
-                  isActive
-                    ? `${styles.tabButton} ${styles.tabButtonActive}`
-                    : styles.tabButton
-                }
-              >
-                {label}
-              </NavLink>
-            );
-          }
-        )}
+        {tabs.map(({ path, label }) => (
+          <NavLink
+            key={path}
+            to={path}
+            end={path === ""}
+            className={({ isActive }) =>
+              isActive
+                ? `${styles.tabButton} ${styles.tabButtonActive}`
+                : styles.tabButton
+            }
+          >
+            {label}
+          </NavLink>
+        ))}
       </div>
 
-      {/* Nested route outlet renders the selected tab component */}
       <div className={styles.content}>
-        <Outlet />
+        {currentTab === "workers" ? (
+          <WorkersTab workerIds={job.workerIds || []} />
+        ) : (
+          <Outlet />
+        )}
       </div>
     </div>
   );

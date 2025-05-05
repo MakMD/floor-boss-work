@@ -1,3 +1,4 @@
+// src/Pages/WorkerProfile.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import styles from "./WorkerProfile.module.css";
@@ -25,8 +26,8 @@ export default function WorkerProfile() {
         const wData = await wRes.json();
         const jData = await jRes.json();
         setWorker(wData);
-        // assume job.worker holds id of worker
-        const assigned = jData.filter((j) => String(j.worker) === workerId);
+        // Filter by workerId property
+        const assigned = jData.filter((j) => String(j.workerId) === workerId);
         setJobs(assigned);
       } catch (e) {
         setError(e.message);

@@ -8,7 +8,7 @@ const UPLOAD_PRESET = "floorboss_unsigned";
 
 export default function Photos() {
   const { id } = useParams();
-  const [job, setJob] = useState(null);
+  const [photos, setPhotos] = useState([]);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -16,11 +16,19 @@ export default function Photos() {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Завантажуємо тільки фото для конкретного замовлення
   useEffect(() => {
+    setLoading(true);
     fetch(`${API_URL}/${id}`)
-      .then((res) => res.json())
-      .then((data) => setJob(data))
-      .catch((e) => setError(e.message));
+      .then((res) => {
+        if (!res.ok) throw new Error("Network error");
+        return res.json();
+      })
+      .then((job) => {
+        setPhotos(Array.isArray(job.photos) ? job.photos : []);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, [id]);
 
   const handleFileChange = (e) => {
@@ -42,6 +50,7 @@ export default function Photos() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
+      formData.append("folder", `job_${id}/photos`);
 
       const resp = await fetch(CLOUDINARY_URL, {
         method: "POST",
@@ -54,13 +63,15 @@ export default function Photos() {
       const data = await resp.json();
       const newPhoto = { id: data.public_id, url: data.secure_url };
 
-      const updated = { ...job, photos: [...(job.photos || []), newPhoto] };
+      const updatedPhotos = [...photos, newPhoto];
+      // Оновлюємо тільки поле photos у замовленні
       await fetch(`${API_URL}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
+        body: JSON.stringify({ photos: updatedPhotos }),
       });
-      setJob(updated);
+
+      setPhotos(updatedPhotos);
       setFile(null);
       setPreview(null);
     } catch (err) {
@@ -76,11 +87,11 @@ export default function Photos() {
   };
   const closeModal = () => setModalOpen(false);
   const showPrev = () =>
-    setCurrentIndex((currentIndex + job.photos.length - 1) % job.photos.length);
-  const showNext = () =>
-    setCurrentIndex((currentIndex + 1) % job.photos.length);
+    setCurrentIndex((currentIndex + photos.length - 1) % photos.length);
+  const showNext = () => setCurrentIndex((currentIndex + 1) % photos.length);
 
-  if (!job) return <p>Loading photos...</p>;
+  if (loading) return <p>Loading photos...</p>;
+  if (error) return <p className={styles.error}>{error}</p>;
 
   return (
     <div className={styles.page}>
@@ -103,11 +114,9 @@ export default function Photos() {
         </button>
       </form>
 
-      {error && <p className={styles.error}>{error}</p>}
-
-      <div className={styles.gallery}>
-        {job.photos?.length ? (
-          job.photos.map((p, idx) => (
+      {photos.length ? (
+        <div className={styles.gallery}>
+          {photos.map((p, idx) => (
             <img
               key={p.id}
               src={p.url}
@@ -115,11 +124,11 @@ export default function Photos() {
               className={styles.photoItem}
               onClick={() => openModal(idx)}
             />
-          ))
-        ) : (
-          <p>No photos uploaded yet.</p>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p>No photos uploaded for this job.</p>
+      )}
 
       {modalOpen && (
         <div className={styles.modalOverlay} onClick={closeModal}>
@@ -131,7 +140,7 @@ export default function Photos() {
               &times;
             </button>
             <img
-              src={job.photos[currentIndex].url}
+              src={photos[currentIndex].url}
               alt="Large view"
               className={styles.modalImage}
             />

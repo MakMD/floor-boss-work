@@ -4,50 +4,91 @@ import { useParams, useNavigate } from "react-router-dom";
 import styles from "./Materials.module.css";
 
 const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dklxyxftr/upload";
+const UPLOAD_PRESET = "floorboss_unsigned";
 
 export default function Materials() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const [file, setFile] = useState(null);
+  const [text, setText] = useState("");
+  const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch job to get existing materials
+  // Завантажуємо поточний job
   useEffect(() => {
     fetch(`${API_URL}/${id}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Network error");
+        return res.json();
+      })
       .then(setJob)
-      .catch((err) => setError(err.message));
+      .catch((e) => setError(e.message));
   }, [id]);
 
+  // Обробник вибору файлу з прев’ю
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const f = e.target.files[0];
+    if (f) {
+      setFile(f);
+      const reader = new FileReader();
+      reader.onloadend = () => setPreview(reader.result);
+      reader.readAsDataURL(f);
+    } else {
+      setFile(null);
+      setPreview(null);
+    }
   };
 
-  const handleUpload = async (e) => {
+  // Сабміт форми: спочатку завантажуємо фото на Cloudinary, потім оновлюємо job.materials :contentReference[oaicite:0]{index=0}:contentReference[oaicite:1]{index=1}
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) return;
+    if (!file && !text.trim()) return;
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      // simulate upload: convert to base64
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const url = reader.result;
-        const newMat = { id: Date.now().toString(), name: file.name, url };
-        const updated = {
-          ...job,
-          materials: [...(job.materials || []), newMat],
-        };
-        await fetch(`${API_URL}/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updated),
+      let fileUrl = null,
+        fileName = null;
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", UPLOAD_PRESET);
+        formData.append("folder", "Materials"); // <-- тут
+        const resp = await fetch(CLOUDINARY_URL, {
+          method: "POST",
+          body: formData,
         });
-        setJob(updated);
-        setFile(null);
+        if (!resp.ok) {
+          const errData = await resp.json();
+          throw new Error(errData.error?.message || "Upload failed");
+        }
+        const data = await resp.json();
+        fileUrl = data.secure_url;
+        fileName = file.name;
+      }
+      // далі — оновлення job.materials, як раніше
+      const newMat = {
+        id: Date.now().toString(),
+        name: fileName || `Note ${new Date().toLocaleString()}`,
+        url: fileUrl,
+        description: text.trim(),
       };
-      reader.readAsDataURL(file);
+      const updatedJob = {
+        ...job,
+        materials: [...(job.materials || []), newMat],
+      };
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedJob),
+      });
+      if (!res.ok) throw new Error("Saving failed");
+      setJob(updatedJob);
+      setFile(null);
+      setText("");
+      setPreview(null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -55,7 +96,7 @@ export default function Materials() {
     }
   };
 
-  if (!job) return <p>Loading materials...</p>;
+  if (!job) return <p>Loading materials…</p>;
 
   return (
     <div className={styles.materialsPage}>
@@ -64,29 +105,54 @@ export default function Materials() {
       </button>
       <h2 className={styles.title}>Materials for Order #{id}</h2>
 
-      <form onSubmit={handleUpload} className={styles.uploadForm}>
+      <form onSubmit={handleSubmit} className={styles.uploadForm}>
+        <textarea
+          placeholder="Notes (optional)"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className={styles.textInput}
+        />
         <input
           type="file"
-          accept=".pdf,image/*"
+          accept="image/*"
           onChange={handleFileChange}
           className={styles.fileInput}
         />
-        <button type="submit" className={styles.uploadButton}>
-          {loading ? "Uploading..." : "Upload Material"}
+        {preview && (
+          <img src={preview} alt="Preview" className={styles.preview} />
+        )}
+        <button
+          type="submit"
+          className={styles.uploadButton}
+          disabled={loading}
+        >
+          {loading ? "Saving…" : "Add Material"}
         </button>
       </form>
 
       {error && <p className={styles.error}>{error}</p>}
 
       <ul className={styles.materialList}>
-        {job.materials?.map((mat) => (
-          <li key={mat.id} className={styles.materialItem}>
-            <a href={mat.url} target="_blank" rel="noopener noreferrer">
-              {mat.name}
-            </a>
-          </li>
-        ))}
-        {!job.materials?.length && <p>No materials uploaded yet.</p>}
+        {job.materials?.length ? (
+          job.materials.map((mat) => (
+            <li key={mat.id} className={styles.materialItem}>
+              {mat.url && (
+                <a href={mat.url} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={mat.url}
+                    alt={mat.name}
+                    className={styles.materialImg}
+                  />
+                </a>
+              )}
+              {mat.description && (
+                <p className={styles.description}>{mat.description}</p>
+              )}
+            </li>
+          ))
+        ) : (
+          <p>No materials uploaded yet.</p>
+        )}
       </ul>
     </div>
   );
