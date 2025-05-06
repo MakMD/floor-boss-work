@@ -1,0 +1,101 @@
+/* src/Pages/Invoices.module.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
+.page {
+  font-family: "Inter", sans-serif;
+  max-width: 600px;
+  margin: 2rem auto;
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.form {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.input {
+  flex: 1 1 120px;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: #f9fafb;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+.addButton {
+  padding: 0.6rem 1.2rem;
+  background: #6366f1;
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.addButton:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+.error {
+  color: #dc2626;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f3f4f6;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+  transition: background 0.2s ease;
+}
+
+.item:hover {
+  background: #e5e7eb;
+}
+
+.date {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.amount {
+  font-weight: 700;
+  color: #2563eb;
+}
+
+@media (max-width: 480px) {
+  .form {
+    flex-direction: column;
+  }
+  .item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .amount {
+    margin-top: 0.5rem;
+  }
+}
