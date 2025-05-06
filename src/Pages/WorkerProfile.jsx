@@ -25,10 +25,18 @@ export default function WorkerProfile() {
         if (!wRes.ok || !jRes.ok) throw new Error("Network error");
         const wData = await wRes.json();
         const jData = await jRes.json();
+
         setWorker(wData);
-        // Filter by workerId property
-        const assigned = jData.filter((j) => String(j.workerId) === workerId);
-        setJobs(assigned);
+
+        // Фільтруємо замовлення, де масив workerIds містить поточний workerId
+        const assignedJobs = Array.isArray(jData)
+          ? jData.filter(
+              (job) =>
+                Array.isArray(job.workerIds) && job.workerIds.includes(workerId)
+            )
+          : [];
+
+        setJobs(assignedJobs);
       } catch (e) {
         setError(e.message);
       } finally {
@@ -53,7 +61,7 @@ export default function WorkerProfile() {
       </p>
       <div className={styles.jobsSection}>
         <h3 className={styles.subtitle}>Assigned Jobs</h3>
-        {jobs.length ? (
+        {jobs.length > 0 ? (
           <ul className={styles.jobList}>
             {jobs.map((job) => (
               <li key={job.id} className={styles.jobItem}>

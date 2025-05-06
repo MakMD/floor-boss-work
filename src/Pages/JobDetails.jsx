@@ -22,7 +22,6 @@ function WorkersTab({ workerIds }) {
       setLoading(false);
       return;
     }
-    // Завантажуємо усіх працівників та фільтруємо за workerIds
     fetch(WORKERS_API)
       .then((res) => {
         if (!res.ok) throw new Error("Network error");
@@ -57,7 +56,7 @@ export default function JobDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Завантажуємо деталі job
+  // Завантаження деталей замовлення
   useEffect(() => {
     setLoading(true);
     fetch(`${JOBS_API}/${id}`)
@@ -74,8 +73,11 @@ export default function JobDetails() {
   if (error) return <p className={styles.error}>{error}</p>;
   if (!job) return <p>Job not found.</p>;
 
-  // Визначаємо поточний “tab” по шляху
-  const currentTab = location.pathname.split("/").pop();
+  // Визначаємо активну вкладку
+  const pathSegments = location.pathname.split("/");
+  let currentTab = pathSegments[pathSegments.length - 1];
+  // Якщо останній сегмент – це id (тобто базова сторінка), виводимо Photos
+  if (currentTab === id) currentTab = "";
 
   const tabs = [
     { path: "", label: "Photos" },

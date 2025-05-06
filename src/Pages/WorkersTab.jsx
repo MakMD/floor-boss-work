@@ -1,7 +1,6 @@
-// src/Pages/WorkersTab.jsx
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import styles from "./WorkersTab.module.css";
+import { useParams, Link } from "react-router-dom";
+import styles from "./TabForWorkers.module.css";
 
 const JOBS_API = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
 const WORKERS_API = "https://680eea7067c5abddd1934af2.mockapi.io/workers";
@@ -14,6 +13,8 @@ export default function WorkersTab() {
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
+
     Promise.all([
       fetch(`${JOBS_API}/${id}`).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch job");
@@ -25,22 +26,28 @@ export default function WorkersTab() {
       }),
     ])
       .then(([job, allWorkers]) => {
-        const assigned = Array.isArray(job.workerIds) ? job.workerIds : [];
-        setWorkers(allWorkers.filter((w) => assigned.includes(w.id)));
+        const assignedIds = Array.isArray(job.workerIds) ? job.workerIds : [];
+        const assignedWorkers = allWorkers.filter((w) =>
+          assignedIds.includes(w.id)
+        );
+        setWorkers(assignedWorkers);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <p>Loading workers...</p>;
+  if (loading) return <p className={styles.loading}>Loading workers...</p>;
   if (error) return <p className={styles.error}>{error}</p>;
-  if (workers.length === 0) return <p>No workers assigned to this order.</p>;
+  if (!workers.length)
+    return <p className={styles.empty}>No workers assigned to this order.</p>;
 
   return (
     <ul className={styles.workersList}>
       {workers.map((w) => (
         <li key={w.id} className={styles.workerItem}>
-          {w.name}
+          <Link to={`/workers/${w.id}`} className={styles.workerLink}>
+            {w.name}
+          </Link>
         </li>
       ))}
     </ul>
