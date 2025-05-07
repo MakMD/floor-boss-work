@@ -1,45 +1,55 @@
 // src/components/App/App.jsx
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import {
   HashRouter as Router,
   Routes,
   Route,
   Navigate,
-  Link,
-  Outlet,
-  useNavigate,
 } from "react-router-dom";
 import ProtectedRoute from "../ProtectedRoute/ProtectedRoute";
-import Login from "../../Pages/Login";
-import Orders from "../../Pages/Orders";
-import JobDetails from "../../Pages/JobDetails";
-import WorkersTab from "../../Pages/WorkersTab";
-import Photos from "../../Pages/Photos";
-import Invoices from "../../Pages/Invoices";
-import Materials from "../../Pages/Materials";
-import PhotosAfter from "../../Pages/PhotosAfter";
-import CompanyInvoices from "../../Pages/CompanyInvoices";
-import Workers from "../../Pages/Workers";
-import WorkerProfile from "../../Pages/WorkerProfile";
-import Calendar from "../../Pages/Calendar";
+import Layout from "./Layout";
 import styles from "./App.module.css";
+
+import { routesConfig } from "../../config/routesConfig";
 
 // --- Global State via React Context ---
 export const AppContext = createContext(null);
 
 function AppProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [settings, setSettings] = useState({ theme: "light" });
+  // Ініціалізуємо user з localStorage, щоб уникнути редиректу перед прочитанням
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem("appUser");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  // Ініціалізуємо settings з localStorage або дефолт
+  const [settings, setSettings] = useState(() => {
+    try {
+      const stored = localStorage.getItem("appSettings");
+      return stored ? JSON.parse(stored) : { theme: "light" };
+    } catch {
+      return { theme: "light" };
+    }
+  });
 
-  useEffect(() => {
-    const stored = localStorage.getItem("appUser");
-    if (stored) setUser(JSON.parse(stored));
-  }, []);
-
+  // Синхронізуємо user у localStorage
   useEffect(() => {
     if (user) localStorage.setItem("appUser", JSON.stringify(user));
     else localStorage.removeItem("appUser");
   }, [user]);
+
+  // Синхронізуємо settings у localStorage
+  useEffect(() => {
+    localStorage.setItem("appSettings", JSON.stringify(settings));
+  }, [settings]);
+
+  // Застосовуємо тему до <body> через data-атрибут
+  useEffect(() => {
+    document.body.dataset.theme = settings.theme;
+  }, [settings.theme]);
 
   const login = (userData) => setUser(userData);
   const logout = () => setUser(null);
@@ -55,140 +65,60 @@ function AppProvider({ children }) {
   );
 }
 
-function Layout() {
-  const { logout } = useContext(AppContext);
-  const navigate = useNavigate();
-  return (
-    <>
-      <nav className={styles.nav}>
-        <Link to="/home" className={styles.navLink}>
-          Home
-        </Link>
-        <Link to="/workers" className={styles.navLink}>
-          Workers
-        </Link>
-        <Link to="/calendar" className={styles.navLink}>
-          Calendar
-        </Link>
-        <button
-          className={styles.logoutBtn}
-          onClick={() => {
-            logout();
-            navigate("/", { replace: true });
-          }}
-        >
-          Logout
-        </button>
-      </nav>
-      <main className={styles.content}>
-        <Outlet />
-      </main>
-    </>
-  );
-}
-
 export default function App() {
   return (
     <AppProvider>
       <Router>
         <Routes>
-          {/* Public login route */}
-          <Route path="/" element={<Login />} />
-
-          {/* Protected routes */}
-          <Route element={<Layout />}>
-            <Route
-              path="home"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <Orders />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="job/:id"
-              element={
-                <ProtectedRoute allowedRoles={["admin", "worker"]}>
-                  <JobDetails />
-                </ProtectedRoute>
-              }
-            >
-              <Route
-                index
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "worker"]}>
-                    <Photos />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="invoices"
-                element={
-                  <ProtectedRoute allowedRoles={["admin"]}>
-                    <Invoices />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="workers"
-                element={
-                  <ProtectedRoute allowedRoles={["admin"]}>
-                    <WorkersTab />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="materials"
-                element={
-                  <ProtectedRoute allowedRoles={["admin"]}>
-                    <Materials />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="photos-after"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "worker"]}>
-                    <PhotosAfter />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="company-invoices"
-                element={
-                  <ProtectedRoute allowedRoles={["admin"]}>
-                    <CompanyInvoices />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
-            <Route
-              path="workers"
-              element={
-                <ProtectedRoute allowedRoles={["admin", "worker"]}>
-                  <Workers />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="workers/:workerId"
-              element={
-                <ProtectedRoute allowedRoles={["admin", "worker"]}>
-                  <WorkerProfile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="calendar"
-              element={
-                <ProtectedRoute allowedRoles={["admin", "worker"]}>
-                  <Calendar />
-                </ProtectedRoute>
-              }
-            />
-          </Route>
-
-          {/* Redirect unknown paths */}
+          {routesConfig.map((route, i) => {
+            // Public
+            if (route.public) {
+              return (
+                <Route key={i} path={route.path} element={route.element} />
+              );
+            }
+            // Protected + Layout
+            return (
+              <Route key={i} element={<Layout />}>
+                {route.children.map((r, j) => {
+                  const Wrapper = ({ children }) => (
+                    <ProtectedRoute allowedRoles={r.allowedRoles}>
+                      {children}
+                    </ProtectedRoute>
+                  );
+                  if (!r.children) {
+                    return (
+                      <Route
+                        key={`${i}-${j}`}
+                        path={r.path}
+                        element={<Wrapper>{r.element}</Wrapper>}
+                      />
+                    );
+                  }
+                  return (
+                    <Route
+                      key={`${i}-${j}`}
+                      path={r.path}
+                      element={<Wrapper>{r.element}</Wrapper>}
+                    >
+                      {r.children.map((c, k) => (
+                        <Route
+                          key={`${i}-${j}-${k}`}
+                          index={!!c.index}
+                          path={c.path}
+                          element={
+                            <ProtectedRoute allowedRoles={c.allowedRoles}>
+                              {c.element}
+                            </ProtectedRoute>
+                          }
+                        />
+                      ))}
+                    </Route>
+                  );
+                })}
+              </Route>
+            );
+          })}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

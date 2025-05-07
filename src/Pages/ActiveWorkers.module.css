@@ -1,43 +1,40 @@
+/* src/Pages/ActiveWorkers.module.css */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
 
-.workersList {
+.list {
   font-family: "Inter", sans-serif;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 1rem;
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
-.workerItem {
+.item {
   background-color: #ffffff;
+  padding: 1rem;
   border-radius: 0.75rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  padding: 1rem;
   text-align: center;
   font-weight: 600;
   color: #1f2937;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
 }
 
-.workerItem:hover {
+.item:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
 }
 
-.workerLink {
+.link {
   text-decoration: none;
   color: inherit;
+  display: block;
 }
 
-.loading {
-  font-family: "Inter", sans-serif;
-  color: #6b7280;
-  text-align: center;
-  margin-top: 1rem;
-}
-
+.loading,
 .empty {
   font-family: "Inter", sans-serif;
   color: #6b7280;
@@ -52,8 +49,8 @@
   margin-top: 1rem;
 }
 
-@media (max-width: 768px) {
-  .workersList {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+@media (max-width: 640px) {
+  .list {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 }
