@@ -1,4 +1,3 @@
-// src/config/routesConfig.jsx
 import React from "react";
 import Login from "../Pages/Login";
 import Home from "../Pages/Home";
@@ -41,24 +40,23 @@ export const routesConfig = [
         children: [
           {
             index: true,
-            path: "",
             element: <Photos />,
             allowedRoles: [Roles.ADMIN, Roles.WORKER],
           },
           {
             path: "workers",
             element: <ActiveWorkers />,
-            allowedRoles: [Roles.ADMIN, Roles.WORKER],
+            allowedRoles: [Roles.ADMIN],
           },
           {
             path: "invoices",
             element: <Invoices />,
-            allowedRoles: [Roles.ADMIN],
+            allowedRoles: [Roles.ADMIN, Roles.WORKER],
           },
           {
             path: "materials",
             element: <Materials />,
-            allowedRoles: [Roles.ADMIN],
+            allowedRoles: [Roles.ADMIN, Roles.WORKER],
           },
           {
             path: "photos-after",
@@ -68,14 +66,15 @@ export const routesConfig = [
           {
             path: "company-invoices",
             element: <CompanyInvoices />,
-            allowedRoles: [Roles.ADMIN],
+            allowedRoles: [Roles.ADMIN, Roles.WORKER],
           },
         ],
       },
+      // Цей маршрут тепер тільки для адміна
       {
         path: "workers",
         element: <Workers />,
-        allowedRoles: [Roles.ADMIN, Roles.WORKER],
+        allowedRoles: [Roles.ADMIN],
       },
       {
         path: "workers/:workerId",

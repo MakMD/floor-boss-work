@@ -5,7 +5,7 @@ import { AppContext } from "./App";
 import styles from "./App.module.css";
 
 export default function Layout() {
-  const { logout } = useContext(AppContext);
+  const { logout, user } = useContext(AppContext);
   const navigate = useNavigate();
 
   return (
@@ -14,12 +14,21 @@ export default function Layout() {
         <Link to="/home" className={styles.navLink}>
           Home
         </Link>
-        <Link to="/orders" className={styles.navLink}>
-          Order
-        </Link>
-        <Link to="/workers" className={styles.navLink}>
-          Workers
-        </Link>
+
+        {/* тільки адмін бачить Orders */}
+        {user?.role === "admin" && (
+          <Link to="/orders" className={styles.navLink}>
+            Order
+          </Link>
+        )}
+
+        {/* тільки адмін бачить Workers */}
+        {user?.role === "admin" && (
+          <Link to="/workers" className={styles.navLink}>
+            Workers
+          </Link>
+        )}
+
         <Link to="/calendar" className={styles.navLink}>
           Calendar
         </Link>

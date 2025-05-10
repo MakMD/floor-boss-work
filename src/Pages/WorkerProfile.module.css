@@ -1,65 +1,84 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+/* src/Pages/WorkerProfile.module.css */
 
 .page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
   font-family: "Inter", sans-serif;
-  max-width: 700px;
-  margin: 2rem auto;
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  color: #2d3748;
+  background: #ffffff;
 }
 
 .backButton {
-  background: #e5e7eb;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
+  display: inline-block;
   margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #edf2f7;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.backButton:hover {
+  background-color: #e2e8f0;
 }
 
 .title {
   font-size: 1.75rem;
-  font-weight: 700;
-  color: #1f2937;
+  font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
-detail {
-  margin-bottom: 1rem;
-  color: #4b5563;
+.detail {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  color: #4a5568;
 }
 
 .jobsSection {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
 }
 
 .subtitle {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 500;
   margin-bottom: 0.75rem;
+  color: #2d3748;
 }
 
 .jobList {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .jobItem {
   margin-bottom: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: #f7fafc;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.jobItem:hover {
+  background-color: #edf2f7;
 }
 
 .jobLink {
   text-decoration: none;
-  color: #2563eb;
-  transition: color 0.2s;
+  color: #2b6cb0;
+  font-weight: 500;
+  display: block;
 }
+
 .jobLink:hover {
-  color: #1e40af;
+  text-decoration: underline;
 }
 
 .error {
-  color: #dc2626;
-  font-weight: 600;
+  color: #e53e3e;
+  text-align: center;
+  margin: 2rem 0;
 }
