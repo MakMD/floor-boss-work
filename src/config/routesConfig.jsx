@@ -1,5 +1,7 @@
+// src/config/routesConfig.jsx
 import React from "react";
 import Login from "../Pages/Login";
+import Home from "../Pages/Home";
 import Orders from "../Pages/Orders";
 import JobDetails from "../Pages/JobDetails";
 import Photos from "../Pages/Photos";
@@ -12,25 +14,23 @@ import Workers from "../Pages/Workers";
 import WorkerProfile from "../Pages/WorkerProfile";
 import Calendar from "../Pages/Calendar";
 
-// ролі
 export const Roles = {
   ADMIN: "admin",
   WORKER: "worker",
 };
 
-// централізований конфіг маршрутів
 export const routesConfig = [
+  { path: "/", element: <Login />, public: true },
   {
-    path: "/",
-    element: <Login />,
-    public: true,
-  },
-  {
-    // обгортає Layout і всі захищені маршрути
     layout: true,
     children: [
       {
         path: "home",
+        element: <Home />,
+        allowedRoles: [Roles.ADMIN, Roles.WORKER],
+      },
+      {
+        path: "orders",
         element: <Orders />,
         allowedRoles: [Roles.ADMIN],
       },
@@ -41,18 +41,19 @@ export const routesConfig = [
         children: [
           {
             index: true,
+            path: "",
             element: <Photos />,
+            allowedRoles: [Roles.ADMIN, Roles.WORKER],
+          },
+          {
+            path: "workers",
+            element: <ActiveWorkers />,
             allowedRoles: [Roles.ADMIN, Roles.WORKER],
           },
           {
             path: "invoices",
             element: <Invoices />,
             allowedRoles: [Roles.ADMIN],
-          },
-          {
-            path: "workers",
-            element: <ActiveWorkers />,
-            allowedRoles: [Roles.ADMIN, Roles.WORKER],
           },
           {
             path: "materials",

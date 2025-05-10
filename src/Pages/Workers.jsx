@@ -18,7 +18,6 @@ export default function Workers() {
         return res.json();
       })
       .then((data) =>
-        // Фільтруємо, залишаючи лише працівників
         setWorkers(
           Array.isArray(data) ? data.filter((w) => w.role === "worker") : []
         )
@@ -34,12 +33,13 @@ export default function Workers() {
       {error && <p className={styles.error}>{error}</p>}
 
       {loading ? (
-        <p>Loading...</p>
+        <p className={styles.loading}>Loading...</p>
       ) : (
         <ul className={styles.list}>
           {workers.length > 0 ? (
-            workers.map((worker) => (
+            workers.map((worker, index) => (
               <li key={worker.id} className={styles.item}>
+                <span className={styles.index}>{index + 1}</span>
                 <Link to={`/workers/${worker.id}`} className={styles.link}>
                   <div className={styles.workerName}>{worker.name}</div>
                   <div className={styles.workerRole}>{worker.role}</div>
@@ -47,7 +47,7 @@ export default function Workers() {
               </li>
             ))
           ) : (
-            <p>No workers found.</p>
+            <p className={styles.empty}>No workers found.</p>
           )}
         </ul>
       )}

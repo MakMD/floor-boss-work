@@ -1,3 +1,4 @@
+// src/components/App/Layout.jsx
 import React, { useContext } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { AppContext } from "./App";
@@ -12,6 +13,9 @@ export default function Layout() {
       <nav className={styles.nav}>
         <Link to="/home" className={styles.navLink}>
           Home
+        </Link>
+        <Link to="/orders" className={styles.navLink}>
+          Order
         </Link>
         <Link to="/workers" className={styles.navLink}>
           Workers

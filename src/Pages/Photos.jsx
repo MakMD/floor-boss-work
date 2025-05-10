@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+// src/Pages/Photos.jsx
+import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import styles from "./Photos.module.css";
+import { AppContext } from "../components/App/App";
 
 const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dklxyxftr/upload";
@@ -8,6 +10,8 @@ const UPLOAD_PRESET = "floorboss_unsigned";
 
 export default function Photos() {
   const { id } = useParams();
+  const { addActivity, user } = useContext(AppContext);
+
   const [photos, setPhotos] = useState([]);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -46,7 +50,9 @@ export default function Photos() {
     if (!file) return;
     setLoading(true);
     setError(null);
+
     try {
+      // Завантаження на Cloudinary
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
@@ -57,14 +63,14 @@ export default function Photos() {
         body: formData,
       });
       if (!resp.ok) {
-        const err = await resp.json();
-        throw new Error(err.error?.message || "Upload failed");
+        const errJson = await resp.json();
+        throw new Error(errJson.error?.message || "Upload failed");
       }
       const data = await resp.json();
       const newPhoto = { id: data.public_id, url: data.secure_url };
 
+      // Оновлення списку фото в API
       const updatedPhotos = [...photos, newPhoto];
-      // Оновлюємо тільки поле photos у замовленні
       await fetch(`${API_URL}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -74,6 +80,11 @@ export default function Photos() {
       setPhotos(updatedPhotos);
       setFile(null);
       setPreview(null);
+
+      // Запис у лог активності
+      addActivity(
+        `User ${user?.name || user?.id} added a photo to order #${id}`
+      );
     } catch (err) {
       setError(err.message);
     } finally {
@@ -87,10 +98,10 @@ export default function Photos() {
   };
   const closeModal = () => setModalOpen(false);
   const showPrev = () =>
-    setCurrentIndex((currentIndex + photos.length - 1) % photos.length);
-  const showNext = () => setCurrentIndex((currentIndex + 1) % photos.length);
+    setCurrentIndex((ci) => (ci + photos.length - 1) % photos.length);
+  const showNext = () => setCurrentIndex((ci) => (ci + 1) % photos.length);
 
-  if (loading) return <p>Loading photos...</p>;
+  if (loading) return <p className={styles.loading}>Loading photos...</p>;
   if (error) return <p className={styles.error}>{error}</p>;
 
   return (

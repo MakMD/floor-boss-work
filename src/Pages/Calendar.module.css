@@ -1,101 +1,224 @@
-/* src/Pages/Calendar.module.css */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
 
+:root {
+  --bg-white: #ffffff;
+  --bg-light: #f9fafb;
+  --border-light: #e2e8f0;
+  --border-primary: #4299e1;
+  --text-dark: #2d3748;
+  --text-muted: #718096;
+  --text-error: #e53e3e;
+  --font-family: "Inter", sans-serif;
+}
+
 .calendarPage {
-  font-family: "Inter", sans-serif;
-  max-width: 900px;
+  font-family: var(--font-family);
+  max-width: 960px;
   margin: 2rem auto;
-  padding: 2rem;
-  background-color: #ffffff;
-  border-radius: 1rem;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-white);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
 .calendarContainer {
+  padding: 1rem 2rem;
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 1.5rem;
+  justify-content: center;
+  background-color: var(--bg-light);
+  border-bottom: 1px solid var(--border-light);
 }
 
-.dateInput {
-  padding: 0.6rem 1.2rem;
-  font-family: "Inter", sans-serif;
-  font-size: 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  background-color: #f9fafb;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+/* React Calendar overrides */
+:global(.react-calendar) {
+  max-width: 500px;
+  margin: auto;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-family);
+}
+:global(.react-calendar__navigation) {
+  display: flex;
+  justify-content: space-between;
+  background-color: var(--bg-light);
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  position: relative;
 }
 
-.dateInput:hover {
-  border-color: #6366f1;
-}
-
-.dateInput:focus {
-  outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
-}
-
-.dateGroup {
-  margin-bottom: 2rem;
-  background-color: #f7f9fc;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-}
-
-.dateHeader {
-  font-size: 1.25rem;
+/* Center the month label */
+:global(.react-calendar__navigation__label) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   font-weight: 600;
-  color: #4f46e5;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0.5rem;
+  color: var(--text-dark);
 }
 
-.jobList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
-  list-style: none;
-  padding: 0;
+:global(.react-calendar__navigation button) {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  cursor: pointer;
+}
+:global(.react-calendar__navigation button:hover) {
+  color: var(--border-primary);
+}
+:global(.react-calendar__month-view__weekdays) {
+  background-color: var(--bg-light);
+  text-transform: uppercase;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-light);
+}
+:global(.react-calendar__tile) {
+  height: 3rem;
+  line-height: 3rem;
+  font-size: 0.875rem;
+  color: var(--text-dark);
+  border: none;
+}
+:global(.react-calendar__tile:enabled:hover) {
+  background-color: #e2e8f0;
+}
+:global(.react-calendar__tile--now) {
+  background: var(--bg-light);
+  border-radius: 4px;
+  font-weight: 700;
+}
+:global(.react-calendar__tile--active) {
+  background: var(--border-primary);
+  color: var(--bg-white);
+  border-radius: 4px;
 }
 
-.jobItem {
-  /* за потреби додаткові налаштування */
+.searchContainer {
+  padding: 1rem;
+  background-color: var(--bg-light);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: center;
 }
 
-.jobLink {
-  display: block;
-  padding: 0.75rem 1rem;
-  background-image: linear-gradient(135deg, #e0e7ff 0%, #f0f5ff 100%);
-  border-radius: 0.75rem;
-  text-decoration: none;
-  color: #1f2937;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.searchInput {
+  width: 100%;
+  max-width: 400px;
+  font-family: var(--font-family);
+  padding: 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
-.jobLink:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+.eventsContainer {
+  padding: 1rem 2rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+.noResults,
+.loading {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1rem;
 }
 
 .error {
-  color: #dc2626;
+  color: var(--text-error);
   text-align: center;
-  margin-top: 1rem;
+  font-weight: 600;
+  padding: 1rem;
 }
 
+.jobList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.jobItem {
+  background-color: var(--bg-white);
+  padding: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.jobLink {
+  font-family: var(--font-family);
+  font-weight: 500;
+  color: var(--text-dark);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.jobLink:hover {
+  color: var(--border-primary);
+}
+:global(.react-calendar__tile) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:global(.react-calendar__year-view__months__month) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 4rem;
+  font-size: 1rem;
+}
+.showAllBtn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--border-primary);
+  color: var(--bg-white);
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  width: fit-content;
+  align-self: center;
+}
+
+.showAllBtn:hover {
+  background-color: #2b6cb0;
+  transform: translateY(-1px);
+}
+.filterContainer {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.calendarWrapper {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 1rem;
+}
 @media (max-width: 640px) {
-  .calendarPage {
-    padding: 1rem;
-  }
   .jobList {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  }
-  .calendarContainer {
-    justify-content: center;
+    grid-template-columns: 1fr;
   }
 }
