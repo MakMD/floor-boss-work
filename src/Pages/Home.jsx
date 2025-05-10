@@ -18,7 +18,6 @@ export default function Home() {
           .slice()
           .reverse()
           .map((item, index) => {
-            // витягуємо номер замовлення із повідомлення
             const match = item.message.match(/#(\d+)/);
             const orderId = match ? match[1] : null;
 
@@ -38,6 +37,26 @@ export default function Home() {
             );
           })}
       </ul>
+
+      {/* ---- Нова секція контактів ---- */}
+      <div className={styles.footer}>
+        <h3 className={styles.footerTitle}>Contact Information</h3>
+        <ul className={styles.contactList}>
+          <li className={styles.contactItem}>
+            <a href="tel:+14031234567" className={styles.contactLink}>
+              📞 John Doe: +1 (403) 123-4567
+            </a>
+          </li>
+          <li className={styles.contactItem}>
+            <a href="tel:+14039876543" className={styles.contactLink}>
+              📞 Jane Smith: +1 (403) 987-6543
+            </a>
+          </li>
+        </ul>
+        <p className={styles.address}>
+          📍 1234 Floor Street, Calgary, AB T2X 1Y4
+        </p>
+      </div>
     </div>
   );
 }

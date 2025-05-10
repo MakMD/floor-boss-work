@@ -1,22 +1,21 @@
 /* src/Pages/Home.module.css */
-
 .homePage {
   max-width: 960px;
   margin: 0 auto;
   padding: 2rem;
   font-family: "Inter", sans-serif;
+  color: #2d3748;
 }
 
 .title {
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  color: #2d3748;
 }
 
 .activityList {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 0 2rem 0;
 }
 
 .activityItem {
@@ -49,11 +48,52 @@
 .activityText {
   flex: 1;
   font-size: 1rem;
-  color: #2d3748;
 }
 
 .empty {
   text-align: center;
   color: #718096;
   padding: 1rem 0;
+}
+
+/* ---- Стилі футера ---- */
+.footer {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.footerTitle {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.contactList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem 0;
+}
+
+.contactItem {
+  margin-bottom: 0.5rem;
+}
+
+.contactLink {
+  color: #2b6cb0;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.contactLink:hover {
+  text-decoration: underline;
+}
+
+.address {
+  font-size: 0.95rem;
+  color: #4a5568;
+  margin: 0;
 }
