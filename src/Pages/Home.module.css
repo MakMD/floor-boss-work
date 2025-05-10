@@ -1,3 +1,5 @@
+/* src/Pages/Home.module.css */
+
 .homePage {
   max-width: 960px;
   margin: 0 auto;
@@ -31,6 +33,17 @@
   font-size: 0.85rem;
   color: #718096;
   min-width: 6.5rem;
+}
+
+.activityLink {
+  flex: 1;
+  font-size: 1rem;
+  color: #3182ce;
+  text-decoration: none;
+}
+
+.activityLink:hover {
+  text-decoration: underline;
 }
 
 .activityText {
