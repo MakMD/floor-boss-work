@@ -1,56 +1,72 @@
 // src/Pages/Workers.jsx
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import { Link, useParams } from "react-router-dom";
+import { AppContext } from "../components/App/App";
+import { supabase } from "../lib/supabase";
 import styles from "./Workers.module.css";
 
-const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/workers";
+export default function ActiveWorkers() {
+  const { id } = useParams();
+  const { user } = useContext(AppContext);
 
-export default function Workers() {
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    fetch(API_URL)
-      .then((res) => {
-        if (!res.ok) throw new Error("Network error");
-        return res.json();
-      })
-      .then((data) =>
-        setWorkers(
-          Array.isArray(data) ? data.filter((w) => w.role === "worker") : []
-        )
-      )
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Отримуємо ID працівників для job
+        const { data: relations, error: relErr } = await supabase
+          .from("job_workers")
+          .select("worker_id")
+          .eq("job_id", id);
+        if (relErr) throw relErr;
+
+        const workerIds = relations.map((r) => r.worker_id);
+        if (workerIds.length === 0) {
+          setWorkers([]);
+          return;
+        }
+
+        // Отримуємо інформацію про працівників
+        const { data: users, error: usersErr } = await supabase
+          .from("workers")
+          .select("id, name, role")
+          .in("id", workerIds)
+          .order("name", { ascending: true });
+        if (usersErr) throw usersErr;
+
+        setWorkers(users);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  if (loading) return <p className={styles.loading}>Loading workers…</p>;
+  if (error) return <p className={styles.error}>{error}</p>;
+  if (workers.length === 0)
+    return (
+      <p className={styles.noResults}>No workers assigned to this order.</p>
+    );
 
   return (
-    <div className={styles.page}>
-      <h2 className={styles.title}>Workers</h2>
-
-      {error && <p className={styles.error}>{error}</p>}
-
-      {loading ? (
-        <p className={styles.loading}>Loading...</p>
-      ) : (
-        <ul className={styles.list}>
-          {workers.length > 0 ? (
-            workers.map((worker, index) => (
-              <li key={worker.id} className={styles.item}>
-                <span className={styles.index}>{index + 1}</span>
-                <Link to={`/workers/${worker.id}`} className={styles.link}>
-                  <div className={styles.workerName}>{worker.name}</div>
-                  <div className={styles.workerRole}>{worker.role}</div>
-                </Link>
-              </li>
-            ))
-          ) : (
-            <p className={styles.empty}>No workers found.</p>
-          )}
-        </ul>
-      )}
-    </div>
+    <ul className={styles.list}>
+      {workers.map((worker, i) => (
+        <li key={worker.id} className={styles.item}>
+          <Link to={`/workers/${worker.id}`} className={styles.link}>
+            <div className={styles.workerName}>
+              {i + 1}. {worker.name}
+            </div>
+            <div className={styles.workerRole}>{worker.role}</div>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }

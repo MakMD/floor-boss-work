@@ -1,15 +1,13 @@
 // src/Pages/Photos.jsx
 import React, { useState, useEffect, useContext } from "react";
-import { useParams } from "react-router-dom";
-import styles from "./Photos.module.css";
+import { useParams, useNavigate } from "react-router-dom";
 import { AppContext } from "../components/App/App";
-
-const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
-const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dklxyxftr/upload";
-const UPLOAD_PRESET = "floorboss_unsigned";
+import { supabase } from "../lib/supabase";
+import styles from "./Photos.module.css";
 
 export default function Photos() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { addActivity, user } = useContext(AppContext);
 
   const [photos, setPhotos] = useState([]);
@@ -17,22 +15,20 @@ export default function Photos() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [modalUrl, setModalUrl] = useState(null);
 
-  // Завантажуємо тільки фото для конкретного замовлення
   useEffect(() => {
-    setLoading(true);
-    fetch(`${API_URL}/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Network error");
-        return res.json();
-      })
-      .then((job) => {
-        setPhotos(Array.isArray(job.photos) ? job.photos : []);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("photos")
+        .select("id, url, created_at")
+        .eq("job_id", id)
+        .order("created_at", { ascending: false });
+      if (error) setError(error.message);
+      else setPhotos(data || []);
+      setLoading(false);
+    })();
   }, [id]);
 
   const handleFileChange = (e) => {
@@ -42,6 +38,9 @@ export default function Photos() {
       const reader = new FileReader();
       reader.onloadend = () => setPreview(reader.result);
       reader.readAsDataURL(f);
+    } else {
+      setFile(null);
+      setPreview(null);
     }
   };
 
@@ -52,39 +51,31 @@ export default function Photos() {
     setError(null);
 
     try {
-      // Завантаження на Cloudinary
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-      formData.append("folder", `job_${id}/photos`);
+      const ext = file.name.split(".").pop();
+      const name = `${Date.now()}.${ext}`;
+      const path = `job_${id}/${name}`;
 
-      const resp = await fetch(CLOUDINARY_URL, {
-        method: "POST",
-        body: formData,
-      });
-      if (!resp.ok) {
-        const errJson = await resp.json();
-        throw new Error(errJson.error?.message || "Upload failed");
-      }
-      const data = await resp.json();
-      const newPhoto = { id: data.public_id, url: data.secure_url };
+      const { error: upErr } = await supabase.storage
+        .from("work")
+        .upload(path, file);
+      if (upErr) throw upErr;
 
-      // Оновлення списку фото в API
-      const updatedPhotos = [...photos, newPhoto];
-      await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photos: updatedPhotos }),
-      });
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("work").getPublicUrl(path);
 
-      setPhotos(updatedPhotos);
+      const { data: newPhoto, error: insErr } = await supabase
+        .from("photos")
+        .insert([{ job_id: id, url: publicUrl }])
+        .single();
+      if (insErr) throw insErr;
+
+      setPhotos((prev) => [newPhoto, ...prev].filter(Boolean));
+      addActivity(
+        `User ${user?.name || user?.id} uploaded photo for order #${id}`
+      );
       setFile(null);
       setPreview(null);
-
-      // Запис у лог активності
-      addActivity(
-        `User ${user?.name || user?.id} added a photo to order #${id}`
-      );
     } catch (err) {
       setError(err.message);
     } finally {
@@ -92,75 +83,68 @@ export default function Photos() {
     }
   };
 
-  const openModal = (idx) => {
-    setCurrentIndex(idx);
-    setModalOpen(true);
-  };
-  const closeModal = () => setModalOpen(false);
-  const showPrev = () =>
-    setCurrentIndex((ci) => (ci + photos.length - 1) % photos.length);
-  const showNext = () => setCurrentIndex((ci) => (ci + 1) % photos.length);
-
-  if (loading) return <p className={styles.loading}>Loading photos...</p>;
-  if (error) return <p className={styles.error}>{error}</p>;
+  const openModal = (url) => setModalUrl(url);
+  const closeModal = () => setModalUrl(null);
 
   return (
-    <div className={styles.page}>
-      <form onSubmit={handleUpload} className={styles.form}>
+    <div className={styles.photosPage}>
+      <button onClick={() => navigate(-1)} className={styles.backButton}>
+        ← Back
+      </button>
+      <h2 className={styles.title}>Photos for Order #{id}</h2>
+
+      <form onSubmit={handleUpload} className={styles.uploadForm}>
         <input
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          className={styles.input}
+          className={styles.fileInput}
         />
         {preview && (
-          <img src={preview} alt="Preview" className={styles.preview} />
+          <div className={styles.previewContainer}>
+            <img src={preview} alt="Preview" className={styles.previewImg} />
+          </div>
         )}
         <button
           type="submit"
-          className={styles.uploadButton}
           disabled={loading}
+          className={styles.uploadButton}
         >
-          {loading ? "Uploading..." : "Upload Photo"}
+          {loading ? "Uploading…" : "Upload Photo"}
         </button>
       </form>
 
-      {photos.length ? (
-        <div className={styles.gallery}>
-          {photos.map((p, idx) => (
-            <img
-              key={p.id}
-              src={p.url}
-              alt="Job"
-              className={styles.photoItem}
-              onClick={() => openModal(idx)}
-            />
+      {error && <p className={styles.error}>{error}</p>}
+
+      {loading ? (
+        <p className={styles.loading}>Loading photos…</p>
+      ) : photos.length > 0 ? (
+        <ul className={styles.photoList}>
+          {photos.map((p) => (
+            <li key={p.id} className={styles.photoItem}>
+              <img
+                src={p.url}
+                alt="Job"
+                className={styles.thumb}
+                onClick={() => openModal(p.url)}
+              />
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
-        <p>No photos uploaded for this job.</p>
+        <p className={styles.noResults}>No photos uploaded yet.</p>
       )}
 
-      {modalOpen && (
+      {modalUrl && (
         <div className={styles.modalOverlay} onClick={closeModal}>
           <div
             className={styles.modalContent}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className={styles.closeButton} onClick={closeModal}>
+            <button className={styles.closeBtn} onClick={closeModal}>
               &times;
             </button>
-            <img
-              src={photos[currentIndex].url}
-              alt="Large view"
-              className={styles.modalImage}
-            />
-            <button className={styles.navButtonLeft} onClick={showPrev}>
-              &#10094;
-            </button>
-            <button className={styles.navButtonRight} onClick={showNext}>
-              &#10095;
-            </button>
+            <img src={modalUrl} alt="Enlarged" className={styles.modalImg} />
           </div>
         </div>
       )}

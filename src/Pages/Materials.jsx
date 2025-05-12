@@ -1,34 +1,40 @@
 // src/Pages/Materials.jsx
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import styles from "./Materials.module.css";
-
-const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
-const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dklxyxftr/upload";
-const UPLOAD_PRESET = "floorboss_unsigned";
 
 export default function Materials() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const [job, setJob] = useState(null);
+
+  const [materials, setMaterials] = useState([]);
   const [file, setFile] = useState(null);
-  const [text, setText] = useState("");
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState(1);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [modalUrl, setModalUrl] = useState(null);
 
-  // Завантажуємо поточний job
+  // 1. Function to fetch materials from Supabase
+  const fetchMaterials = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("materials")
+      .select("id, url, description, amount, created_at")
+      .eq("job_id", id)
+      .order("created_at", { ascending: false });
+    if (error) setError(error.message);
+    else setMaterials(data || []);
+    setLoading(false);
+  };
+
+  // 2. Load materials on mount and when job id changes
   useEffect(() => {
-    fetch(`${API_URL}/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Network error");
-        return res.json();
-      })
-      .then(setJob)
-      .catch((e) => setError(e.message));
+    fetchMaterials();
   }, [id]);
 
-  // Обробник вибору файлу з прев’ю
+  // File preview handler
   const handleFileChange = (e) => {
     const f = e.target.files[0];
     if (f) {
@@ -42,74 +48,75 @@ export default function Materials() {
     }
   };
 
-  // Сабміт форми: спочатку завантажуємо фото на Cloudinary, потім оновлюємо job.materials :contentReference[oaicite:0]{index=0}:contentReference[oaicite:1]{index=1}
-  const handleSubmit = async (e) => {
+  // Upload handler: after upload, re-fetch materials
+  const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file && !text.trim()) return;
+    if (!file && !description.trim()) return;
     setLoading(true);
     setError(null);
+
     try {
-      let fileUrl = null,
-        fileName = null;
+      let publicUrl = null;
       if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", UPLOAD_PRESET);
-        formData.append("folder", "Materials"); // <-- тут
-        const resp = await fetch(CLOUDINARY_URL, {
-          method: "POST",
-          body: formData,
-        });
-        if (!resp.ok) {
-          const errData = await resp.json();
-          throw new Error(errData.error?.message || "Upload failed");
-        }
-        const data = await resp.json();
-        fileUrl = data.secure_url;
-        fileName = file.name;
+        const ext = file.name.split(".").pop();
+        const name = `${Date.now()}.${ext}`;
+        const path = `job_${id}/${name}`;
+        const { error: upErr } = await supabase.storage
+          .from("material")
+          .upload(path, file);
+        if (upErr) throw upErr;
+        const {
+          data: { publicUrl: url },
+        } = supabase.storage.from("material").getPublicUrl(path);
+        publicUrl = url;
       }
-      // далі — оновлення job.materials, як раніше
-      const newMat = {
-        id: Date.now().toString(),
-        name: fileName || `Note ${new Date().toLocaleString()}`,
-        url: fileUrl,
-        description: text.trim(),
-      };
-      const updatedJob = {
-        ...job,
-        materials: [...(job.materials || []), newMat],
-      };
-      const res = await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedJob),
-      });
-      if (!res.ok) throw new Error("Saving failed");
-      setJob(updatedJob);
+
+      const { error: insErr } = await supabase.from("materials").insert([
+        {
+          job_id: id,
+          url: publicUrl,
+          description: description.trim(),
+          amount: Number(amount),
+        },
+      ]);
+      if (insErr) throw insErr;
+
+      // Re-fetch materials to immediately show new entry
+      await fetchMaterials();
+
+      // Reset form inputs
       setFile(null);
-      setText("");
+      setDescription("");
+      setAmount(1);
       setPreview(null);
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
 
-  if (!job) return <p>Loading materials…</p>;
+  const openModal = (url) => setModalUrl(url);
+  const closeModal = () => setModalUrl(null);
 
   return (
     <div className={styles.materialsPage}>
-      <button onClick={() => navigate(-1)} className={styles.backButton}>
-        &larr; Back
-      </button>
       <h2 className={styles.title}>Materials for Order #{id}</h2>
-
-      <form onSubmit={handleSubmit} className={styles.uploadForm}>
+      <form onSubmit={handleUpload} className={styles.uploadForm}>
+        <label className={styles.label}>
+          Amount:
+          <input
+            type="number"
+            min="1"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={styles.amountInput}
+            required
+          />
+        </label>
         <textarea
-          placeholder="Notes (optional)"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          placeholder="Description (optional)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           className={styles.textInput}
         />
         <input
@@ -119,12 +126,14 @@ export default function Materials() {
           className={styles.fileInput}
         />
         {preview && (
-          <img src={preview} alt="Preview" className={styles.preview} />
+          <div className={styles.previewContainer}>
+            <img src={preview} alt="Preview" className={styles.previewImg} />
+          </div>
         )}
         <button
           type="submit"
-          className={styles.uploadButton}
           disabled={loading}
+          className={styles.uploadButton}
         >
           {loading ? "Saving…" : "Add Material"}
         </button>
@@ -132,28 +141,46 @@ export default function Materials() {
 
       {error && <p className={styles.error}>{error}</p>}
 
-      <ul className={styles.materialList}>
-        {job.materials?.length ? (
-          job.materials.map((mat) => (
-            <li key={mat.id} className={styles.materialItem}>
-              {mat.url && (
-                <a href={mat.url} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={mat.url}
-                    alt={mat.name}
-                    className={styles.materialImg}
-                  />
-                </a>
+      {loading ? (
+        <p className={styles.loading}>Loading materials…</p>
+      ) : materials.length > 0 ? (
+        <ul className={styles.materialList}>
+          {materials.map((m) => (
+            <li key={m.id} className={styles.materialItem}>
+              {m.url && (
+                <img
+                  src={m.url}
+                  alt={m.description || "Material"}
+                  className={styles.thumb}
+                  onClick={() => openModal(m.url)}
+                />
               )}
-              {mat.description && (
-                <p className={styles.description}>{mat.description}</p>
-              )}
+              <div className={styles.materialInfo}>
+                <span className={styles.materialAmount}>Qty: {m.amount}</span>
+                {m.description && (
+                  <p className={styles.description}>{m.description}</p>
+                )}
+              </div>
             </li>
-          ))
-        ) : (
-          <p>No materials uploaded yet.</p>
-        )}
-      </ul>
+          ))}
+        </ul>
+      ) : (
+        <p className={styles.noResults}>No materials added yet.</p>
+      )}
+
+      {modalUrl && (
+        <div className={styles.modalOverlay} onClick={closeModal}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className={styles.closeBtn} onClick={closeModal}>
+              &times;
+            </button>
+            <img src={modalUrl} alt="Material" className={styles.modalImg} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

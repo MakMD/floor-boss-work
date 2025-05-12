@@ -1,4 +1,3 @@
-// src/Pages/CompanyInvoices.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./CompanyInvoices.module.css";
@@ -16,7 +15,6 @@ export default function CompanyInvoices() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Load job to get existing company invoices
   useEffect(() => {
     fetch(`${API_URL}/${id}`)
       .then((res) => {
@@ -34,6 +32,7 @@ export default function CompanyInvoices() {
       date: invoiceDate,
       amount: parseFloat(companyAmount),
     };
+    // Правильне застосування спред-оператора
     const updated = {
       ...job,
       companyInvoices: [...(job.companyInvoices || []), newInv],

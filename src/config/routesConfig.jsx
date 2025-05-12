@@ -70,7 +70,6 @@ export const routesConfig = [
           },
         ],
       },
-      // Цей маршрут тепер тільки для адміна
       {
         path: "workers",
         element: <Workers />,

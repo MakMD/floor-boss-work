@@ -3,8 +3,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate, NavLink, Outlet } from "react-router-dom";
 import styles from "./JobDetails.module.css";
 import { AppContext } from "../components/App/App";
-
-const JOBS_API = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
+import { supabase } from "../lib/supabase";
 
 export default function JobDetails() {
   const { id } = useParams();
@@ -15,86 +14,79 @@ export default function JobDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Завантажуємо дані замовлення
   useEffect(() => {
-    async function fetchJob() {
-      try {
-        setLoading(true);
-        const res = await fetch(`${JOBS_API}/${id}`);
-        if (!res.ok) throw new Error("Network error");
-        const data = await res.json();
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("jobs")
+        .select(`*, job_workers(worker_id)`)
+        .eq("id", id)
+        .single();
+      if (error) {
+        setError(error.message);
+      } else {
         setJob({
           ...data,
-          workerStatus: data.workerStatus || "not_started",
-          adminStatus: data.adminStatus || "pending",
+          workerStatus: data.worker_status || "not_started",
+          adminStatus: data.admin_status || "pending",
         });
-
-        // Питаємо працівника про початок виконання
         if (
           user?.role === "worker" &&
-          (!data.workerStatus || data.workerStatus === "not_started")
+          (data.worker_status || "not_started") === "not_started"
         ) {
-          const ok = window.confirm(
-            "Бажаєте розпочати виконання цього завдання?"
-          );
-          if (ok) await updateField("workerStatus", "in_progress");
+          if (window.confirm("Бажаєте розпочати виконання цього завдання?")) {
+            await updateField("worker_status", "in_progress");
+          }
         }
-      } catch (e) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
       }
-    }
-    fetchJob();
+      setLoading(false);
+    })();
   }, [id, user]);
 
-  // Оновити певне поле в замовленні
   const updateField = async (field, value) => {
-    try {
-      const res = await fetch(`${JOBS_API}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field]: value }),
-      });
-      if (!res.ok) throw new Error("Не вдалося оновити статус");
-      setJob((prev) => ({ ...prev, [field]: value }));
-      // Лог активності тільки для workerStatus
-      if (field === "workerStatus") {
+    setLoading(true);
+    const { error } = await supabase
+      .from("jobs")
+      .update({ [field]: value })
+      .eq("id", id);
+    if (error) {
+      alert("Не вдалося оновити статус: " + error.message);
+    } else {
+      setJob((prev) => ({
+        ...prev,
+        [field === "worker_status" ? "workerStatus" : "adminStatus"]: value,
+      }));
+      if (field === "worker_status") {
         addActivity(
           `User ${
             user?.name || user?.id
           } set status "${value}" for order #${id}`
         );
       }
-      // Лог адміністраторських дій
-      if (field === "adminStatus") {
+      if (field === "admin_status") {
+        const action = value === "approved" ? "approved" : "rejected";
         addActivity(
-          `Admin ${user?.name || user?.id} ${
-            value === "approved" ? "approved" : "rejected"
-          } completion for order #${id}`
+          `Admin ${
+            user?.name || user?.id
+          } ${action} completion for order #${id}`
         );
       }
-    } catch (e) {
-      alert(e.message);
     }
+    setLoading(false);
   };
 
   if (loading) return <p className={styles.loading}>Loading...</p>;
   if (error) return <p className={styles.error}>{error}</p>;
   if (!job) return <p className={styles.error}>Job not found.</p>;
 
-  // Конфіг табів — робітник не бачить вкладку Workers
-  let tabs = [
+  const tabs = [
     { path: "", label: "Photos" },
-    { path: "workers", label: "Workers" },
+    ...(user.role === "admin" ? [{ path: "workers", label: "Workers" }] : []),
     { path: "invoices", label: "Invoices" },
     { path: "materials", label: "Materials" },
     { path: "photos-after", label: "After Photos" },
     { path: "company-invoices", label: "Company Invoices" },
   ];
-  if (user?.role === "worker") {
-    tabs = tabs.filter((t) => t.path !== "workers");
-  }
 
   return (
     <div className={styles.jobDetails}>
@@ -109,7 +101,6 @@ export default function JobDetails() {
 
       <h1 className={styles.title}>Order #{job.id}</h1>
 
-      {/* Статуси */}
       <div className={styles.statusContainer}>
         <div
           className={`${styles.badge} ${
@@ -126,23 +117,19 @@ export default function JobDetails() {
             ? "In Progress"
             : "Done"}
         </div>
-
-        {/* Кнопка Finish для робітника */}
-        {user?.role === "worker" && job.workerStatus === "in_progress" && (
+        {user.role === "worker" && job.workerStatus === "in_progress" && (
           <button
             className={styles.actionBtn}
-            onClick={() => updateField("workerStatus", "done")}
+            onClick={() => updateField("worker_status", "done")}
           >
             Finish
           </button>
         )}
-
-        {/* Адмін бачить кнопки Approve і Reject лише коли статус робітника = done */}
-        {user?.role === "admin" && job.workerStatus === "done" && (
+        {user.role === "admin" && job.workerStatus === "done" && (
           <>
             <button
               className={styles.actionBtn}
-              onClick={() => updateField("adminStatus", "approved")}
+              onClick={() => updateField("admin_status", "approved")}
               disabled={job.adminStatus === "approved"}
             >
               {job.adminStatus === "approved"
@@ -152,18 +139,15 @@ export default function JobDetails() {
             <button
               className={styles.rejectBtn}
               onClick={async () => {
-                // відкидаємо та повертаємо до in_progress
-                await updateField("adminStatus", "rejected");
-                await updateField("workerStatus", "in_progress");
+                await updateField("admin_status", "rejected");
+                await updateField("worker_status", "in_progress");
               }}
             >
               Reject Completion
             </button>
           </>
         )}
-
-        {/* Показати зелений Completed після підтвердження адміністратором */}
-        {user?.role === "admin" &&
+        {user.role === "admin" &&
           job.workerStatus === "done" &&
           job.adminStatus === "approved" && (
             <div className={`${styles.badge} ${styles.badgeDoneGreen}`}>
@@ -172,20 +156,21 @@ export default function JobDetails() {
           )}
       </div>
 
-      {/* Таби */}
       <div className={styles.tabs}>
-        {tabs.map(({ path, label }) => (
-          <NavLink
-            key={path}
-            to={path}
-            end={path === ""}
-            className={({ isActive }) =>
-              isActive ? styles.activeTab : styles.tab
-            }
-          >
-            {label}
-          </NavLink>
-        ))}
+        {tabs.map(({ path, label }) => {
+          const to = path ? `/job/${id}/${path}` : `/job/${id}`;
+          return (
+            <NavLink
+              key={path}
+              to={to}
+              className={({ isActive }) =>
+                isActive ? styles.activeTab : styles.tab
+              }
+            >
+              {label}
+            </NavLink>
+          );
+        })}
       </div>
 
       <div className={styles.content}>

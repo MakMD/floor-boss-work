@@ -1,26 +1,37 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+// src/Pages/PhotosAfter.jsx
+import React, { useState, useEffect, useContext } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { AppContext } from "../components/App/App";
+import { supabase } from "../lib/supabase";
 import styles from "./PhotosAfter.module.css";
-
-const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
-const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dklxyxftr/upload";
-const UPLOAD_PRESET = "floorboss_unsigned";
 
 export default function PhotosAfter() {
   const { id } = useParams();
-  const [job, setJob] = useState(null);
+  const navigate = useNavigate();
+  const { addActivity, user } = useContext(AppContext);
+
+  const [photos, setPhotos] = useState([]);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [modalUrl, setModalUrl] = useState(null);
+
+  // Fetch after-photos, newest first
+  const fetchPhotos = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("photos_after")
+      .select("id, url, created_at")
+      .eq("job_id", id)
+      .order("created_at", { ascending: false });
+    if (error) setError(error.message);
+    else setPhotos(data || []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    fetch(`${API_URL}/${id}`)
-      .then((res) => res.json())
-      .then((data) => setJob(data))
-      .catch((e) => setError(e.message));
+    fetchPhotos();
   }, [id]);
 
   const handleFileChange = (e) => {
@@ -30,6 +41,9 @@ export default function PhotosAfter() {
       const reader = new FileReader();
       reader.onloadend = () => setPreview(reader.result);
       reader.readAsDataURL(f);
+    } else {
+      setFile(null);
+      setPreview(null);
     }
   };
 
@@ -38,33 +52,35 @@ export default function PhotosAfter() {
     if (!file) return;
     setLoading(true);
     setError(null);
+
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-      formData.append("folder", "after_work_photos");
+      const ext = file.name.split(".").pop();
+      const name = `${Date.now()}.${ext}`;
+      const path = `job_${id}/${name}`;
 
-      const resp = await fetch(CLOUDINARY_URL, {
-        method: "POST",
-        body: formData,
-      });
-      if (!resp.ok) {
-        const err = await resp.json();
-        throw new Error(err.error?.message || "Upload failed");
-      }
-      const data = await resp.json();
-      const newPhoto = { id: data.public_id, url: data.secure_url };
+      // upload to afterwork bucket
+      const { error: upErr } = await supabase.storage
+        .from("afterwork")
+        .upload(path, file);
+      if (upErr) throw upErr;
 
-      const updated = {
-        ...job,
-        photos_after_work: [...(job.photos_after_work || []), newPhoto],
-      };
-      await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      setJob(updated);
+      // get public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("afterwork").getPublicUrl(path);
+
+      // insert record
+      const { data: newPhoto, error: insErr } = await supabase
+        .from("photos_after")
+        .insert([{ job_id: id, url: publicUrl }])
+        .single();
+      if (insErr) throw insErr;
+
+      // prepend to list
+      setPhotos((prev) => [newPhoto, ...prev].filter(Boolean));
+      addActivity(
+        `User ${user?.name || user?.id} uploaded after-photo for order #${id}`
+      );
       setFile(null);
       setPreview(null);
     } catch (err) {
@@ -74,75 +90,72 @@ export default function PhotosAfter() {
     }
   };
 
-  if (!job) return <p>Loading...</p>;
-
-  const photos = job.photos_after_work || [];
-  const openModal = (idx) => {
-    setCurrentIndex(idx);
-    setModalOpen(true);
-  };
-  const closeModal = () => setModalOpen(false);
-  const showPrev = () =>
-    setCurrentIndex((currentIndex + photos.length - 1) % photos.length);
-  const showNext = () => setCurrentIndex((currentIndex + 1) % photos.length);
+  const openModal = (url) => setModalUrl(url);
+  const closeModal = () => setModalUrl(null);
 
   return (
-    <div className={styles.page}>
-      <h2 className={styles.title}>After Work Photos</h2>
-      <form onSubmit={handleUpload} className={styles.form}>
+    <div className={styles.photosAfterPage}>
+      <button onClick={() => navigate(-1)} className={styles.backButton}>
+        ← Back
+      </button>
+      <h2 className={styles.title}>After Photos for Order #{id}</h2>
+
+      <form onSubmit={handleUpload} className={styles.uploadForm}>
         <input
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          className={styles.input}
+          className={styles.fileInput}
         />
         {preview && (
-          <img src={preview} alt="Preview" className={styles.preview} />
+          <div className={styles.previewContainer}>
+            <img src={preview} alt="Preview" className={styles.previewImg} />
+          </div>
         )}
         <button
           type="submit"
-          className={styles.uploadButton}
           disabled={loading}
+          className={styles.uploadButton}
         >
-          {loading ? "Uploading..." : "Upload After Photo"}
+          {loading ? "Uploading…" : "Upload After Photo"}
         </button>
       </form>
+
       {error && <p className={styles.error}>{error}</p>}
-      {photos.length ? (
-        <div className={styles.gallery}>
-          {photos.map((p, idx) => (
-            <img
-              key={p.id}
-              src={p.url}
-              alt="After work"
-              className={styles.photoItem}
-              onClick={() => openModal(idx)}
-            />
+
+      {loading ? (
+        <p className={styles.loading}>Loading after-photos…</p>
+      ) : photos.length > 0 ? (
+        <ul className={styles.photoList}>
+          {photos.map((p) => (
+            <li key={p.id} className={styles.photoItem}>
+              <img
+                src={p.url}
+                alt="After Job"
+                className={styles.thumb}
+                onClick={() => openModal(p.url)}
+              />
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
-        <p>No after-work photos available.</p>
+        <p className={styles.noResults}>No after-photos uploaded yet.</p>
       )}
-      {modalOpen && (
+
+      {modalUrl && (
         <div className={styles.modalOverlay} onClick={closeModal}>
           <div
             className={styles.modalContent}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className={styles.closeButton} onClick={closeModal}>
+            <button className={styles.closeBtn} onClick={closeModal}>
               &times;
             </button>
             <img
-              src={photos[currentIndex].url}
-              alt="Large view"
-              className={styles.modalImage}
+              src={modalUrl}
+              alt="After Job Enlarged"
+              className={styles.modalImg}
             />
-            <button className={styles.navButtonLeft} onClick={showPrev}>
-              &#10094;
-            </button>
-            <button className={styles.navButtonRight} onClick={showNext}>
-              &#10095;
-            </button>
           </div>
         </div>
       )}

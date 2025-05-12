@@ -5,8 +5,7 @@ import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import styles from "./Calendar.module.css";
 import { AppContext } from "../components/App/App";
-
-const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
+import { supabase } from "../lib/supabase";
 
 // Парсить YYYY-MM-DD як локальну дату (щоб уникнути зсуву часу UTC)
 function parseLocalDate(dateString) {
@@ -21,34 +20,41 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Обрана дата
+  // Обрана дата та фільтри
   const [activeDate, setActiveDate] = useState(new Date());
-  // Пошуковий термін
   const [searchTerm, setSearchTerm] = useState("");
-  // Вмикає/вимикає фільтр по даті
   const [showAll, setShowAll] = useState(false);
 
-  // Завантажити всі роботи
+  // Завантажуємо всі роботи
   useEffect(() => {
-    setLoading(true);
-    fetch(API_URL)
-      .then((res) => {
-        if (!res.ok) throw new Error("Network error");
-        return res.json();
-      })
-      .then((data) => setJobs(data))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("id, address, date, client, job_workers(worker_id)")
+        .order("date", { ascending: true });
+      if (error) {
+        setError(error.message);
+        setJobs([]);
+      } else {
+        const withWorkers = data.map((job) => ({
+          ...job,
+          workerIds: job.job_workers?.map((jw) => jw.worker_id) || [],
+        }));
+        setJobs(withWorkers);
+      }
+      setLoading(false);
+    })();
   }, []);
 
-  // Перший зріз по ролі: worker бачить тільки свої роботи
+  // Фільтрація за роллю
   const accessibleJobs =
     user?.role === "worker"
       ? jobs.filter((job) => job.workerIds?.includes(user.id))
       : jobs;
 
-  // Далі фільтр по тексту
-  const afterTextFilter = accessibleJobs.filter((job) => {
+  // Текстовий фільтр
+  const afterText = accessibleJobs.filter((job) => {
     const term = searchTerm.toLowerCase();
     return (
       (job.address || "").toLowerCase().includes(term) ||
@@ -56,15 +62,16 @@ export default function CalendarPage() {
     );
   });
 
-  // Тепер фільтруємо по даті, якщо showAll === false
-  const dateFiltered = afterTextFilter.filter((job) => {
+  // Фільтр по даті або всі
+  const dateFiltered = afterText.filter((job) => {
     if (showAll) return true;
     if (!job.date) return false;
-    const jobDate = parseLocalDate(job.date);
-    return jobDate.toDateString() === activeDate.toDateString();
+    return (
+      parseLocalDate(job.date).toDateString() === activeDate.toDateString()
+    );
   });
 
-  // Групуємо по датах
+  // Групуємо за датами
   const grouped = dateFiltered.reduce((acc, job) => {
     const key = job.date || "Unknown date";
     if (!acc[key]) acc[key] = [];
@@ -102,36 +109,22 @@ export default function CalendarPage() {
         />
       </div>
 
-      {/* Кнопка Show All */}
+      {/* Кнопка Show All / Filter by Date */}
       <div className={styles.buttonContainer}>
         <button
           className={styles.showAllBtn}
-          onClick={() => {
-            setShowAll((prev) => {
-              const next = !prev;
-              if (next) {
-                // скидаємо активну дату
-                setActiveDate(null);
-              } else {
-                // повертаємо на сьогодні
-                setActiveDate(new Date());
-              }
-              return next;
-            });
-          }}
+          onClick={() => setShowAll((prev) => !prev)}
         >
           {showAll ? "Filter by Date" : "Show All Orders"}
         </button>
       </div>
 
-      {/* Список робіт, згрупований за датами */}
+      {/* Заголовок та список */}
       <div className={styles.eventsContainer}>
         <h2 className={styles.title}>
           {showAll
             ? "All Orders"
-            : activeDate
-            ? `Orders on ${activeDate.toLocaleDateString()}`
-            : "Orders"}
+            : `Orders on ${activeDate.toLocaleDateString()}`}
         </h2>
 
         {loading && <p className={styles.loading}>Loading...</p>}
@@ -145,7 +138,6 @@ export default function CalendarPage() {
         )}
 
         {sortedDates.map((dateKey) => {
-          // всередині кожної дати сортуємо замовлення від нових до старих за id
           const jobsForDate = grouped[dateKey].sort(
             (a, b) => Number(b.id) - Number(a.id)
           );

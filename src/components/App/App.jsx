@@ -1,17 +1,10 @@
 // src/components/App/App.jsx
 import React, { createContext, useState, useEffect } from "react";
-import {
-  HashRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../ProtectedRoute/ProtectedRoute";
 import Layout from "./Layout";
-
 import { routesConfig } from "../../config/routesConfig";
 
-// --- Global State via React Context ---
 export const AppContext = createContext(null);
 
 function AppProvider({ children }) {
@@ -23,7 +16,6 @@ function AppProvider({ children }) {
     const stored = localStorage.getItem("appSettings");
     return stored ? JSON.parse(stored) : { theme: "light" };
   });
-  // Новий стан для логу активності
   const [activityLog, setActivityLog] = useState([]);
 
   useEffect(() => {
@@ -43,7 +35,6 @@ function AppProvider({ children }) {
   const logout = () => setUser(null);
   const updateSettings = (newSettings) =>
     setSettings((prev) => ({ ...prev, ...newSettings }));
-  // Функція для додавання записів в лог
   const addActivity = (message) =>
     setActivityLog((prev) => [...prev, { message, timestamp: Date.now() }]);
 
@@ -69,39 +60,63 @@ export default function App() {
     <AppProvider>
       <Router>
         <Routes>
-          {routesConfig.map((route, i) => {
-            if (route.public) {
-              return (
-                <Route key={i} path={route.path} element={route.element} />
-              );
+          {/* Public routes */}
+          {routesConfig
+            .filter((route) => route.public)
+            .map((route, idx) => (
+              <Route key={idx} path={route.path} element={route.element} />
+            ))}
+
+          {/* Protected routes under Layout */}
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={["admin", "worker"]}>
+                <Layout />
+              </ProtectedRoute>
             }
-            return (
-              <Route key={i} element={<Layout />}>
-                {route.children.map((r, j) => {
-                  const Wrapper = ({ children }) => (
-                    <ProtectedRoute allowedRoles={r.allowedRoles}>
-                      {children}
-                    </ProtectedRoute>
-                  );
-                  if (!r.children) {
-                    return (
-                      <Route
-                        key={`${i}-${j}`}
-                        path={r.path}
-                        element={<Wrapper>{r.element}</Wrapper>}
-                      />
-                    );
-                  }
+          >
+            {routesConfig
+              .find((route) => route.layout)
+              .children.map((r, i) => {
+                // No nested children
+                if (!r.children) {
                   return (
                     <Route
-                      key={`${i}-${j}`}
+                      key={i}
                       path={r.path}
-                      element={<Wrapper>{r.element}</Wrapper>}
-                    >
-                      {r.children.map((c, k) => (
+                      element={
+                        <ProtectedRoute allowedRoles={r.allowedRoles}>
+                          {r.element}
+                        </ProtectedRoute>
+                      }
+                    />
+                  );
+                }
+                // Route with nested paths: add wildcard to parent path
+                return (
+                  <Route
+                    key={i}
+                    path={`${r.path}/*`}
+                    element={
+                      <ProtectedRoute allowedRoles={r.allowedRoles}>
+                        {r.element}
+                      </ProtectedRoute>
+                    }
+                  >
+                    {r.children.map((c, j) =>
+                      c.index ? (
                         <Route
-                          key={`${i}-${j}-${k}`}
-                          index={!!c.index}
+                          key={j}
+                          index
+                          element={
+                            <ProtectedRoute allowedRoles={c.allowedRoles}>
+                              {c.element}
+                            </ProtectedRoute>
+                          }
+                        />
+                      ) : (
+                        <Route
+                          key={j}
                           path={c.path}
                           element={
                             <ProtectedRoute allowedRoles={c.allowedRoles}>
@@ -109,14 +124,12 @@ export default function App() {
                             </ProtectedRoute>
                           }
                         />
-                      ))}
-                    </Route>
-                  );
-                })}
-              </Route>
-            );
-          })}
-          <Route path="*" element={<Navigate to="/" replace />} />
+                      )
+                    )}
+                  </Route>
+                );
+              })}
+          </Route>
         </Routes>
       </Router>
     </AppProvider>

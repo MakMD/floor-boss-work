@@ -1,11 +1,8 @@
-// src/Pages/Orders.jsx
 import React, { useState, useEffect, useContext } from "react";
 import Select from "react-select";
 import { AppContext } from "../components/App/App";
+import { supabase } from "../lib/supabase";
 import styles from "./Orders.module.css";
-
-const JOBS_API = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
-const WORKERS_API = "https://680eea7067c5abddd1934af2.mockapi.io/workers";
 
 export default function Orders() {
   const { user } = useContext(AppContext);
@@ -23,56 +20,69 @@ export default function Orders() {
 
   // Завантажуємо працівників
   useEffect(() => {
-    fetch(WORKERS_API)
-      .then((res) => res.json())
-      .then(setWorkers)
-      .catch(console.error);
+    (async () => {
+      setError(null);
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("workers")
+          .select("id, name")
+          .eq("role", "worker")
+          .order("name", { ascending: true });
+        if (error) throw error;
+        setWorkers(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  // Обробка створення замовлення
-  const handleAddJob = (e) => {
+  // Додаємо нове замовлення
+  const handleAddJob = async (e) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    const newJob = {
-      address,
-      date,
-      sf: Number(sf),
-      rate: Number(rate),
-      client,
-      notes,
-      workerIds: selectedWorkers,
-      photos: [],
-      photos_after_work: [],
-      invoices: [],
-      materials: [],
-    };
-    fetch(JOBS_API, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newJob),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to create job");
-        return res.json();
-      })
-      .then(() => {
-        // Очищаємо форму
-        setAddress("");
-        setDate(new Date().toISOString().slice(0, 10));
-        setSf("");
-        setRate("");
-        setClient("");
-        setNotes("");
-        setSelectedWorkers([]);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    try {
+      // 1) Створюємо job
+      const { data: newJob, error: insertError } = await supabase
+        .from("jobs")
+        .insert([
+          { address, date, sf: Number(sf), rate: Number(rate), client, notes },
+        ])
+        .select()
+        .single();
+      if (insertError) throw insertError;
+
+      // 2) Додаємо зв’язки у job_workers
+      if (selectedWorkers.length) {
+        const relations = selectedWorkers.map((wid) => ({
+          job_id: newJob.id,
+          worker_id: wid,
+        }));
+        const { error: relError } = await supabase
+          .from("job_workers")
+          .insert(relations);
+        if (relError) throw relError;
+      }
+
+      // 3) Очищаємо форму
+      setAddress("");
+      setDate(new Date().toISOString().slice(0, 10));
+      setSf("");
+      setRate("");
+      setClient("");
+      setNotes("");
+      setSelectedWorkers([]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const workerOptions = workers.map((w) => ({
-    value: w.id,
-    label: w.name,
-  }));
+  const workerOptions = workers.map((w) => ({ value: w.id, label: w.name }));
 
   return (
     <div className={styles.homePage}>
@@ -127,14 +137,13 @@ export default function Orders() {
           value={workerOptions.filter((opt) =>
             selectedWorkers.includes(opt.value)
           )}
-          onChange={(selected) =>
-            setSelectedWorkers(selected ? selected.map((s) => s.value) : [])
+          onChange={(sel) =>
+            setSelectedWorkers(sel ? sel.map((s) => s.value) : [])
           }
           className={styles.formSelect}
-          classNamePrefix="react-select"
           placeholder="Select workers..."
         />
-        <button type="submit" className={styles.formButton}>
+        <button type="submit" className={styles.formButton} disabled={loading}>
           {loading ? "Adding…" : "Add Job"}
         </button>
       </form>

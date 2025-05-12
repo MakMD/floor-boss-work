@@ -1,60 +1,71 @@
 // src/Pages/Invoices.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
+import { supabase } from "../lib/supabase";
+import { AppContext } from "../components/App/App";
 import styles from "./Invoices.module.css";
 
-const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
-
 export default function Invoices() {
-  const { id } = useParams();
-  const [job, setJob] = useState(null);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const { id: jobId } = useParams();
+  const { user } = useContext(AppContext);
+
+  const [invoices, setInvoices] = useState([]);
+  const [date, setDate] = useState("");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Завантаження рахунків
   useEffect(() => {
-    fetch(`${API_URL}/${id}`)
-      .then((res) => res.json())
-      .then((data) => setJob(data))
-      .catch((e) => setError(e.message));
-  }, [id]);
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("id, invoice_date, amount")
+        .eq("job_id", jobId)
+        .order("created_at", { ascending: true });
+      if (error) {
+        setError(error.message);
+        setInvoices([]);
+      } else {
+        setInvoices(data);
+      }
+      setLoading(false);
+    })();
+  }, [jobId]);
 
+  // Додавання нового рахунку
   const handleAdd = async (e) => {
     e.preventDefault();
+    if (!date || !amount) return;
     setLoading(true);
-    try {
-      const newInv = {
-        id: Date.now().toString(),
-        date,
-        amount: parseFloat(amount),
-      };
-      const updated = { ...job, invoices: [...(job.invoices || []), newInv] };
-      await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      setJob(updated);
-      setAmount("");
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  if (!job) return <p>Loading invoices...</p>;
+    const { data, error } = await supabase
+      .from("invoices")
+      .insert([{ job_id: jobId, invoice_date: date, amount: Number(amount) }])
+      .single();
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setInvoices((prev) => [...prev, data]);
+      setDate("");
+      setAmount("");
+    }
+    setLoading(false);
+  };
 
   return (
     <div className={styles.page}>
+      <h2 className={styles.title}>Invoices for Order #{jobId}</h2>
+
       <form onSubmit={handleAdd} className={styles.form}>
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className={styles.input}
           required
+          className={styles.input}
         />
         <input
           type="number"
@@ -62,23 +73,32 @@ export default function Invoices() {
           placeholder="Amount"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className={styles.input}
           required
+          className={styles.input}
         />
-        <button type="submit" className={styles.addButton}>
-          {loading ? "Adding..." : "Add Invoice"}
+        <button type="submit" className={styles.addButton} disabled={loading}>
+          {loading ? "Adding…" : "Add Invoice"}
         </button>
       </form>
+
       {error && <p className={styles.error}>{error}</p>}
-      <ul className={styles.list}>
-        {(job.invoices || []).map((inv) => (
-          <li key={inv.id} className={styles.item}>
-            <span className={styles.date}>{inv.date}</span>
-            <span className={styles.amount}>${inv.amount.toFixed(2)}</span>
-          </li>
-        ))}
-        {!job.invoices?.length && <p>No invoices yet.</p>}
-      </ul>
+
+      {loading ? (
+        <p className={styles.loading}>Loading invoices...</p>
+      ) : invoices.length > 0 ? (
+        <ul className={styles.list}>
+          {invoices.map((inv) => (
+            <li key={inv.id} className={styles.item}>
+              <span className={styles.date}>
+                {new Date(inv.invoice_date).toLocaleDateString()}
+              </span>
+              <span className={styles.amount}>${inv.amount.toFixed(2)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className={styles.noResults}>No invoices yet.</p>
+      )}
     </div>
   );
 }

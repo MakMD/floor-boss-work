@@ -17,6 +17,7 @@
     "@emotion/styled": "^11.14.0",
     "@mantine/core": "^8.0.0",
     "@mantine/hooks": "^8.0.0",
+    "@supabase/supabase-js": "^2.49.4",
     "axios": "^1.9.0",
     "cloudinary": "^2.6.0",
     "framer-motion": "^12.10.4",
