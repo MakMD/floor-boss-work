@@ -66,3 +66,32 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+/* index.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Flex:wght@400;500;700&display=swap");
+
+:root {
+  --font-sans: "Inter", sans-serif;
+  --font-alt: "Roboto Flex", sans-serif;
+
+  /* Light theme colors */
+  --bg: #ffffff;
+  --fg: #1f2937;
+  --accent: #3b82f6;
+  --surface: #f7fafc;
+  --muted: #4b5563;
+}
+
+[data-theme="dark"] {
+  --bg: #111827;
+  --fg: #f9fafb;
+  --accent: #8b5cf6;
+  --surface: #1f2937;
+  --muted: #9ca3af;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--fg);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}

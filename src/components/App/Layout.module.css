@@ -1,0 +1,10 @@
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  transition: color 0.2s ease;
+}
+.theme-toggle:hover {
+  color: var(--accent);
+}

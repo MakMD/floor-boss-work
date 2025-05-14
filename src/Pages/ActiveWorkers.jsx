@@ -1,4 +1,3 @@
-// src/Pages/ActiveWorkers.jsx
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AppContext } from "../components/App/App";
@@ -14,11 +13,16 @@ export default function ActiveWorkers() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Ось тут перевірка:
+    if (!id) {
+      setWorkers([]);
+      return;
+    }
+
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        // 1) Отримуємо зв'язки job_workers для цього job
         const { data: relations, error: relError } = await supabase
           .from("job_workers")
           .select("worker_id")
@@ -31,7 +35,6 @@ export default function ActiveWorkers() {
           return;
         }
 
-        // 2) Завантажуємо дані працівників за отриманими ID
         const { data: users, error: usersError } = await supabase
           .from("workers")
           .select("id, name, role")
@@ -48,6 +51,7 @@ export default function ActiveWorkers() {
     })();
   }, [id]);
 
+  if (!id) return <p className={styles.noResults}>No job selected.</p>;
   if (loading) return <p className={styles.loading}>Loading workers…</p>;
   if (error) return <p className={styles.error}>{error}</p>;
   if (workers.length === 0)
@@ -57,13 +61,13 @@ export default function ActiveWorkers() {
 
   return (
     <ul className={styles.list}>
-      {workers.map((worker, index) => (
-        <li key={worker.id} className={styles.item}>
-          <Link to={`/workers/${worker.id}`} className={styles.link}>
+      {workers.map((w, i) => (
+        <li key={w.id} className={styles.item}>
+          <Link to={`/workers/${w.id}`} className={styles.link}>
             <div className={styles.workerName}>
-              {index + 1}. {worker.name}
+              {i + 1}. {w.name}
             </div>
-            <div className={styles.workerRole}>{worker.role}</div>
+            <div className={styles.workerRole}>{w.role}</div>
           </Link>
         </li>
       ))}
