@@ -33,8 +33,12 @@ function AppProvider({ children }) {
 
   const login = (userData) => setUser(userData);
   const logout = () => setUser(null);
+
+  // Виправлене оновлення налаштувань
   const updateSettings = (newSettings) =>
     setSettings((prev) => ({ ...prev, ...newSettings }));
+
+  // Виправлене додавання до журналу
   const addActivity = (message) =>
     setActivityLog((prev) => [...prev, { message, timestamp: Date.now() }]);
 
@@ -60,76 +64,40 @@ export default function App() {
     <AppProvider>
       <Router>
         <Routes>
-          {/* Public routes */}
-          {routesConfig
-            .filter((route) => route.public)
-            .map((route, idx) => (
-              <Route key={idx} path={route.path} element={route.element} />
-            ))}
-
-          {/* Protected routes under Layout */}
-          <Route
-            element={
-              <ProtectedRoute allowedRoles={["admin", "worker"]}>
-                <Layout />
-              </ProtectedRoute>
+          {routesConfig.map((route, i) => {
+            if (route.public) {
+              return (
+                <Route key={i} path={route.path} element={route.element} />
+              );
             }
-          >
-            {routesConfig
-              .find((route) => route.layout)
-              .children.map((r, i) => {
-                // No nested children
-                if (!r.children) {
+            return (
+              <Route key={i} element={<Layout />}>
+                {route.children.map((r, j) => {
+                  const Wrapper = ({ children }) => (
+                    <ProtectedRoute allowedRoles={r.allowedRoles}>
+                      {children}
+                    </ProtectedRoute>
+                  );
                   return (
                     <Route
-                      key={i}
+                      key={`${i}-${j}`}
                       path={r.path}
-                      element={
-                        <ProtectedRoute allowedRoles={r.allowedRoles}>
-                          {r.element}
-                        </ProtectedRoute>
-                      }
-                    />
+                      element={<Wrapper>{r.element}</Wrapper>}
+                    >
+                      {r.children &&
+                        r.children.map((c, k) => (
+                          <Route
+                            key={`${i}-${j}-${k}`}
+                            index={c.index}
+                            element={<Wrapper>{c.element}</Wrapper>}
+                          />
+                        ))}
+                    </Route>
                   );
-                }
-                // Route with nested paths: add wildcard to parent path
-                return (
-                  <Route
-                    key={i}
-                    path={`${r.path}/*`}
-                    element={
-                      <ProtectedRoute allowedRoles={r.allowedRoles}>
-                        {r.element}
-                      </ProtectedRoute>
-                    }
-                  >
-                    {r.children.map((c, j) =>
-                      c.index ? (
-                        <Route
-                          key={j}
-                          index
-                          element={
-                            <ProtectedRoute allowedRoles={c.allowedRoles}>
-                              {c.element}
-                            </ProtectedRoute>
-                          }
-                        />
-                      ) : (
-                        <Route
-                          key={j}
-                          path={c.path}
-                          element={
-                            <ProtectedRoute allowedRoles={c.allowedRoles}>
-                              {c.element}
-                            </ProtectedRoute>
-                          }
-                        />
-                      )
-                    )}
-                  </Route>
-                );
-              })}
-          </Route>
+                })}
+              </Route>
+            );
+          })}
         </Routes>
       </Router>
     </AppProvider>
