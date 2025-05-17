@@ -1,89 +1,96 @@
 import React from "react";
-import Login from "../Pages/Login";
 import Home from "../Pages/Home";
-import Orders from "../Pages/Orders";
-import JobDetails from "../Pages/JobDetails";
-import Photos from "../Pages/Photos";
-import Invoices from "../Pages/Invoices";
+import Login from "../Pages/Login";
+import Dashboard from "../components/Dashboard/Dashboard";
 import ActiveWorkers from "../Pages/ActiveWorkers";
-import Materials from "../Pages/Materials";
-import PhotosAfter from "../Pages/PhotosAfter";
-import CompanyInvoices from "../Pages/CompanyInvoices";
 import Workers from "../Pages/Workers";
 import WorkerProfile from "../Pages/WorkerProfile";
+import Invoices from "../Pages/Invoices";
+import CompanyInvoices from "../Pages/CompanyInvoices";
+import Orders from "../Pages/Orders";
+import JobDetails from "../Pages/JobDetails";
+import Materials from "../Pages/Materials";
+import Photos from "../Pages/Photos";
+import PhotosAfter from "../Pages/PhotosAfter";
 import Calendar from "../Pages/Calendar";
 
-export const Roles = {
-  ADMIN: "admin",
-  WORKER: "worker",
-};
-
 export const routesConfig = [
-  { path: "/", element: <Login />, public: true },
+  // Логін залишається публічним
+  { path: "/login", element: <Login />, public: true },
+  // Всі інші шляхи під Layout, в т.ч. Home з верхнім меню
   {
-    layout: true,
+    public: false,
     children: [
+      {
+        path: "",
+        element: <Home />,
+        allowedRoles: ["admin", "company", "user"],
+        index: true,
+      },
       {
         path: "home",
         element: <Home />,
-        allowedRoles: [Roles.ADMIN, Roles.WORKER],
+        allowedRoles: ["admin", "company", "user"],
       },
       {
-        path: "orders",
-        element: <Orders />,
-        allowedRoles: [Roles.ADMIN],
+        path: "dashboard",
+        element: <Dashboard />,
+        allowedRoles: ["admin", "company", "user"],
       },
       {
-        path: "job/:id",
-        element: <JobDetails />,
-        allowedRoles: [Roles.ADMIN, Roles.WORKER],
-        children: [
-          {
-            index: true,
-            element: <Photos />,
-            allowedRoles: [Roles.ADMIN, Roles.WORKER],
-          },
-          {
-            path: "workers",
-            element: <ActiveWorkers />,
-            allowedRoles: [Roles.ADMIN],
-          },
-          {
-            path: "invoices",
-            element: <Invoices />,
-            allowedRoles: [Roles.ADMIN, Roles.WORKER],
-          },
-          {
-            path: "materials",
-            element: <Materials />,
-            allowedRoles: [Roles.ADMIN, Roles.WORKER],
-          },
-          {
-            path: "photos-after",
-            element: <PhotosAfter />,
-            allowedRoles: [Roles.ADMIN, Roles.WORKER],
-          },
-          {
-            path: "company-invoices",
-            element: <CompanyInvoices />,
-            allowedRoles: [Roles.ADMIN, Roles.WORKER],
-          },
-        ],
+        path: "workers/active",
+        element: <ActiveWorkers />,
+        allowedRoles: ["admin", "company"],
       },
       {
         path: "workers",
         element: <Workers />,
-        allowedRoles: [Roles.ADMIN],
+        allowedRoles: ["admin", "company", "user"],
       },
       {
-        path: "workers/:workerId",
+        path: "workers/:id",
         element: <WorkerProfile />,
-        allowedRoles: [Roles.ADMIN, Roles.WORKER],
+        allowedRoles: ["admin", "company"],
+      },
+      {
+        path: "invoices",
+        element: <Invoices />,
+        allowedRoles: ["admin", "company"],
+      },
+      {
+        path: "company-invoices",
+        element: <CompanyInvoices />,
+        allowedRoles: ["company"],
+      },
+      {
+        path: "orders",
+        element: <Orders />,
+        allowedRoles: ["admin", "company", "user"],
+      },
+      {
+        path: "orders/:id",
+        element: <JobDetails />,
+        allowedRoles: ["admin", "company", "user"],
+      },
+      {
+        path: "orders/:id/materials",
+        element: <Materials />,
+        allowedRoles: ["admin", "company", "user"],
+      },
+      {
+        path: "orders/:id/photos/before",
+        element: <Photos />,
+        allowedRoles: ["admin", "company", "user"],
+      },
+      {
+        path: "orders/:id/photos/after",
+        element: <PhotosAfter />,
+        allowedRoles: ["admin", "company", "user"],
       },
       {
         path: "calendar",
         element: <Calendar />,
-        allowedRoles: [Roles.ADMIN, Roles.WORKER],
+        allowedRoles: ["admin", "company", "user"],
       },
     ],
   },

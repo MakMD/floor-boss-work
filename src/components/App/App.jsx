@@ -1,9 +1,9 @@
-// src/components/App/App.jsx
 import React, { createContext, useState, useEffect } from "react";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../ProtectedRoute/ProtectedRoute";
 import Layout from "./Layout";
 import { routesConfig } from "../../config/routesConfig";
+import { supabase } from "../../lib/supabase";
 
 export const AppContext = createContext(null);
 
@@ -12,35 +12,49 @@ function AppProvider({ children }) {
     const stored = localStorage.getItem("appUser");
     return stored ? JSON.parse(stored) : null;
   });
+
   const [settings, setSettings] = useState(() => {
     const stored = localStorage.getItem("appSettings");
     return stored ? JSON.parse(stored) : { theme: "light" };
   });
+
   const [activityLog, setActivityLog] = useState([]);
 
+  const login = (userData) => setUser(userData);
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+  const updateSettings = (newSettings) =>
+    setSettings((prev) => ({ ...prev, ...newSettings }));
+  const addActivity = (message) =>
+    setActivityLog((prev) => [...prev, { message, timestamp: Date.now() }]);
+
+  // Відновлення сесії Supabase при завантаженні
+  useEffect(() => {
+    async function restoreSession() {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+      if (error) console.error("Error restoring session:", error);
+      if (session?.user) {
+        setUser(session.user);
+      }
+    }
+    restoreSession();
+  }, []);
+
+  // Збереження користувача в localStorage
   useEffect(() => {
     if (user) localStorage.setItem("appUser", JSON.stringify(user));
     else localStorage.removeItem("appUser");
   }, [user]);
 
+  // Збереження налаштувань
   useEffect(() => {
     localStorage.setItem("appSettings", JSON.stringify(settings));
   }, [settings]);
-
-  useEffect(() => {
-    document.body.dataset.theme = settings.theme;
-  }, [settings.theme]);
-
-  const login = (userData) => setUser(userData);
-  const logout = () => setUser(null);
-
-  // Виправлене оновлення налаштувань
-  const updateSettings = (newSettings) =>
-    setSettings((prev) => ({ ...prev, ...newSettings }));
-
-  // Виправлене додавання до журналу
-  const addActivity = (message) =>
-    setActivityLog((prev) => [...prev, { message, timestamp: Date.now() }]);
 
   return (
     <AppContext.Provider
@@ -64,40 +78,44 @@ export default function App() {
     <AppProvider>
       <Router>
         <Routes>
-          {routesConfig.map((route, i) => {
-            if (route.public) {
-              return (
-                <Route key={i} path={route.path} element={route.element} />
-              );
-            }
-            return (
-              <Route key={i} element={<Layout />}>
-                {route.children.map((r, j) => {
-                  const Wrapper = ({ children }) => (
-                    <ProtectedRoute allowedRoles={r.allowedRoles}>
-                      {children}
-                    </ProtectedRoute>
-                  );
-                  return (
+          {/* Публічні маршрути */}
+          {routesConfig
+            .filter((route) => route.public)
+            .map((route, i) => (
+              <Route key={i} path={route.path} element={route.element} />
+            ))}
+
+          {/* Приватні маршрути під Layout */}
+          <Route element={<Layout />}>
+            {routesConfig
+              .filter((route) => !route.public)
+              .flatMap((route, i) =>
+                route.children ? (
+                  route.children.map((child, j) => (
                     <Route
                       key={`${i}-${j}`}
-                      path={r.path}
-                      element={<Wrapper>{r.element}</Wrapper>}
-                    >
-                      {r.children &&
-                        r.children.map((c, k) => (
-                          <Route
-                            key={`${i}-${j}-${k}`}
-                            index={c.index}
-                            element={<Wrapper>{c.element}</Wrapper>}
-                          />
-                        ))}
-                    </Route>
-                  );
-                })}
-              </Route>
-            );
-          })}
+                      path={child.path}
+                      element={
+                        <ProtectedRoute allowedRoles={child.allowedRoles}>
+                          {child.element}
+                        </ProtectedRoute>
+                      }
+                      {...(child.index ? { index: true } : {})}
+                    />
+                  ))
+                ) : (
+                  <Route
+                    key={i}
+                    path={route.path}
+                    element={
+                      <ProtectedRoute allowedRoles={route.allowedRoles}>
+                        {route.element}
+                      </ProtectedRoute>
+                    }
+                  />
+                )
+              )}
+          </Route>
         </Routes>
       </Router>
     </AppProvider>
