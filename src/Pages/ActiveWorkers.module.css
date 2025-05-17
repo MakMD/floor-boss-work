@@ -1,56 +1,93 @@
 /* src/Pages/ActiveWorkers.module.css */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
 
-.list {
-  font-family: "Inter", sans-serif;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1rem;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.item {
+.page {
   background-color: #ffffff;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  text-align: center;
+  font-family: "Inter", sans-serif;
+  color: #2d3748;
+  max-width: 960px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.title {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
   font-weight: 600;
-  color: #1f2937;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
 }
 
-.item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-}
-
-.link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
+.error {
+  color: #e53e3e;
+  margin-bottom: 1rem;
 }
 
 .loading,
 .empty {
-  font-family: "Inter", sans-serif;
-  color: #6b7280;
+  color: #718096;
   text-align: center;
-  margin-top: 1rem;
+  margin: 2rem 0;
 }
 
-.error {
-  font-family: "Inter", sans-serif;
-  color: #dc2626;
-  text-align: center;
-  margin-top: 1rem;
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
 }
 
-@media (max-width: 640px) {
-  .list {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  }
+.item {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-right: 0.75rem;
+  background-color: #4299e1;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 50%;
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: #3b82f6;
+}
+
+.workerName {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.workerRole {
+  font-size: 0.875rem;
+  color: #718096;
+  margin-top: 0.25rem;
 }

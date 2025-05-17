@@ -1,3 +1,4 @@
+// src/Pages/ActiveWorkers.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -19,7 +20,11 @@ export default function ActiveWorkers() {
           .eq("job_id", jobId);
         if (relErr) throw relErr;
         const ids = rel.map((r) => r.worker_id);
-        if (!ids.length) return setWorkers([]);
+        if (!ids.length) {
+          setWorkers([]);
+          setLoading(false);
+          return;
+        }
 
         const { data, error: usrErr } = await supabase
           .from("workers")
@@ -36,19 +41,29 @@ export default function ActiveWorkers() {
     })();
   }, [jobId]);
 
-  if (loading) return <p>Loading assigned workers…</p>;
-  if (error) return <p className={styles.error}>{error}</p>;
-  if (!workers.length) return <p>No assigned workers.</p>;
-
   return (
-    <ul className={styles.list}>
-      {workers.map((w, idx) => (
-        <li key={w.id}>
-          <Link to={`/workers/${w.id}`}>
-            {idx + 1}. {w.name}
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <div className={styles.page}>
+      <h2 className={styles.title}>Assigned Workers</h2>
+
+      {loading && <p className={styles.loading}>Loading assigned workers…</p>}
+      {error && <p className={styles.error}>{error}</p>}
+      {!loading && !error && workers.length === 0 && (
+        <p className={styles.empty}>No assigned workers.</p>
+      )}
+
+      {!loading && !error && workers.length > 0 && (
+        <ul className={styles.list}>
+          {workers.map((w, idx) => (
+            <li key={w.id} className={styles.item}>
+              <span className={styles.index}>{idx + 1}</span>
+              <Link to={`/workers/${w.id}`} className={styles.link}>
+                <span className={styles.workerName}>{w.name}</span>
+                <span className={styles.workerRole}>{w.role}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

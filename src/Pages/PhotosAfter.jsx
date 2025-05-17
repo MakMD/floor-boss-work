@@ -12,13 +12,13 @@ export default function PhotosAfter() {
 
   const [photos, setPhotos] = useState([]);
   const [file, setFile] = useState(null);
-  const [caption, setCaption] = useState(""); // новий стейт для підпису
+  const [caption, setCaption] = useState("");
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [modalUrl, setModalUrl] = useState(null);
 
-  // Fetch after-photos, newest first, включаючи caption
+  // Завантажуємо фото після виконання завдання
   const fetchPhotos = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -57,24 +57,22 @@ export default function PhotosAfter() {
     if (!file) return;
     setLoading(true);
     setError(null);
-
     try {
       const ext = file.name.split(".").pop();
       const name = `${Date.now()}.${ext}`;
       const path = `job_${id}/${name}`;
 
-      // upload to bucket
+      // Завантажуємо файл до сховища
       const { error: upErr } = await supabase.storage
         .from("afterwork")
         .upload(path, file);
       if (upErr) throw upErr;
 
-      // get public URL
       const {
         data: { publicUrl },
       } = supabase.storage.from("afterwork").getPublicUrl(path);
 
-      // insert record with caption (може бути порожнім)
+      // Вставляємо запис з необов'язковим підписом
       const { error: insErr } = await supabase
         .from("photos_after")
         .insert([{ job_id: id, url: publicUrl, caption: caption || null }]);
@@ -85,13 +83,13 @@ export default function PhotosAfter() {
           (caption ? ` with caption "${caption}"` : "")
       );
 
-      // очистити форму
+      // Очищаємо форму
       setFile(null);
       setCaption("");
       setPreview(null);
 
-      // повторно підвантажити список
-      await fetchPhotos();
+      // Оновлюємо список фото
+      fetchPhotos();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -107,6 +105,7 @@ export default function PhotosAfter() {
       <button onClick={() => navigate(-1)} className={styles.backButton}>
         ← Back
       </button>
+
       <h2 className={styles.title}>After Photos for Order #{id}</h2>
 
       <form onSubmit={handleUpload} className={styles.uploadForm}>
@@ -123,7 +122,6 @@ export default function PhotosAfter() {
           </div>
         )}
 
-        {/* Поле для необов'язкового підпису */}
         <textarea
           placeholder="Caption (optional)"
           value={caption}

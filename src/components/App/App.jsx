@@ -180,7 +180,6 @@ export default function App() {
                 />
               }
             >
-              {/* Index таб — Photos */}
               <Route
                 index
                 element={
@@ -190,7 +189,6 @@ export default function App() {
                   />
                 }
               />
-              {/* Materials */}
               <Route
                 path="materials"
                 element={
@@ -200,7 +198,6 @@ export default function App() {
                   />
                 }
               />
-              {/* Before Photos */}
               <Route
                 path="photos"
                 element={
@@ -210,7 +207,6 @@ export default function App() {
                   />
                 }
               />
-              {/* After Photos */}
               <Route
                 path="photos-after"
                 element={
@@ -220,7 +216,6 @@ export default function App() {
                   />
                 }
               />
-              {/* Invoices */}
               <Route
                 path="invoices"
                 element={
@@ -230,7 +225,6 @@ export default function App() {
                   />
                 }
               />
-              {/* Company Invoices */}
               <Route
                 path="company-invoices"
                 element={
@@ -240,13 +234,12 @@ export default function App() {
                   />
                 }
               />
-              {/* Workers (Admin only) */}
               <Route
                 path="workers"
                 element={
                   <ProtectedRoute
                     allowedRoles={["admin"]}
-                    element={<Workers />}
+                    element={<ActiveWorkers />}
                   />
                 }
               />

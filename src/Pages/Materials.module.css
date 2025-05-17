@@ -166,3 +166,17 @@
   cursor: pointer;
   color: #333;
 }
+.fileInput::file-selector-button {
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.fileInput::file-selector-button:hover {
+  background-color: #2563eb;
+}

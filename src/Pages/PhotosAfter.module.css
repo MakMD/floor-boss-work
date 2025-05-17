@@ -10,6 +10,23 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
+.backButton {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.backButton:hover {
+  background-color: #2563eb;
+}
+
 .title {
   font-size: 1.75rem;
   font-weight: 700;
@@ -25,13 +42,29 @@
   margin-bottom: 2rem;
 }
 
-.fileInput {
-  font-family: var(--font-family);
+.fileInput,
+.captionInput {
+  font-family: "Inter", sans-serif;
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   font-size: 0.9rem;
+  color: #1f2937;
+  background-color: #f7fafc;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fileInput:focus,
+.captionInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.captionInput {
+  min-height: 4rem;
+  resize: vertical;
 }
 
 .previewContainer {
@@ -86,10 +119,9 @@
 
 .photoItem {
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
-  padding: 0.5rem;
+  padding: 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background-color: #f7fafc;
@@ -103,20 +135,13 @@
   border-radius: 4px;
 }
 
-.materialInfo {
+.photoCaption {
   flex: 1;
-}
-
-.materialAmount {
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
-  display: block;
-}
-
-.description {
+  margin: 0;
   font-size: 0.9rem;
   color: #4b5563;
+  font-style: italic;
+  line-height: 1.4;
 }
 
 /* Modal styles */
@@ -159,4 +184,18 @@
   font-size: 1.5rem;
   cursor: pointer;
   color: #333;
+}
+.fileInput::file-selector-button {
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.fileInput::file-selector-button:hover {
+  background-color: #2563eb;
 }
