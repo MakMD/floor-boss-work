@@ -12,12 +12,10 @@ function AppProvider({ children }) {
     const stored = localStorage.getItem("appUser");
     return stored ? JSON.parse(stored) : null;
   });
-
   const [settings, setSettings] = useState(() => {
     const stored = localStorage.getItem("appSettings");
     return stored ? JSON.parse(stored) : { theme: "light" };
   });
-
   const [activityLog, setActivityLog] = useState([]);
 
   const login = (userData) => setUser(userData);
@@ -30,7 +28,6 @@ function AppProvider({ children }) {
   const addActivity = (message) =>
     setActivityLog((prev) => [...prev, { message, timestamp: Date.now() }]);
 
-  // Відновлення сесії Supabase при завантаженні
   useEffect(() => {
     async function restoreSession() {
       const {
@@ -38,20 +35,16 @@ function AppProvider({ children }) {
         error,
       } = await supabase.auth.getSession();
       if (error) console.error("Error restoring session:", error);
-      if (session?.user) {
-        setUser(session.user);
-      }
+      if (session?.user) setUser(session.user);
     }
     restoreSession();
   }, []);
 
-  // Збереження користувача в localStorage
   useEffect(() => {
     if (user) localStorage.setItem("appUser", JSON.stringify(user));
     else localStorage.removeItem("appUser");
   }, [user]);
 
-  // Збереження налаштувань
   useEffect(() => {
     localStorage.setItem("appSettings", JSON.stringify(settings));
   }, [settings]);
@@ -78,14 +71,14 @@ export default function App() {
     <AppProvider>
       <Router>
         <Routes>
-          {/* Публічні маршрути */}
+          {/* Public routes */}
           {routesConfig
             .filter((route) => route.public)
             .map((route, i) => (
               <Route key={i} path={route.path} element={route.element} />
             ))}
 
-          {/* Приватні маршрути під Layout */}
+          {/* Private routes under Layout */}
           <Route element={<Layout />}>
             {routesConfig
               .filter((route) => !route.public)
