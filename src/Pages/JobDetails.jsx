@@ -14,42 +14,13 @@ export default function JobDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Завантажуємо дані замовлення
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("jobs")
-        .select("*, job_workers(worker_id)")
-        .eq("id", id)
-        .single();
-
-      if (error) {
-        setError(error.message);
-      } else {
-        setJob({
-          ...data,
-          workerStatus: data.worker_status || "not_started",
-          adminStatus: data.admin_status || "pending",
-        });
-        if (user?.role === "worker" && data.worker_status === "not_started") {
-          if (window.confirm("Бажаєте розпочати виконання цього завдання?")) {
-            await updateField("worker_status", "in_progress");
-          }
-        }
-      }
-      setLoading(false);
-    })();
-  }, [id, user]);
-
-  // Оновлення статусу
+  // Функція оновлення статусу
   const updateField = async (field, value) => {
     setLoading(true);
     const { error } = await supabase
       .from("jobs")
       .update({ [field]: value })
       .eq("id", id);
-
     if (error) {
       alert("Не вдалося оновити статус: " + error.message);
     } else {
@@ -69,11 +40,33 @@ export default function JobDetails() {
     setLoading(false);
   };
 
+  // Завантажуємо дані замовлення
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*, job_workers(worker_id)")
+        .eq("id", id)
+        .single();
+      if (error) {
+        setError(error.message);
+      } else {
+        setJob({
+          ...data,
+          workerStatus: data.worker_status || "not_started",
+          adminStatus: data.admin_status || "pending",
+        });
+      }
+      setLoading(false);
+    })();
+  }, [id]);
+
   if (loading) return <p className={styles.loading}>Loading...</p>;
   if (error) return <p className={styles.error}>Error: {error}</p>;
   if (!job) return <p className={styles.error}>Job not found.</p>;
 
-  // Визначаємо вкладки
+  // Вкладки
   const tabs = [
     { path: "", label: "Photos" },
     ...(user.role === "admin" ? [{ path: "workers", label: "Workers" }] : []),
@@ -113,6 +106,15 @@ export default function JobDetails() {
             : "Done"}
         </div>
 
+        {/* Кнопки для worker */}
+        {user.role === "worker" && job.workerStatus === "not_started" && (
+          <button
+            className={styles.actionBtn}
+            onClick={() => updateField("worker_status", "in_progress")}
+          >
+            Start
+          </button>
+        )}
         {user.role === "worker" && job.workerStatus === "in_progress" && (
           <button
             className={styles.actionBtn}
@@ -122,6 +124,7 @@ export default function JobDetails() {
           </button>
         )}
 
+        {/* Кнопки для admin */}
         {user.role === "admin" && job.workerStatus === "done" && (
           <>
             <button
@@ -135,16 +138,15 @@ export default function JobDetails() {
             </button>
             <button
               className={styles.rejectBtn}
-              onClick={async () => {
-                await updateField("admin_status", "rejected");
-                await updateField("worker_status", "in_progress");
+              onClick={() => {
+                updateField("admin_status", "rejected");
+                updateField("worker_status", "in_progress");
               }}
             >
               Reject Completion
             </button>
           </>
         )}
-
         {user.role === "admin" &&
           job.workerStatus === "done" &&
           job.adminStatus === "approved" && (
@@ -158,8 +160,8 @@ export default function JobDetails() {
         {tabs.map(({ path, label }) => (
           <NavLink
             key={path}
-            to={path} // відносний шлях
-            end={path === ""} // активний тільки на exact index
+            to={path}
+            end={path === ""}
             className={({ isActive }) =>
               isActive ? styles.activeTab : styles.tab
             }

@@ -92,7 +92,7 @@ export default function App() {
               index
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "user"]}
+                  allowedRoles={["admin", "company", "worker"]}
                   element={<Home />}
                 />
               }
@@ -100,17 +100,14 @@ export default function App() {
             <Route
               path="home"
               element={
-                <ProtectedRoute
-                  allowedRoles={["admin", "company", "user"]}
-                  element={<Home />}
-                />
+                <ProtectedRoute allowedRoles={["admin"]} element={<Home />} />
               }
             />
             <Route
               path="dashboard"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "user"]}
+                  allowedRoles={["admin", "company", "worker"]}
                   element={<Dashboard />}
                 />
               }
@@ -128,7 +125,7 @@ export default function App() {
               path="workers"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "user"]}
+                  allowedRoles={["admin", "company", "worker"]}
                   element={<Workers />}
                 />
               }
@@ -175,7 +172,7 @@ export default function App() {
               path="orders/:id"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "user"]}
+                  allowedRoles={["admin", "company", "worker"]}
                   element={<JobDetails />}
                 />
               }
@@ -184,7 +181,7 @@ export default function App() {
                 index
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "company", "user"]}
+                    allowedRoles={["admin", "company", "worker"]}
                     element={<Photos />}
                   />
                 }
@@ -193,7 +190,7 @@ export default function App() {
                 path="materials"
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "company", "user"]}
+                    allowedRoles={["admin", "company", "worker"]}
                     element={<Materials />}
                   />
                 }
@@ -202,7 +199,7 @@ export default function App() {
                 path="photos"
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "company", "user"]}
+                    allowedRoles={["admin", "company", "worker"]}
                     element={<Photos />}
                   />
                 }
@@ -211,7 +208,7 @@ export default function App() {
                 path="photos-after"
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "company", "user"]}
+                    allowedRoles={["admin", "company", "worker"]}
                     element={<PhotosAfter />}
                   />
                 }
@@ -220,7 +217,7 @@ export default function App() {
                 path="invoices"
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "company", "user"]}
+                    allowedRoles={["admin", "company", "worker"]}
                     element={<Invoices />}
                   />
                 }
@@ -229,7 +226,7 @@ export default function App() {
                 path="company-invoices"
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "company", "user"]}
+                    allowedRoles={["admin", "company", "worker"]}
                     element={<CompanyInvoices />}
                   />
                 }
@@ -249,7 +246,7 @@ export default function App() {
               path="calendar"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "user"]}
+                  allowedRoles={["admin", "company", "worker"]}
                   element={<Calendar />}
                 />
               }
