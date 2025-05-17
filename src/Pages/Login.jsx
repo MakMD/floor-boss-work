@@ -1,4 +1,3 @@
-// src/Pages/Login.jsx
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -19,7 +18,6 @@ export default function Login() {
     setLoading(true);
     setError(null);
     try {
-      // Використовуємо maybeSingle(), щоб уникнути 406, якщо не знайдено рядок
       const { data: userData, error: fetchError } = await supabase
         .from("workers")
         .select("id, name, username, role")
@@ -38,7 +36,6 @@ export default function Login() {
         return;
       }
 
-      // Успішний логін
       login(userData);
       navigate("/home");
     } catch (err) {
@@ -52,29 +49,35 @@ export default function Login() {
     <div className={styles.loginPage}>
       <motion.form
         onSubmit={handleLogin}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className={styles.loginForm}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className={styles.loginCard}
       >
-        <h2 className={styles.title}>Login</h2>
+        {/* <img src={logo} alt="Logo" className={styles.logo} /> */}
+        <h2 className={styles.loginTitle}>Login</h2>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <p className={styles.loginError}>{error}</p>}
 
+        <label htmlFor="username">Username</label>
         <input
+          id="username"
           type="text"
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className={styles.input}
+          className={styles.loginInput}
           required
         />
 
+        <label htmlFor="password">Password</label>
         <input
+          id="password"
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className={styles.input}
+          className={styles.loginInput}
           required
         />
 
