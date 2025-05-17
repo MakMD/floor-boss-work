@@ -29,19 +29,20 @@ export default function CalendarPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from("jobs")
         .select("id, address, date, client, job_workers(worker_id)")
         .order("date", { ascending: true });
-      if (error) {
-        setError(error.message);
+      if (fetchError) {
+        setError(fetchError.message);
         setJobs([]);
       } else {
-        const withWorkers = data.map((job) => ({
-          ...job,
-          workerIds: job.job_workers?.map((jw) => jw.worker_id) || [],
-        }));
-        setJobs(withWorkers);
+        setJobs(
+          data.map((job) => ({
+            ...job,
+            workerIds: job.job_workers?.map((jw) => jw.worker_id) || [],
+          }))
+        );
       }
       setLoading(false);
     })();
@@ -50,7 +51,7 @@ export default function CalendarPage() {
   // Фільтрація за роллю
   const accessibleJobs =
     user?.role === "worker"
-      ? jobs.filter((job) => job.workerIds?.includes(user.id))
+      ? jobs.filter((job) => job.workerIds.includes(user.id))
       : jobs;
 
   // Текстовий фільтр
@@ -147,7 +148,8 @@ export default function CalendarPage() {
               <ul className={styles.jobList}>
                 {jobsForDate.map((job) => (
                   <li key={job.id} className={styles.jobItem}>
-                    <Link to={`/job/${job.id}`} className={styles.jobLink}>
+                    {/* Виправлено шлях: /orders/:id */}
+                    <Link to={`/orders/${job.id}`} className={styles.jobLink}>
                       Order #{job.id}: {job.client || job.address}
                     </Link>
                   </li>

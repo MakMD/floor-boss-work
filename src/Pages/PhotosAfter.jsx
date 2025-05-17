@@ -12,21 +12,26 @@ export default function PhotosAfter() {
 
   const [photos, setPhotos] = useState([]);
   const [file, setFile] = useState(null);
+  const [caption, setCaption] = useState(""); // новий стейт для підпису
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [modalUrl, setModalUrl] = useState(null);
 
-  // Fetch after-photos, newest first
+  // Fetch after-photos, newest first, включаючи caption
   const fetchPhotos = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("photos_after")
-      .select("id, url, created_at")
+      .select("id, url, created_at, caption")
       .eq("job_id", id)
       .order("created_at", { ascending: false });
-    if (error) setError(error.message);
-    else setPhotos(data || []);
+    if (error) {
+      setError(error.message);
+      setPhotos([]);
+    } else {
+      setPhotos(data);
+    }
     setLoading(false);
   };
 
@@ -58,7 +63,7 @@ export default function PhotosAfter() {
       const name = `${Date.now()}.${ext}`;
       const path = `job_${id}/${name}`;
 
-      // upload to afterwork bucket
+      // upload to bucket
       const { error: upErr } = await supabase.storage
         .from("afterwork")
         .upload(path, file);
@@ -69,20 +74,24 @@ export default function PhotosAfter() {
         data: { publicUrl },
       } = supabase.storage.from("afterwork").getPublicUrl(path);
 
-      // insert record
-      const { data: newPhoto, error: insErr } = await supabase
+      // insert record with caption (може бути порожнім)
+      const { error: insErr } = await supabase
         .from("photos_after")
-        .insert([{ job_id: id, url: publicUrl }])
-        .single();
+        .insert([{ job_id: id, url: publicUrl, caption: caption || null }]);
       if (insErr) throw insErr;
 
-      // prepend to list
-      setPhotos((prev) => [newPhoto, ...prev].filter(Boolean));
       addActivity(
-        `User ${user?.name || user?.id} uploaded after-photo for order #${id}`
+        `User ${user?.name || user?.id} uploaded after-photo for order #${id}` +
+          (caption ? ` with caption "${caption}"` : "")
       );
+
+      // очистити форму
       setFile(null);
+      setCaption("");
       setPreview(null);
+
+      // повторно підвантажити список
+      await fetchPhotos();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -107,11 +116,21 @@ export default function PhotosAfter() {
           onChange={handleFileChange}
           className={styles.fileInput}
         />
+
         {preview && (
           <div className={styles.previewContainer}>
             <img src={preview} alt="Preview" className={styles.previewImg} />
           </div>
         )}
+
+        {/* Поле для необов'язкового підпису */}
+        <textarea
+          placeholder="Caption (optional)"
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          className={styles.captionInput}
+        />
+
         <button
           type="submit"
           disabled={loading}
@@ -131,10 +150,11 @@ export default function PhotosAfter() {
             <li key={p.id} className={styles.photoItem}>
               <img
                 src={p.url}
-                alt="After Job"
+                alt={p.caption || "After Job"}
                 className={styles.thumb}
                 onClick={() => openModal(p.url)}
               />
+              {p.caption && <p className={styles.photoCaption}>{p.caption}</p>}
             </li>
           ))}
         </ul>

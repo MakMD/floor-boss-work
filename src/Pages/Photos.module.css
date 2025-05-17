@@ -1,3 +1,4 @@
+/* src/Pages/PhotosAfter.module.css */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
 
 .photosAfterPage {
@@ -32,6 +33,18 @@
   border: 1px solid #e2e8f0;
   border-radius: 4px;
   font-size: 0.9rem;
+}
+
+/* Поле для необов’язкового підпису */
+.captionInput {
+  font-family: var(--font-family);
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  resize: vertical;
 }
 
 .previewContainer {
@@ -75,6 +88,7 @@
   margin-top: 1rem;
 }
 
+/* Відновлені стилі для списку фото */
 .photoList {
   list-style: none;
   padding: 0;
@@ -103,20 +117,12 @@
   border-radius: 4px;
 }
 
-.materialInfo {
-  flex: 1;
-}
-
-.materialAmount {
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
-  display: block;
-}
-
-.description {
+/* Стиль для підпису під фото */
+.photoCaption {
   font-size: 0.9rem;
   color: #4b5563;
+  margin-left: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 /* Modal styles */

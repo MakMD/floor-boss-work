@@ -14,14 +14,16 @@ export default function JobDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Завантажуємо дані замовлення
   useEffect(() => {
     (async () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("jobs")
-        .select(`*, job_workers(worker_id)`)
+        .select("*, job_workers(worker_id)")
         .eq("id", id)
         .single();
+
       if (error) {
         setError(error.message);
       } else {
@@ -30,10 +32,7 @@ export default function JobDetails() {
           workerStatus: data.worker_status || "not_started",
           adminStatus: data.admin_status || "pending",
         });
-        if (
-          user?.role === "worker" &&
-          (data.worker_status || "not_started") === "not_started"
-        ) {
+        if (user?.role === "worker" && data.worker_status === "not_started") {
           if (window.confirm("Бажаєте розпочати виконання цього завдання?")) {
             await updateField("worker_status", "in_progress");
           }
@@ -43,12 +42,14 @@ export default function JobDetails() {
     })();
   }, [id, user]);
 
+  // Оновлення статусу
   const updateField = async (field, value) => {
     setLoading(true);
     const { error } = await supabase
       .from("jobs")
       .update({ [field]: value })
       .eq("id", id);
+
     if (error) {
       alert("Не вдалося оновити статус: " + error.message);
     } else {
@@ -56,29 +57,23 @@ export default function JobDetails() {
         ...prev,
         [field === "worker_status" ? "workerStatus" : "adminStatus"]: value,
       }));
-      if (field === "worker_status") {
-        addActivity(
-          `User ${
-            user?.name || user?.id
-          } set status "${value}" for order #${id}`
-        );
-      }
-      if (field === "admin_status") {
-        const action = value === "approved" ? "approved" : "rejected";
-        addActivity(
-          `Admin ${
-            user?.name || user?.id
-          } ${action} completion for order #${id}`
-        );
-      }
+      const actor = user?.name || user?.id;
+      const msg =
+        field === "worker_status"
+          ? `User ${actor} set status "${value}" for order #${id}`
+          : `Admin ${actor} ${
+              value === "approved" ? "approved" : "rejected"
+            } completion for order #${id}`;
+      addActivity(msg);
     }
     setLoading(false);
   };
 
   if (loading) return <p className={styles.loading}>Loading...</p>;
-  if (error) return <p className={styles.error}>{error}</p>;
+  if (error) return <p className={styles.error}>Error: {error}</p>;
   if (!job) return <p className={styles.error}>Job not found.</p>;
 
+  // Визначаємо вкладки
   const tabs = [
     { path: "", label: "Photos" },
     ...(user.role === "admin" ? [{ path: "workers", label: "Workers" }] : []),
@@ -117,6 +112,7 @@ export default function JobDetails() {
             ? "In Progress"
             : "Done"}
         </div>
+
         {user.role === "worker" && job.workerStatus === "in_progress" && (
           <button
             className={styles.actionBtn}
@@ -125,6 +121,7 @@ export default function JobDetails() {
             Finish
           </button>
         )}
+
         {user.role === "admin" && job.workerStatus === "done" && (
           <>
             <button
@@ -147,6 +144,7 @@ export default function JobDetails() {
             </button>
           </>
         )}
+
         {user.role === "admin" &&
           job.workerStatus === "done" &&
           job.adminStatus === "approved" && (
@@ -157,20 +155,18 @@ export default function JobDetails() {
       </div>
 
       <div className={styles.tabs}>
-        {tabs.map(({ path, label }) => {
-          const to = path ? `/job/${id}/${path}` : `/job/${id}`;
-          return (
-            <NavLink
-              key={path}
-              to={to}
-              className={({ isActive }) =>
-                isActive ? styles.activeTab : styles.tab
-              }
-            >
-              {label}
-            </NavLink>
-          );
-        })}
+        {tabs.map(({ path, label }) => (
+          <NavLink
+            key={path}
+            to={path} // відносний шлях
+            end={path === ""} // активний тільки на exact index
+            className={({ isActive }) =>
+              isActive ? styles.activeTab : styles.tab
+            }
+          >
+            {label}
+          </NavLink>
+        ))}
       </div>
 
       <div className={styles.content}>

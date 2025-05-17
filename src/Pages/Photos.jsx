@@ -12,23 +12,31 @@ export default function Photos() {
 
   const [photos, setPhotos] = useState([]);
   const [file, setFile] = useState(null);
+  const [caption, setCaption] = useState(""); // новий стейт для підпису
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [modalUrl, setModalUrl] = useState(null);
 
+  // Fetch photos, newest first, включаючи caption
+  const fetchPhotos = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("photos")
+      .select("id, url, created_at, caption")
+      .eq("job_id", id)
+      .order("created_at", { ascending: false });
+    if (error) {
+      setError(error.message);
+      setPhotos([]);
+    } else {
+      setPhotos(data);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("photos")
-        .select("id, url, created_at")
-        .eq("job_id", id)
-        .order("created_at", { ascending: false });
-      if (error) setError(error.message);
-      else setPhotos(data || []);
-      setLoading(false);
-    })();
+    fetchPhotos();
   }, [id]);
 
   const handleFileChange = (e) => {
@@ -55,27 +63,35 @@ export default function Photos() {
       const name = `${Date.now()}.${ext}`;
       const path = `job_${id}/${name}`;
 
+      // upload to 'work' bucket
       const { error: upErr } = await supabase.storage
         .from("work")
         .upload(path, file);
       if (upErr) throw upErr;
 
+      // get public URL
       const {
         data: { publicUrl },
       } = supabase.storage.from("work").getPublicUrl(path);
 
-      const { data: newPhoto, error: insErr } = await supabase
+      // insert record with optional caption
+      const { error: insErr } = await supabase
         .from("photos")
-        .insert([{ job_id: id, url: publicUrl }])
-        .single();
+        .insert([{ job_id: id, url: publicUrl, caption: caption || null }]);
       if (insErr) throw insErr;
 
-      setPhotos((prev) => [newPhoto, ...prev].filter(Boolean));
       addActivity(
-        `User ${user?.name || user?.id} uploaded photo for order #${id}`
+        `User ${user?.name || user?.id} uploaded photo for order #${id}` +
+          (caption ? ` with caption "${caption}"` : "")
       );
+
+      // reset form
       setFile(null);
+      setCaption("");
       setPreview(null);
+
+      // refresh list
+      await fetchPhotos();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -88,9 +104,9 @@ export default function Photos() {
 
   return (
     <div className={styles.photosPage}>
-      <button onClick={() => navigate(-1)} className={styles.backButton}>
+      {/* <button onClick={() => navigate(-1)} className={styles.backButton}>
         ← Back
-      </button>
+      </button> */}
       <h2 className={styles.title}>Photos for Order #{id}</h2>
 
       <form onSubmit={handleUpload} className={styles.uploadForm}>
@@ -100,11 +116,21 @@ export default function Photos() {
           onChange={handleFileChange}
           className={styles.fileInput}
         />
+
         {preview && (
           <div className={styles.previewContainer}>
             <img src={preview} alt="Preview" className={styles.previewImg} />
           </div>
         )}
+
+        {/* Поле для необов’язкового підпису */}
+        <textarea
+          placeholder="Caption (optional)"
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          className={styles.captionInput}
+        />
+
         <button
           type="submit"
           disabled={loading}
@@ -124,10 +150,11 @@ export default function Photos() {
             <li key={p.id} className={styles.photoItem}>
               <img
                 src={p.url}
-                alt="Job"
+                alt={p.caption || "Job"}
                 className={styles.thumb}
                 onClick={() => openModal(p.url)}
               />
+              {p.caption && <p className={styles.photoCaption}>{p.caption}</p>}
             </li>
           ))}
         </ul>

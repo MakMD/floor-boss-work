@@ -1,3 +1,4 @@
+// src/config/routesConfig.jsx
 import React from "react";
 import Home from "../Pages/Home";
 import Login from "../Pages/Login";
@@ -15,17 +16,18 @@ import PhotosAfter from "../Pages/PhotosAfter";
 import Calendar from "../Pages/Calendar";
 
 export const routesConfig = [
-  // Логін залишається публічним
+  // Public route
   { path: "/login", element: <Login />, public: true },
-  // Всі інші шляхи під Layout, в т.ч. Home з верхнім меню
+
+  // Protected routes under Layout
   {
     public: false,
     children: [
       {
         path: "",
         element: <Home />,
-        allowedRoles: ["admin", "company", "user"],
         index: true,
+        allowedRoles: ["admin", "company", "user"],
       },
       {
         path: "home",
@@ -67,26 +69,54 @@ export const routesConfig = [
         element: <Orders />,
         allowedRoles: ["admin", "company", "user"],
       },
+
+      // Деталі замовлення з вкладеними табами
       {
         path: "orders/:id",
         element: <JobDetails />,
         allowedRoles: ["admin", "company", "user"],
+        children: [
+          // за замовчуванням – Photos
+          {
+            index: true,
+            element: <Photos />,
+            allowedRoles: ["admin", "company", "user"],
+          },
+          // Materials
+          {
+            path: "materials",
+            element: <Materials />,
+            allowedRoles: ["admin", "company", "user"],
+          },
+          // Before Photos
+          {
+            path: "photos",
+            element: <Photos />,
+            allowedRoles: ["admin", "company", "user"],
+          },
+          // After Photos
+          {
+            path: "photos-after",
+            element: <PhotosAfter />,
+            allowedRoles: ["admin", "company", "user"],
+          },
+          // Invoices
+          {
+            path: "invoices",
+            element: <Invoices />,
+            allowedRoles: ["admin", "company", "user"],
+          },
+          // Company Invoices
+          {
+            path: "company-invoices",
+            element: <CompanyInvoices />,
+            allowedRoles: ["admin", "company", "user"],
+          },
+          // Workers (тільки для admin)
+          { path: "workers", element: <Workers />, allowedRoles: ["admin"] },
+        ],
       },
-      {
-        path: "orders/:id/materials",
-        element: <Materials />,
-        allowedRoles: ["admin", "company", "user"],
-      },
-      {
-        path: "orders/:id/photos/before",
-        element: <Photos />,
-        allowedRoles: ["admin", "company", "user"],
-      },
-      {
-        path: "orders/:id/photos/after",
-        element: <PhotosAfter />,
-        allowedRoles: ["admin", "company", "user"],
-      },
+
       {
         path: "calendar",
         element: <Calendar />,

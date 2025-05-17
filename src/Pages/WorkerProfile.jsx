@@ -5,7 +5,7 @@ import { AppContext } from "../components/App/App";
 import styles from "./WorkerProfile.module.css";
 
 export default function WorkerProfile() {
-  const { workerId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useContext(AppContext);
   // … решта без змін …
@@ -23,7 +23,7 @@ export default function WorkerProfile() {
         const { data: w, error: wErr } = await supabase
           .from("workers")
           .select("id, name, role")
-          .eq("id", workerId)
+          .eq("id", id)
           .single();
         if (wErr) throw wErr;
         setWorker(w);
@@ -32,7 +32,7 @@ export default function WorkerProfile() {
         const { data: rels, error: rErr } = await supabase
           .from("job_workers")
           .select("job_id")
-          .eq("worker_id", workerId);
+          .eq("worker_id", id);
         if (rErr) throw rErr;
         const jobIds = rels.map((r) => r.job_id);
 
@@ -55,7 +55,7 @@ export default function WorkerProfile() {
         setLoading(false);
       }
     })();
-  }, [workerId]);
+  }, [id]);
 
   if (loading) return <p className={styles.loading}>Loading profile...</p>;
   if (error) return <p className={styles.error}>{error}</p>;
