@@ -1,3 +1,4 @@
+// src/Pages/Orders.jsx
 import React, { useState, useEffect, useContext } from "react";
 import Select from "react-select";
 import { AppContext } from "../components/App/App";
@@ -131,18 +132,45 @@ export default function Orders() {
           onChange={(e) => setNotes(e.target.value)}
           className={styles.formTextarea}
         />
-        <Select
-          isMulti
-          options={workerOptions}
-          value={workerOptions.filter((opt) =>
-            selectedWorkers.includes(opt.value)
-          )}
-          onChange={(sel) =>
-            setSelectedWorkers(sel ? sel.map((s) => s.value) : [])
-          }
-          className={styles.formSelect}
-          placeholder="Select workers..."
-        />
+
+        {/* Обертка для розширеного Select */}
+        <div className={styles.selectWrapper}>
+          <Select
+            isMulti
+            options={workerOptions}
+            value={workerOptions.filter((opt) =>
+              selectedWorkers.includes(opt.value)
+            )}
+            onChange={(sel) =>
+              setSelectedWorkers(sel ? sel.map((s) => s.value) : [])
+            }
+            placeholder="Select workers..."
+            menuPortalTarget={document.body} // порталуємо в body
+            menuPosition="fixed" // фіксоване позиціонування
+            styles={{
+              control: (base) => ({
+                ...base,
+                minHeight: 40,
+                fontSize: "0.9rem",
+              }),
+              menu: (base) => ({
+                ...base,
+                width: "100%",
+                zIndex: 9999,
+              }),
+              menuList: (base) => ({
+                ...base,
+                maxHeight: "50vh",
+                overflowY: "auto",
+              }),
+              menuPortal: (base) => ({
+                ...base,
+                zIndex: 9999,
+              }),
+            }}
+          />
+        </div>
+
         <button type="submit" className={styles.formButton} disabled={loading}>
           {loading ? "Adding…" : "Add Job"}
         </button>

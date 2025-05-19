@@ -17,17 +17,20 @@ export default function JobDetails() {
   // Функція оновлення статусу
   const updateField = async (field, value) => {
     setLoading(true);
-    const { error } = await supabase
+    const { error: jobErr } = await supabase
       .from("jobs")
       .update({ [field]: value })
       .eq("id", id);
-    if (error) {
-      alert("Не вдалося оновити статус: " + error.message);
+
+    if (jobErr) {
+      alert("Не вдалося оновити статус: " + jobErr.message);
     } else {
+      // Оновлюємо локальний стан
       setJob((prev) => ({
         ...prev,
         [field === "worker_status" ? "workerStatus" : "adminStatus"]: value,
       }));
+
       const actor = user?.name || user?.id;
       const msg =
         field === "worker_status"
@@ -35,7 +38,24 @@ export default function JobDetails() {
           : `Admin ${actor} ${
               value === "approved" ? "approved" : "rejected"
             } completion for order #${id}`;
+
+      // Локальне логи
       addActivity(msg);
+
+      // Якщо працівник почав виконання — додаємо запис в job_updates
+      if (field === "worker_status" && value === "in_progress") {
+        try {
+          await supabase.from("job_updates").insert([
+            {
+              job_id: id,
+              worker_id: user.id,
+              message: `Worker ${actor} started order #${id}`,
+            },
+          ]);
+        } catch (updErr) {
+          console.error("Не вдалося додати job_update:", updErr);
+        }
+      }
     }
     setLoading(false);
   };
@@ -44,13 +64,14 @@ export default function JobDetails() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error: fetchErr } = await supabase
         .from("jobs")
         .select("*, job_workers(worker_id)")
         .eq("id", id)
         .single();
-      if (error) {
-        setError(error.message);
+
+      if (fetchErr) {
+        setError(fetchErr.message);
       } else {
         setJob({
           ...data,

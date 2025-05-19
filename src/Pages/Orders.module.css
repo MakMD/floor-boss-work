@@ -146,3 +146,13 @@
     grid-template-columns: 1fr;
   }
 }
+.selectWrapper {
+  margin-bottom: 1rem;
+  width: 100%;
+  /* якщо потрібно, можна задати max-width */
+}
+
+/* Додатковий z-index для меню, якщо потрібно */
+.selectWrapper .react-select__menu {
+  z-index: 9999;
+}

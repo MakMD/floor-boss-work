@@ -32,7 +32,6 @@
   border-bottom: 1px solid var(--border-light);
 }
 
-/* React Calendar overrides */
 :global(.react-calendar) {
   max-width: 500px;
   margin: auto;
@@ -51,7 +50,6 @@
   position: relative;
 }
 
-/* Center the month label */
 :global(.react-calendar__navigation__label) {
   position: absolute;
   top: 50%;
@@ -221,4 +219,106 @@
   .jobList {
     grid-template-columns: 1fr;
   }
+}
+
+.jobItem {
+  position: relative;
+  padding-right: 120px;
+}
+
+.jobActions {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hideBtn,
+.deleteBtn {
+  background: transparent;
+  border: 1px solid #e2e8e0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.2s;
+}
+
+.hideBtn:hover {
+  background: #facc15;
+  border-color: #f59e0b;
+}
+
+.deleteBtn:hover {
+  background: #f87171;
+  border-color: #ef4444;
+}
+
+.jobItem {
+  position: relative;
+  padding-right: 160px;
+}
+
+.jobActions {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 0.25rem;
+}
+
+.editBtn,
+.hideBtn,
+.deleteBtn,
+.cancelBtn {
+  background: #ffffff;
+  border: 1px solid #ccc;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.editBtn:hover {
+  background: #e2e8f0;
+  border-color: #a0aec0;
+}
+
+.hideBtn:hover {
+  background: #facc15;
+  border-color: #f59e0b;
+}
+
+.deleteBtn:hover {
+  background: #f87171;
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+.cancelBtn:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+}
+
+.hiddenToggle {
+  text-align: right;
+  margin-bottom: 0.5rem;
+}
+
+.toggleBtn {
+  background: #3182ce;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.toggleBtn:hover {
+  background: #2b6cb0;
 }

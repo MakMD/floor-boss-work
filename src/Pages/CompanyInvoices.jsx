@@ -1,51 +1,33 @@
+// src/Pages/CompanyInvoices.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import styles from "./CompanyInvoices.module.css";
 
-const API_URL = "https://680eea7067c5abddd1934af2.mockapi.io/jobs";
-
 export default function CompanyInvoices() {
-  const { id } = useParams();
+  const { id: jobId } = useParams();
   const navigate = useNavigate();
-  const [job, setJob] = useState(null);
+
+  const [invoices, setInvoices] = useState([]);
   const [invoiceDate, setInvoiceDate] = useState(
-    new Date().toISOString().substring(0, 10)
+    new Date().toISOString().slice(0, 10)
   );
   const [companyAmount, setCompanyAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetch(`${API_URL}/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Network error");
-        return res.json();
-      })
-      .then((data) => setJob(data))
-      .catch((e) => setError(e.message));
-  }, [id]);
-
-  const handleAddCompanyInvoice = async (e) => {
-    e.preventDefault();
-    const newInv = {
-      id: Date.now().toString(),
-      date: invoiceDate,
-      amount: parseFloat(companyAmount),
-    };
-    // Правильне застосування спред-оператора
-    const updated = {
-      ...job,
-      companyInvoices: [...(job.companyInvoices || []), newInv],
-    };
+  // Завантажуємо рахунки для цього замовлення
+  const fetchInvoices = async () => {
     setLoading(true);
+    setError(null);
     try {
-      await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      setJob(updated);
-      setCompanyAmount("");
+      const { data, error } = await supabase
+        .from("company_invoices")
+        .select("id, date, amount")
+        .eq("job_id", jobId)
+        .order("date", { ascending: false });
+      if (error) throw error;
+      setInvoices(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -53,14 +35,39 @@ export default function CompanyInvoices() {
     }
   };
 
-  if (!job) return <p>Loading company invoices...</p>;
+  useEffect(() => {
+    fetchInvoices();
+  }, [jobId]);
+
+  // Додаємо новий рахунок
+  const handleAddCompanyInvoice = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const amount = parseFloat(companyAmount);
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error("Сума повинна бути додатним числом");
+      }
+      const { error } = await supabase
+        .from("company_invoices")
+        .insert([{ job_id: jobId, date: invoiceDate, amount }]);
+      if (error) throw error;
+      setCompanyAmount("");
+      setInvoiceDate(new Date().toISOString().slice(0, 10));
+      await fetchInvoices();
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
   return (
     <div className={styles.page}>
       <button className={styles.backButton} onClick={() => navigate(-1)}>
-        &larr; Back
+        ← Back
       </button>
-      <h2 className={styles.title}>Company Invoices — Order #{id}</h2>
+      <h2 className={styles.title}>Company Invoices — Order #{jobId}</h2>
 
       <form onSubmit={handleAddCompanyInvoice} className={styles.form}>
         <input
@@ -79,21 +86,28 @@ export default function CompanyInvoices() {
           className={styles.input}
           required
         />
-        <button type="submit" className={styles.addButton}>
-          {loading ? "Adding..." : "Add Invoice"}
+        <button type="submit" className={styles.addButton} disabled={loading}>
+          {loading ? "Adding…" : "Add Invoice"}
         </button>
       </form>
 
       {error && <p className={styles.error}>{error}</p>}
 
+      {loading && !invoices.length ? (
+        <p className={styles.loading}>Loading invoices…</p>
+      ) : null}
+
       <ul className={styles.list}>
-        {(job.companyInvoices || []).map((inv) => (
-          <li key={inv.id} className={styles.item}>
-            <span className={styles.date}>{inv.date}</span>
-            <span className={styles.amount}>${inv.amount.toFixed(2)}</span>
-          </li>
-        ))}
-        {!job.companyInvoices?.length && <p>No company invoices yet.</p>}
+        {invoices.length > 0
+          ? invoices.map((inv) => (
+              <li key={inv.id} className={styles.item}>
+                <span className={styles.date}>{inv.date}</span>
+                <span className={styles.amount}>${inv.amount.toFixed(2)}</span>
+              </li>
+            ))
+          : !loading && (
+              <li className={styles.empty}>No company invoices yet.</li>
+            )}
       </ul>
     </div>
   );

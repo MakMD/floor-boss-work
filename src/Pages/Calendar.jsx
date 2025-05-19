@@ -1,5 +1,5 @@
 // src/Pages/Calendar.jsx
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { Link } from "react-router-dom";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -7,7 +7,6 @@ import styles from "./Calendar.module.css";
 import { AppContext } from "../components/App/App";
 import { supabase } from "../lib/supabase";
 
-// Парсить YYYY-MM-DD як локальну дату (щоб уникнути зсуву часу UTC)
 function parseLocalDate(dateString) {
   const [year, month, day] = dateString.split("-").map(Number);
   return new Date(year, month - 1, day);
@@ -20,74 +19,120 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Обрана дата та фільтри
   const [activeDate, setActiveDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
-  // Завантажуємо всі роботи
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data, error: fetchError } = await supabase
+  // Виносимо fetch в окрему функцію і мемоізуємо
+  const fetchJobs = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let query = supabase
         .from("jobs")
-        .select("id, address, date, client, job_workers(worker_id)")
+        .select("id, address, date, client, job_workers(worker_id), is_hidden")
         .order("date", { ascending: true });
-      if (fetchError) {
-        setError(fetchError.message);
-        setJobs([]);
-      } else {
-        setJobs(
-          data.map((job) => ({
-            ...job,
-            workerIds: job.job_workers?.map((jw) => jw.worker_id) || [],
-          }))
-        );
+      query = query.eq("is_hidden", showHidden);
+      if (user.role === "worker") {
+        // для workerів додатковий фільтр
+        query = query.eq("job_workers.worker_id", user.id);
       }
+      const { data, error: fetchError } = await query;
+      if (fetchError) throw fetchError;
+      setJobs(
+        data.map((job) => ({
+          ...job,
+          workerIds: job.job_workers?.map((jw) => jw.worker_id) || [],
+        }))
+      );
+    } catch (err) {
+      setError(err.message);
+      setJobs([]);
+    } finally {
       setLoading(false);
-    })();
-  }, []);
+    }
+  }, [showHidden, user]);
 
-  // Фільтрація за роллю
+  // Початкове завантаження та при зміні showHidden або user
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  const handleDelete = async (jobId) => {
+    if (!window.confirm("Видалити замовлення?")) return;
+    setLoading(true);
+    const { error: delErr } = await supabase
+      .from("jobs")
+      .delete()
+      .eq("id", jobId);
+    setLoading(false);
+    if (delErr) {
+      alert("Не вдалося видалити: " + delErr.message);
+    } else {
+      await fetchJobs();
+      setEditingId(null);
+    }
+  };
+
+  const handleHide = async (jobId) => {
+    if (!window.confirm("Приховати замовлення?")) return;
+    setLoading(true);
+    const { error: updErr } = await supabase
+      .from("jobs")
+      .update({ is_hidden: true })
+      .eq("id", jobId);
+    setLoading(false);
+    if (updErr) {
+      alert("Не вдалося приховати: " + updErr.message);
+    } else {
+      await fetchJobs();
+      setEditingId(null);
+    }
+  };
+
+  // Фільтрація та групування
   const accessibleJobs =
-    user?.role === "worker"
+    user.role === "worker"
       ? jobs.filter((job) => job.workerIds.includes(user.id))
       : jobs;
-
-  // Текстовий фільтр
   const afterText = accessibleJobs.filter((job) => {
     const term = searchTerm.toLowerCase();
     return (
-      (job.address || "").toLowerCase().includes(term) ||
-      (job.client || "").toLowerCase().includes(term)
+      job.address.toLowerCase().includes(term) ||
+      job.client.toLowerCase().includes(term)
     );
   });
-
-  // Фільтр по даті або всі
-  const dateFiltered = afterText.filter((job) => {
-    if (showAll) return true;
-    if (!job.date) return false;
-    return (
-      parseLocalDate(job.date).toDateString() === activeDate.toDateString()
-    );
-  });
-
-  // Групуємо за датами
+  const dateFiltered = afterText.filter((job) =>
+    showAll
+      ? true
+      : job.date &&
+        parseLocalDate(job.date).toDateString() === activeDate.toDateString()
+  );
   const grouped = dateFiltered.reduce((acc, job) => {
     const key = job.date || "Unknown date";
     if (!acc[key]) acc[key] = [];
     acc[key].push(job);
     return acc;
   }, {});
-
-  // Сортуємо дати від нових до старих
   const sortedDates = Object.keys(grouped).sort(
     (a, b) => parseLocalDate(b) - parseLocalDate(a)
   );
 
   return (
     <div className={styles.calendarPage}>
-      {/* Пошук */}
+      {user.role === "admin" && (
+        <div className={styles.hiddenToggle}>
+          <button
+            className={styles.toggleBtn}
+            onClick={() => setShowHidden((prev) => !prev)}
+          >
+            {showHidden ? "Show Visible" : "Show Hidden"}
+          </button>
+        </div>
+      )}
+
       <div className={styles.searchContainer}>
         <input
           type="text"
@@ -98,7 +143,6 @@ export default function CalendarPage() {
         />
       </div>
 
-      {/* Календар */}
       <div className={styles.calendarWrapper}>
         <ReactCalendar
           onChange={(date) => {
@@ -110,7 +154,6 @@ export default function CalendarPage() {
         />
       </div>
 
-      {/* Кнопка Show All / Filter by Date */}
       <div className={styles.buttonContainer}>
         <button
           className={styles.showAllBtn}
@@ -120,11 +163,12 @@ export default function CalendarPage() {
         </button>
       </div>
 
-      {/* Заголовок та список */}
       <div className={styles.eventsContainer}>
         <h2 className={styles.title}>
           {showAll
-            ? "All Orders"
+            ? showHidden
+              ? "Hidden Orders"
+              : "All Orders"
             : `Orders on ${activeDate.toLocaleDateString()}`}
         </h2>
 
@@ -132,32 +176,64 @@ export default function CalendarPage() {
         {error && <p className={styles.error}>{error}</p>}
         {!loading && sortedDates.length === 0 && (
           <p className={styles.noResults}>
-            {user?.role === "worker"
+            {user.role === "worker"
               ? "No assigned orders."
               : "No orders match your criteria."}
           </p>
         )}
 
-        {sortedDates.map((dateKey) => {
-          const jobsForDate = grouped[dateKey].sort(
-            (a, b) => Number(b.id) - Number(a.id)
-          );
-          return (
-            <div key={dateKey} className={styles.dateGroup}>
-              <h3 className={styles.dateHeader}>{dateKey}</h3>
-              <ul className={styles.jobList}>
-                {jobsForDate.map((job) => (
+        {sortedDates.map((dateKey) => (
+          <div key={dateKey} className={styles.dateGroup}>
+            <h3 className={styles.dateHeader}>{dateKey}</h3>
+            <ul className={styles.jobList}>
+              {grouped[dateKey]
+                .sort((a, b) => Number(b.id) - Number(a.id))
+                .map((job) => (
                   <li key={job.id} className={styles.jobItem}>
-                    {/* Виправлено шлях: /orders/:id */}
                     <Link to={`/orders/${job.id}`} className={styles.jobLink}>
                       Order #{job.id}: {job.client || job.address}
                     </Link>
+
+                    {user.role === "admin" && (
+                      <div className={styles.jobActions}>
+                        {editingId === job.id ? (
+                          <>
+                            {!showHidden && (
+                              <button
+                                className={styles.hideBtn}
+                                onClick={() => handleHide(job.id)}
+                              >
+                                Hide
+                              </button>
+                            )}
+                            <button
+                              className={styles.deleteBtn}
+                              onClick={() => handleDelete(job.id)}
+                            >
+                              Delete
+                            </button>
+                            <button
+                              className={styles.cancelBtn}
+                              onClick={() => setEditingId(null)}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            className={styles.editBtn}
+                            onClick={() => setEditingId(job.id)}
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </li>
                 ))}
-              </ul>
-            </div>
-          );
-        })}
+            </ul>
+          </div>
+        ))}
       </div>
     </div>
   );

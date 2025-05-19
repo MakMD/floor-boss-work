@@ -97,3 +97,30 @@
   color: #4a5568;
   margin: 0;
 }
+/* src/Pages/Home.module.css */
+/* … ваші існуючі стилі … */
+
+.activityItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  background: #ffffff;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.deleteBtn {
+  position: absolute;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  color: #e53e3e;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.deleteBtn:hover {
+  color: #c53030;
+}
