@@ -8,55 +8,78 @@ import styles from "./Orders.module.css";
 export default function Orders() {
   const { user } = useContext(AppContext);
 
+  // Завантажені дані
   const [workers, setWorkers] = useState([]);
+  const [companies, setCompanies] = useState([]);
+
+  // Поля форми
   const [address, setAddress] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [sf, setSf] = useState("");
   const [rate, setRate] = useState("");
-  const [client, setClient] = useState("");
+  const [builder, setBuilder] = useState("");
   const [notes, setNotes] = useState("");
+  const [storageUrl, setStorageUrl] = useState("");
+  const [workOrderNum, setWorkOrderNum] = useState("");
   const [selectedWorkers, setSelectedWorkers] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Завантажуємо працівників
+  // Підвантажуємо список працівників і компаній
   useEffect(() => {
     (async () => {
-      setError(null);
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        let { data: wData, error: wErr } = await supabase
           .from("workers")
           .select("id, name")
           .eq("role", "worker")
           .order("name", { ascending: true });
-        if (error) throw error;
-        setWorkers(data);
-      } catch (err) {
-        setError(err.message);
+        if (wErr) throw wErr;
+        setWorkers(wData);
+
+        let { data: cData, error: cErr } = await supabase
+          .from("companies")
+          .select("id, name")
+          .order("name", { ascending: true });
+        if (cErr) throw cErr;
+        setCompanies(cData);
+      } catch (e) {
+        setError(e.message);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  // Додаємо нове замовлення
+  // Вставка нового замовлення
   const handleAddJob = async (e) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
     try {
       // 1) Створюємо job
       const { data: newJob, error: insertError } = await supabase
         .from("jobs")
         .insert([
-          { address, date, sf: Number(sf), rate: Number(rate), client, notes },
+          {
+            address,
+            date,
+            rate: rate ? Number(rate) : null,
+            client: builder,
+            notes: notes || null,
+            storage_url: storageUrl || null,
+            work_order_number: workOrderNum || null,
+            company_id: selectedCompany?.value || null,
+          },
         ])
         .select()
         .single();
       if (insertError) throw insertError;
 
-      // 2) Додаємо зв’язки у job_workers
+      // 2) Додаємо зв’язки у job_workers (за наявності)
       if (selectedWorkers.length) {
         const relations = selectedWorkers.map((wid) => ({
           job_id: newJob.id,
@@ -71,11 +94,13 @@ export default function Orders() {
       // 3) Очищаємо форму
       setAddress("");
       setDate(new Date().toISOString().slice(0, 10));
-      setSf("");
       setRate("");
-      setClient("");
+      setBuilder("");
       setNotes("");
+      setStorageUrl("");
+      setWorkOrderNum("");
       setSelectedWorkers([]);
+      setSelectedCompany(null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -83,98 +108,102 @@ export default function Orders() {
     }
   };
 
-  const workerOptions = workers.map((w) => ({ value: w.id, label: w.name }));
+  const workerOptions = workers.map((w) => ({
+    value: w.id,
+    label: w.name,
+  }));
+  const companyOptions = companies.map((c) => ({
+    value: c.id,
+    label: c.name,
+  }));
 
   return (
-    <div className={styles.homePage}>
-      <form onSubmit={handleAddJob} className={styles.addForm}>
+    <div className={styles.page}>
+      <h2 className={styles.title}>Add New Order</h2>
+      <form onSubmit={handleAddJob} className={styles.form}>
         <input
           type="text"
           placeholder="Address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          required
-          className={styles.formInput}
+          className={styles.input}
         />
+
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          required
-          className={styles.formInput}
+          className={styles.input}
         />
-        <input
-          type="number"
-          placeholder="Square Footage"
-          value={sf}
-          onChange={(e) => setSf(e.target.value)}
-          required
-          className={styles.formInput}
-        />
+
         <input
           type="number"
           placeholder="Rate"
           value={rate}
           onChange={(e) => setRate(e.target.value)}
-          required
-          className={styles.formInput}
+          className={styles.input}
         />
+
         <input
           type="text"
-          placeholder="Client"
-          value={client}
-          onChange={(e) => setClient(e.target.value)}
-          className={styles.formInput}
+          placeholder="Builder"
+          value={builder}
+          onChange={(e) => setBuilder(e.target.value)}
+          className={styles.input}
         />
+
+        <input
+          type="text"
+          placeholder="Work Order #"
+          value={workOrderNum}
+          onChange={(e) => setWorkOrderNum(e.target.value)}
+          className={styles.input}
+        />
+
+        <input
+          type="text"
+          placeholder="Storage URL"
+          value={storageUrl}
+          onChange={(e) => setStorageUrl(e.target.value)}
+          className={styles.input}
+        />
+
         <textarea
-          placeholder="Notes"
+          placeholder="Notes (optional)"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className={styles.formTextarea}
+          className={styles.textarea}
         />
 
-        {/* Обертка для розширеного Select */}
-        <div className={styles.selectWrapper}>
-          <Select
-            isMulti
-            options={workerOptions}
-            value={workerOptions.filter((opt) =>
-              selectedWorkers.includes(opt.value)
-            )}
-            onChange={(sel) =>
-              setSelectedWorkers(sel ? sel.map((s) => s.value) : [])
-            }
-            placeholder="Select workers..."
-            menuPortalTarget={document.body} // порталуємо в body
-            menuPosition="fixed" // фіксоване позиціонування
-            styles={{
-              control: (base) => ({
-                ...base,
-                minHeight: 40,
-                fontSize: "0.9rem",
-              }),
-              menu: (base) => ({
-                ...base,
-                width: "100%",
-                zIndex: 9999,
-              }),
-              menuList: (base) => ({
-                ...base,
-                maxHeight: "50vh",
-                overflowY: "auto",
-              }),
-              menuPortal: (base) => ({
-                ...base,
-                zIndex: 9999,
-              }),
-            }}
-          />
-        </div>
+        <Select
+          options={companyOptions}
+          value={selectedCompany}
+          onChange={setSelectedCompany}
+          placeholder="Select company..."
+          isClearable
+          className={styles.select}
+        />
 
-        <button type="submit" className={styles.formButton} disabled={loading}>
-          {loading ? "Adding…" : "Add Job"}
+        <Select
+          isMulti
+          options={workerOptions}
+          value={workerOptions.filter((o) => selectedWorkers.includes(o.value))}
+          onChange={(sel) =>
+            setSelectedWorkers(sel ? sel.map((s) => s.value) : [])
+          }
+          placeholder="Select workers..."
+          className={styles.select}
+          menuPortalTarget={document.body}
+          styles={{
+            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+          }}
+        />
+
+        <button type="submit" className={styles.button} disabled={loading}>
+          {loading ? "Saving…" : "Add Order"}
         </button>
       </form>
+
       {error && <p className={styles.error}>{error}</p>}
     </div>
   );

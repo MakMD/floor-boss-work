@@ -14,7 +14,7 @@ export default function JobDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Функція оновлення статусу
+  // Оновлення статусу і створення job_update при старті
   const updateField = async (field, value) => {
     setLoading(true);
     const { error: jobErr } = await supabase
@@ -25,7 +25,6 @@ export default function JobDetails() {
     if (jobErr) {
       alert("Не вдалося оновити статус: " + jobErr.message);
     } else {
-      // Оновлюємо локальний стан
       setJob((prev) => ({
         ...prev,
         [field === "worker_status" ? "workerStatus" : "adminStatus"]: value,
@@ -34,33 +33,27 @@ export default function JobDetails() {
       const actor = user?.name || user?.id;
       const msg =
         field === "worker_status"
-          ? `User ${actor} set status "${value}" for order #${id}`
+          ? `Worker ${actor} set status "${value}" for order #${id}`
           : `Admin ${actor} ${
               value === "approved" ? "approved" : "rejected"
             } completion for order #${id}`;
-
-      // Локальне логи
       addActivity(msg);
 
-      // Якщо працівник почав виконання — додаємо запис в job_updates
       if (field === "worker_status" && value === "in_progress") {
-        try {
-          await supabase.from("job_updates").insert([
-            {
-              job_id: id,
-              worker_id: user.id,
-              message: `Worker ${actor} started order #${id}`,
-            },
-          ]);
-        } catch (updErr) {
-          console.error("Не вдалося додати job_update:", updErr);
-        }
+        // запис у job_updates
+        await supabase.from("job_updates").insert([
+          {
+            job_id: id,
+            worker_id: user.id,
+            message: `Worker ${actor} started order #${id}`,
+          },
+        ]);
       }
     }
     setLoading(false);
   };
 
-  // Завантажуємо дані замовлення
+  // Завантаження даних замовлення
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -87,14 +80,17 @@ export default function JobDetails() {
   if (error) return <p className={styles.error}>Error: {error}</p>;
   if (!job) return <p className={styles.error}>Job not found.</p>;
 
-  // Вкладки
+  // Оновлений список вкладок (без before-Photos)
   const tabs = [
-    { path: "", label: "Photos" },
+    ...(user.role === "admin"
+      ? [{ path: "work-order-photos", label: "Work Order Photos" }]
+      : []),
     ...(user.role === "admin" ? [{ path: "workers", label: "Workers" }] : []),
-    { path: "invoices", label: "Invoices" },
     { path: "materials", label: "Materials" },
     { path: "photos-after", label: "After Photos" },
+    { path: "invoices", label: "Invoices" },
     { path: "company-invoices", label: "Company Invoices" },
+    { path: "", label: "Notes" }, // якщо ви додасте Notes
   ];
 
   return (
@@ -127,7 +123,6 @@ export default function JobDetails() {
             : "Done"}
         </div>
 
-        {/* Кнопки для worker */}
         {user.role === "worker" && job.workerStatus === "not_started" && (
           <button
             className={styles.actionBtn}
@@ -145,7 +140,6 @@ export default function JobDetails() {
           </button>
         )}
 
-        {/* Кнопки для admin */}
         {user.role === "admin" && job.workerStatus === "done" && (
           <>
             <button
@@ -181,7 +175,7 @@ export default function JobDetails() {
         {tabs.map(({ path, label }) => (
           <NavLink
             key={path}
-            to={path}
+            to={path || "."}
             end={path === ""}
             className={({ isActive }) =>
               isActive ? styles.activeTab : styles.tab

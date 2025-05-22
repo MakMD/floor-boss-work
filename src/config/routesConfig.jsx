@@ -11,7 +11,6 @@ import CompanyInvoices from "../Pages/CompanyInvoices";
 import Orders from "../Pages/Orders";
 import JobDetails from "../Pages/JobDetails";
 import Materials from "../Pages/Materials";
-import Photos from "../Pages/Photos";
 import PhotosAfter from "../Pages/PhotosAfter";
 import Calendar from "../Pages/Calendar";
 
@@ -70,28 +69,27 @@ export const routesConfig = [
         allowedRoles: ["admin", "company", "user"],
       },
 
-      // Деталі замовлення з вкладеними табами
+      // Деталі замовлення з вкладеними табами (без before-Photos)
       {
         path: "orders/:id",
         element: <JobDetails />,
         allowedRoles: ["admin", "company", "user"],
         children: [
-          // за замовчуванням – Photos
+          // за замовчуванням – After Photos
           {
             index: true,
-            element: <Photos />,
+            element: <PhotosAfter />,
             allowedRoles: ["admin", "company", "user"],
+          },
+          {
+            path: "work-order-photos",
+            element: <WorkOrderPhotos />,
+            allowedRoles: ["admin"],
           },
           // Materials
           {
             path: "materials",
             element: <Materials />,
-            allowedRoles: ["admin", "company", "user"],
-          },
-          // Before Photos
-          {
-            path: "photos",
-            element: <Photos />,
             allowedRoles: ["admin", "company", "user"],
           },
           // After Photos
@@ -113,7 +111,11 @@ export const routesConfig = [
             allowedRoles: ["admin", "company", "user"],
           },
           // Workers (тільки для admin)
-          { path: "workers", element: <Workers />, allowedRoles: ["admin"] },
+          {
+            path: "workers",
+            element: <Workers />,
+            allowedRoles: ["admin"],
+          },
         ],
       },
 

@@ -19,7 +19,6 @@ import WorkerProfile from "../../Pages/WorkerProfile";
 import Orders from "../../Pages/Orders";
 import JobDetails from "../../Pages/JobDetails";
 import Materials from "../../Pages/Materials";
-import Photos from "../../Pages/Photos";
 import PhotosAfter from "../../Pages/PhotosAfter";
 import Invoices from "../../Pages/Invoices";
 import CompanyInvoices from "../../Pages/CompanyInvoices";
@@ -100,7 +99,10 @@ export default function App() {
             <Route
               path="home"
               element={
-                <ProtectedRoute allowedRoles={["admin"]} element={<Home />} />
+                <ProtectedRoute
+                  allowedRoles={["admin", "company", "worker"]}
+                  element={<Home />}
+                />
               }
             />
             <Route
@@ -161,7 +163,7 @@ export default function App() {
               path="orders"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "user"]}
+                  allowedRoles={["admin", "company", "worker"]}
                   element={<Orders />}
                 />
               }
@@ -177,15 +179,17 @@ export default function App() {
                 />
               }
             >
+              {/* За замовчуванням — After Photos */}
               <Route
                 index
                 element={
                   <ProtectedRoute
                     allowedRoles={["admin", "company", "worker"]}
-                    element={<Photos />}
+                    element={<PhotosAfter />}
                   />
                 }
               />
+              {/* Materials */}
               <Route
                 path="materials"
                 element={
@@ -195,15 +199,7 @@ export default function App() {
                   />
                 }
               />
-              <Route
-                path="photos"
-                element={
-                  <ProtectedRoute
-                    allowedRoles={["admin", "company", "worker"]}
-                    element={<Photos />}
-                  />
-                }
-              />
+              {/* After Photos */}
               <Route
                 path="photos-after"
                 element={
@@ -213,6 +209,7 @@ export default function App() {
                   />
                 }
               />
+              {/* Invoices */}
               <Route
                 path="invoices"
                 element={
@@ -222,6 +219,7 @@ export default function App() {
                   />
                 }
               />
+              {/* Company Invoices */}
               <Route
                 path="company-invoices"
                 element={
@@ -231,6 +229,7 @@ export default function App() {
                   />
                 }
               />
+              {/* Workers (Admin only) */}
               <Route
                 path="workers"
                 element={
