@@ -199,3 +199,19 @@
 .fileInput::file-selector-button:hover {
   background-color: #2563eb;
 }
+.previewContainerMultiple {
+  display: flex;
+  flex-wrap: wrap; /* Дозволяє переносити прев'ю на новий рядок */
+  gap: 10px; /* Проміжок між прев'ю */
+  margin-bottom: 1rem;
+  justify-content: center; /* Центрування прев'ю, якщо вони не займають всю ширину */
+}
+
+.previewImg {
+  max-width: 100px; /* Зменшено для відображення кількох прев'ю */
+  max-height: 100px;
+  object-fit: cover; /* Змінено на cover для кращого вигляду мініатюр */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  /* margin: 0 auto; видалено, оскільки gap та flex-wrap керують розміщенням */
+}

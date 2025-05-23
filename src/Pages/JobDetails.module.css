@@ -1,10 +1,11 @@
+/* src/Pages/JobDetails.module.css */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
 
 .jobDetails {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-family); /* Використовуйте var(--font-family) */
   max-width: 960px;
   margin: 2rem auto;
-  background-color: #ffffff;
+  background-color: #ffffff; /* Ваш колір var(--bg-white) */
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -14,18 +15,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f7fafc;
-  padding: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  background-color: #f7fafc; /* Ваш колір var(--bg-light) */
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0; /* Ваш колір var(--border-light) */
 }
 
-.backBtn,
-.logoutBtn {
+.backBtn {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #ffffff;
-  background-color: #3b82f6;
+  color: #ffffff; /* Ваш колір */
+  background-color: #3b82f6; /* Ваш колір var(--accent, #3b82f6) */
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -33,86 +33,71 @@
 }
 
 .logoutBtn {
-  background-color: #ef4444;
+  /* Цей стиль для кнопки Logout, яка зараз в Layout.jsx */
+  /* Якщо ви хочете специфічний стиль для кнопки Logout саме тут, він має бути в App.module.css */
+  background-color: #ef4444; /* Ваш колір var(--color-error, #ef4444) */
 }
 
 .backBtn:hover {
-  background-color: #2563eb;
+  background-color: #2563eb; /* Ваш колір var(--accent-hover, #2563eb) */
 }
 
 .logoutBtn:hover {
-  background-color: #dc2626;
+  background-color: #dc2626; /* Ваш колір var(--color-error-hover, #dc2626) */
 }
 
 .title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #1f2937; /* Ваш колір var(--text-dark) */
   text-align: center;
-  padding: 1rem 0;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.tabs {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  background-color: #ffffff;
-  padding: 0;
+  padding: 1.5rem 2rem;
   margin: 0;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0; /* Ваш колір var(--border-light) */
 }
 
-.tab {
-  flex: 1;
-  text-align: center;
-  padding: 0.75rem 0;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #4b5563;
-  text-decoration: none;
-  transition: color 0.2s ease, background-color 0.2s ease;
+.jobInfoBlock {
+  padding: 1rem 1.5rem;
+  background-color: #f9fafb; /* Ваш колір var(--surface, #f9fafb) */
+  border-bottom: 1px solid #e2e8f0; /* Ваш колір var(--border-light) */
+  margin-bottom: 1rem;
 }
-
-.tab:hover {
-  background-color: #f1f5f9;
-  color: #1f2937;
+.jobInfoBlock .detail {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  color: #4a5568; /* Ваш колір var(--fg-muted, #4a5568) */
 }
-
-.activeTab {
-  flex: 1;
-  text-align: center;
-  padding: 0.75rem 0;
-  font-size: 0.9rem;
+.jobInfoBlock .detail strong {
+  color: #2d3748; /* Ваш колір var(--fg, #2d3748) */
+}
+.instructionsBlock {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #ffffff; /* Ваш колір var(--bg-white) */
+  border: 1px solid #e2e8f0; /* Ваш колір var(--border-light) */
+  border-radius: 6px;
+}
+.instructionsBlock strong {
+  display: block;
+  margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #1f2937;
-  background-color: #f7fafc;
-  border-bottom: 3px solid #3b82f6;
+  color: #2d3748; /* Ваш колір var(--fg, #2d3748) */
+}
+.instructionText {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #4b5563; /* Ваш колір var(--fg-muted, #4b5563) */
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
-.content {
-  background-color: #f7fafc;
-  padding: 2rem;
-  min-height: 360px;
-}
-
-.loading,
-.error {
-  font-family: "Inter", sans-serif;
-  color: #6b7280;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-.error {
-  color: #dc2626;
-  font-weight: 600;
-}
 .statusContainer {
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-bottom: 1rem;
+  padding: 0 1.5rem;
+  flex-wrap: wrap; /* Дозволяє переноситися елементам */
 }
 
 .badge {
@@ -122,26 +107,26 @@
   font-weight: 500;
   color: #fff;
 }
-
 .badgeNotStarted {
   background-color: #a0aec0;
 }
-
 .badgeInProgress {
   background-color: #4299e1;
 }
-
 .badgeDoneGrey {
   background-color: #718096;
 }
-
 .badgeDoneGreen {
   background-color: #48bb78;
+}
+.badgeError {
+  /* Ви просили додати цей стиль для статусу Rejected */
+  background-color: #e53e3e; /* Ваш колір var(--color-error, #e53e3e) */
 }
 
 .actionBtn {
   padding: 0.5rem 1rem;
-  background-color: #2b6cb0;
+  background-color: #2b6cb0; /* Ваш колір var(--accent-dark, #2b6cb0) */
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -149,14 +134,13 @@
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
-
 .actionBtn:disabled {
-  background-color: #cbd5e0;
+  background-color: #cbd5e0; /* Ваш колір var(--color-gray-300) */
   cursor: default;
 }
 .rejectBtn {
   padding: 0.5rem 1rem;
-  background-color: #e53e3e;
+  background-color: #e53e3e; /* Ваш колір var(--color-error, #e53e3e) */
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -165,19 +149,186 @@
   margin-left: 0.5rem;
   transition: background-color 0.2s ease;
 }
-
 .rejectBtn:hover {
-  background-color: #c53030;
+  background-color: #c53030; /* Ваш колір var(--color-error-hover, #c53030) */
 }
 
-@media (max-width: 640px) {
+.tabs {
+  display: flex;
+  justify-content: space-around; /* Змінено на space-around для кращого розподілу */
+  flex-wrap: wrap; /* Дозволяє вкладкам переноситися, якщо не вміщуються */
+  background-color: #ffffff; /* Ваш колір var(--bg-white) */
+  padding: 0;
+  margin: 0;
+  border-bottom: 1px solid #e2e8f0; /* Ваш колір var(--border-light) */
+}
+
+.tab {
+  flex: 1 1 auto;
+  text-align: center;
+  padding: 0.85rem 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4b5563; /* Ваш колір var(--text-muted) */
+  text-decoration: none;
+  transition: color 0.2s ease, background-color 0.2s ease,
+    border-bottom-color 0.2s ease;
+  border-bottom: 3px solid transparent; /* Неактивні вкладки мають прозорий нижній бордер */
+}
+.tab:hover {
+  background-color: #f1f5f9; /* Ваш колір var(--bg-light) */
+  color: #1f2937; /* Ваш колір var(--text-dark) */
+}
+.activeTab {
+  flex: 1 1 auto;
+  text-align: center;
+  padding: 0.85rem 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937; /* Ваш колір var(--text-dark) */
+  background-color: #f7fafc; /* Ваш ОРИГІНАЛЬНИЙ колір фону для активної вкладки */
+  border-bottom: 3px solid #3b82f6; /* Ваш ОРИГІНАЛЬНИЙ колір підкреслення var(--accent) */
+}
+
+.content {
+  background-color: #f7fafc; /* Ваш колір var(--bg-light) */
+  padding: 1.5rem;
+  min-height: 360px;
+}
+
+.loading,
+.errorMsg {
+  font-family: var(--font-family); /* Ваш шрифт */
+  color: #6b7280; /* Ваш колір var(--text-muted) */
+  text-align: center;
+  margin-top: 2rem;
+  padding: 1rem;
+}
+.errorMsg {
+  color: #dc2626; /* Ваш колір var(--text-error) */
+  font-weight: 600;
+  background-color: rgba(220, 38, 38, 0.1);
+  border: 1px solid #dc2626; /* Ваш колір var(--text-error) */
+  border-radius: 6px;
+}
+
+/* --- Медіа-запити для адаптивності --- */
+@media (max-width: 768px) {
+  /* Планшети */
+  .jobDetails {
+    margin: 1.5rem 1rem;
+    border-radius: 6px;
+  }
+  .btnContainer {
+    padding: 0.75rem 1rem;
+  }
+  .title {
+    font-size: 1.5rem;
+    padding: 1.25rem 1rem;
+  }
+  .jobInfoBlock,
+  .statusContainer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .statusContainer {
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  .badge {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+  }
+  .actionBtn,
+  .rejectBtn {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  .tab,
+  .activeTab {
+    font-size: 0.85rem;
+    padding: 0.75rem 0.25rem;
+    min-width: 80px;
+  }
+  .content {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Телефони */
+  .jobDetails {
+    margin: 1rem 0;
+    border-radius: 0;
+  }
+  .btnContainer {
+    padding: 0.75rem;
+  }
+  .backBtn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  .title {
+    font-size: 1.3rem;
+    padding: 1rem;
+  }
+  .jobInfoBlock,
+  .statusContainer {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  .jobInfoBlock .detail {
+    font-size: 0.9rem;
+  }
+  .instructionText {
+    font-size: 0.85rem;
+  }
+
+  .statusContainer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .statusContainer > * {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+  .statusContainer .badge {
+    /* Якщо бейдж є flex-контейнером і текст в ньому треба центрувати: */
+    /* display: flex; */
+    /* justify-content: center; */
+  }
+  .rejectBtn {
+    margin-left: 0;
+  }
+
   .tabs {
     flex-direction: column;
   }
   .tab,
   .activeTab {
     flex: none;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e2e8f0; /* Ваш var(--border-light) */
+    border-left: 3px solid transparent; /* Для вертикального меню */
+  }
+  .activeTab {
+    border-left-color: #3b82f6; /* Ваш var(--accent) */
+    /* border-bottom: 1px solid #e2e8f0; -- Залишаємо для консистенції з .tab */
+    /* Нижнє підкреслення для активної вкладки у вертикальному меню може бути зайвим, 
+       оскільки є лівий бордер. Якщо воно потрібне, розкоментуйте: */
+    /* border-bottom: 3px solid #3b82f6 !important; */ /* Ваш var(--accent) */
+    /* Можливо, фон активної вкладки у вертикальному меню теж має бути іншим */
+    /* background-color: #e9ecef; /* Наприклад, трохи темніший фон */
+  }
+  .tab:last-child,
+  .activeTab:last-child {
+    /* Прибираємо нижній бордер у останньої вкладки у вертикальному списку */
+    border-bottom: none;
+  }
+
+  .content {
     padding: 0.75rem;
-    border-bottom: 1px solid #e2e8f0;
   }
 }

@@ -6,204 +6,398 @@ import { supabase } from "../lib/supabase";
 import styles from "./Orders.module.css";
 
 export default function Orders() {
-  const { user } = useContext(AppContext);
+  const { user, addActivity } = useContext(AppContext); // Додаємо addActivity для логування
 
-  // Завантажені дані
   const [workers, setWorkers] = useState([]);
-  const [companies, setCompanies] = useState([]);
-
-  // Поля форми
   const [address, setAddress] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [sf, setSf] = useState("");
   const [rate, setRate] = useState("");
-  const [builder, setBuilder] = useState("");
+  const [client, setClient] = useState("");
   const [notes, setNotes] = useState("");
-  const [storageUrl, setStorageUrl] = useState("");
-  const [workOrderNum, setWorkOrderNum] = useState("");
   const [selectedWorkers, setSelectedWorkers] = useState([]);
+
+  const [workOrderNumber, setWorkOrderNumber] = useState("");
+  const [storageInfo, setStorageInfo] = useState("");
+  const [adminInstructions, setAdminInstructions] = useState("");
   const [selectedCompany, setSelectedCompany] = useState(null);
+  const [companies, setCompanies] = useState([]);
+  const [jobOrderPhotoFile, setJobOrderPhotoFile] = useState(null);
+  const [jobOrderPhotoPreview, setJobOrderPhotoPreview] = useState(null);
 
   const [loading, setLoading] = useState(false);
+  const [formSubmitting, setFormSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  // Підвантажуємо список працівників і компаній
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        let { data: wData, error: wErr } = await supabase
-          .from("workers")
-          .select("id, name")
-          .eq("role", "worker")
-          .order("name", { ascending: true });
-        if (wErr) throw wErr;
-        setWorkers(wData);
+  const uuidRegex =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
-        let { data: cData, error: cErr } = await supabase
-          .from("companies")
-          .select("id, name")
-          .order("name", { ascending: true });
-        if (cErr) throw cErr;
-        setCompanies(cData);
-      } catch (e) {
-        setError(e.message);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [workersRes, companiesRes] = await Promise.all([
+          supabase
+            .from("workers")
+            .select("id, name")
+            .order("name", { ascending: true }),
+          supabase
+            .from("companies")
+            .select("id, name")
+            .order("name", { ascending: true }),
+        ]);
+
+        if (workersRes.error) throw workersRes.error;
+        setWorkers(workersRes.data || []);
+
+        if (companiesRes.error) throw companiesRes.error;
+        setCompanies(companiesRes.data || []);
+      } catch (err) {
+        setError(err.message);
+        setWorkers([]);
+        setCompanies([]);
       } finally {
         setLoading(false);
       }
-    })();
+    };
+    fetchData();
   }, []);
 
-  // Вставка нового замовлення
+  const handleJobOrderPhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setJobOrderPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setJobOrderPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setJobOrderPhotoFile(null);
+      setJobOrderPhotoPreview(null);
+    }
+  };
+
   const handleAddJob = async (e) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
+    if (!address.trim() || !date) {
+      setError("Address and Date are required.");
+      return;
+    }
 
+    setError(null);
+    setFormSubmitting(true);
     try {
-      // 1) Створюємо job
+      if (!user || typeof user.id !== "string" || !uuidRegex.test(user.id)) {
+        setError("User ID is invalid. Cannot create job.");
+        setFormSubmitting(false);
+        return;
+      }
+
+      let jobOrderPhotoUrl = null;
+      if (jobOrderPhotoFile) {
+        const fileExt = jobOrderPhotoFile.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random()
+          .toString(36)
+          .substring(2, 8)}.${fileExt}`;
+        const filePath = `job-order-specific/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("job-order-photos")
+          .upload(filePath, jobOrderPhotoFile);
+
+        if (uploadError)
+          throw new Error(
+            `Failed to upload job order photo: ${uploadError.message}`
+          );
+        const { data: urlData } = supabase.storage
+          .from("job-order-photos")
+          .getPublicUrl(filePath);
+        jobOrderPhotoUrl = urlData.publicUrl;
+      }
+
+      const jobData = {
+        address,
+        date,
+        sf: sf ? Number(sf) : null,
+        rate: rate ? Number(rate) : null,
+        client,
+        notes,
+        created_by: user.id,
+        work_order_number: workOrderNumber || null,
+        storage_info: storageInfo || null,
+        admin_instructions: adminInstructions || null,
+        company_id: selectedCompany ? selectedCompany.value : null,
+        job_order_photo_url: jobOrderPhotoUrl,
+      };
+
       const { data: newJob, error: insertError } = await supabase
         .from("jobs")
-        .insert([
-          {
-            address,
-            date,
-            rate: rate ? Number(rate) : null,
-            client: builder,
-            notes: notes || null,
-            storage_url: storageUrl || null,
-            work_order_number: workOrderNum || null,
-            company_id: selectedCompany?.value || null,
-          },
-        ])
+        .insert([jobData])
         .select()
         .single();
       if (insertError) throw insertError;
 
-      // 2) Додаємо зв’язки у job_workers (за наявності)
-      if (selectedWorkers.length) {
-        const relations = selectedWorkers.map((wid) => ({
-          job_id: newJob.id,
-          worker_id: wid,
-        }));
+      // --- АВТОМАТИЧНЕ СТВОРЕННЯ ІНВОЙСУ ПІСЛЯ СТВОРЕННЯ ЗАМОВЛЕННЯ ---
+      if (newJob && newJob.id) {
+        const sfValue = parseFloat(newJob.sf); // Беремо sf з newJob (щойно створеного)
+        const rateValue = parseFloat(newJob.rate); // Беремо rate з newJob
+
+        if (
+          !isNaN(sfValue) &&
+          !isNaN(rateValue) &&
+          sfValue > 0 &&
+          rateValue > 0
+        ) {
+          const calculatedInvoiceAmount = sfValue * rateValue;
+          const currentDateForInvoice = new Date().toISOString().slice(0, 10);
+
+          const { error: invoiceInsertError } = await supabase
+            .from("invoices")
+            .insert([
+              {
+                job_id: newJob.id,
+                invoice_date: currentDateForInvoice,
+                amount: calculatedInvoiceAmount,
+              },
+            ]);
+
+          if (invoiceInsertError) {
+            console.error(
+              "Failed to create automatic invoice:",
+              invoiceInsertError.message
+            );
+            // Вирішіть, чи потрібно показувати цю помилку користувачеві
+            // setError(prev => prev ? `${prev}\nFailed to create auto-invoice: ${invoiceInsertError.message}` : `Failed to create auto-invoice: ${invoiceInsertError.message}`);
+            addActivity(
+              `Order #${newJob.id} created. Auto-invoice creation failed: ${invoiceInsertError.message}`
+            );
+          } else {
+            console.log(
+              `Automatic invoice for $${calculatedInvoiceAmount.toFixed(
+                2
+              )} created for order #${newJob.id}`
+            );
+            addActivity(
+              `Order #${
+                newJob.id
+              } created. Auto-invoice for $${calculatedInvoiceAmount.toFixed(
+                2
+              )} generated.`
+            );
+          }
+        } else {
+          console.warn(
+            `Order #${newJob.id} created, but sf/rate are invalid for auto-invoice. sf: ${newJob.sf}, rate: ${newJob.rate}`
+          );
+          addActivity(
+            `Order #${newJob.id} created. Auto-invoice not generated (invalid sf/rate).`
+          );
+        }
+      }
+      // --- КІНЕЦЬ АВТОМАТИЧНОГО СТВОРЕННЯ ІНВОЙСУ ---
+
+      if (selectedWorkers.length > 0 && newJob) {
+        const relations = selectedWorkers.map((workerOption) => {
+          if (
+            !workerOption ||
+            typeof workerOption.value !== "string" ||
+            !uuidRegex.test(workerOption.value)
+          ) {
+            throw new Error(
+              `Invalid worker ID found: ${
+                workerOption?.value || "undefined"
+              }. Cannot assign worker.`
+            );
+          }
+          return {
+            job_id: newJob.id,
+            worker_id: workerOption.value,
+          };
+        });
         const { error: relError } = await supabase
           .from("job_workers")
           .insert(relations);
         if (relError) throw relError;
       }
 
-      // 3) Очищаємо форму
       setAddress("");
       setDate(new Date().toISOString().slice(0, 10));
+      setSf("");
       setRate("");
-      setBuilder("");
+      setClient("");
       setNotes("");
-      setStorageUrl("");
-      setWorkOrderNum("");
       setSelectedWorkers([]);
+      setWorkOrderNumber("");
+      setStorageInfo("");
+      setAdminInstructions("");
       setSelectedCompany(null);
+      setJobOrderPhotoFile(null);
+      setJobOrderPhotoPreview(null);
+      alert("Job added successfully!"); // Можна додати інформацію про інвойс, якщо потрібно
     } catch (err) {
-      setError(err.message);
+      console.error("Error in handleAddJob:", err);
+      setError(err.message || "An unexpected error occurred.");
     } finally {
-      setLoading(false);
+      setFormSubmitting(false);
     }
   };
 
-  const workerOptions = workers.map((w) => ({
-    value: w.id,
-    label: w.name,
-  }));
-  const companyOptions = companies.map((c) => ({
-    value: c.id,
-    label: c.name,
-  }));
+  const workerOptions = workers.map((w) => ({ value: w.id, label: w.name }));
+  const companyOptions = companies.map((c) => ({ value: c.id, label: c.name }));
+
+  if (loading) {
+    return <div className={styles.loading}>Loading data...</div>;
+  }
 
   return (
-    <div className={styles.page}>
-      <h2 className={styles.title}>Add New Order</h2>
-      <form onSubmit={handleAddJob} className={styles.form}>
+    <div className={styles.homePage}>
+      <h1 className={styles.title}>Create New Order</h1>
+      <form onSubmit={handleAddJob} className={styles.addForm}>
+        {/* ... JSX форми залишається без змін ... */}
         <input
           type="text"
           placeholder="Address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          className={styles.input}
+          required
+          className={styles.formInput}
         />
-
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className={styles.input}
+          required
+          className={styles.formInput}
         />
-
         <input
           type="number"
-          placeholder="Rate"
+          placeholder="Square Footage (Optional)"
+          value={sf}
+          onChange={(e) => setSf(e.target.value)}
+          className={styles.formInput}
+        />
+        <input
+          type="number"
+          placeholder="Rate (Optional)"
           value={rate}
           onChange={(e) => setRate(e.target.value)}
-          className={styles.input}
+          className={styles.formInput}
         />
-
         <input
           type="text"
-          placeholder="Builder"
-          value={builder}
-          onChange={(e) => setBuilder(e.target.value)}
-          className={styles.input}
+          placeholder="Builder (Optional)"
+          value={client}
+          onChange={(e) => setClient(e.target.value)}
+          className={styles.formInput}
         />
-
         <input
           type="text"
-          placeholder="Work Order #"
-          value={workOrderNum}
-          onChange={(e) => setWorkOrderNum(e.target.value)}
-          className={styles.input}
+          placeholder="Work Order # (Optional)"
+          value={workOrderNumber}
+          onChange={(e) => setWorkOrderNumber(e.target.value)}
+          className={styles.formInput}
         />
-
-        <input
-          type="text"
-          placeholder="Storage URL"
-          value={storageUrl}
-          onChange={(e) => setStorageUrl(e.target.value)}
-          className={styles.input}
-        />
-
         <textarea
-          placeholder="Notes (optional)"
+          placeholder="Storage Info (Optional)"
+          value={storageInfo}
+          onChange={(e) => setStorageInfo(e.target.value)}
+          className={styles.formTextarea}
+        />
+        <textarea
+          placeholder="Admin Instructions (Optional)"
+          value={adminInstructions}
+          onChange={(e) => setAdminInstructions(e.target.value)}
+          className={styles.formTextarea}
+        />
+        <div>
+          <label htmlFor="jobOrderPhoto" className={styles.formLabel}>
+            Job Order Photo (Optional):
+          </label>
+          <input
+            type="file"
+            id="jobOrderPhoto"
+            accept="image/*"
+            onChange={handleJobOrderPhotoChange}
+            className={styles.fileInput}
+          />
+          {jobOrderPhotoPreview && (
+            <div className={styles.previewContainer}>
+              <img
+                src={jobOrderPhotoPreview}
+                alt="Job Order Preview"
+                className={styles.previewImg}
+              />
+            </div>
+          )}
+        </div>
+        <textarea
+          placeholder="Notes (Optional)"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className={styles.textarea}
+          className={styles.formTextarea}
         />
-
-        <Select
-          options={companyOptions}
-          value={selectedCompany}
-          onChange={setSelectedCompany}
-          placeholder="Select company..."
-          isClearable
-          className={styles.select}
-        />
-
-        <Select
-          isMulti
-          options={workerOptions}
-          value={workerOptions.filter((o) => selectedWorkers.includes(o.value))}
-          onChange={(sel) =>
-            setSelectedWorkers(sel ? sel.map((s) => s.value) : [])
-          }
-          placeholder="Select workers..."
-          className={styles.select}
-          menuPortalTarget={document.body}
-          styles={{
-            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-          }}
-        />
-
-        <button type="submit" className={styles.button} disabled={loading}>
-          {loading ? "Saving…" : "Add Order"}
+        <div className={styles.selectWrapper}>
+          <Select
+            options={companyOptions}
+            value={selectedCompany}
+            onChange={(selectedOption) => setSelectedCompany(selectedOption)}
+            placeholder="Select Company (Optional)"
+            isClearable
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
+            styles={{
+              control: (base) => ({
+                ...base,
+                minHeight: 40,
+                fontSize: "0.9rem",
+              }),
+              menu: (base) => ({ ...base, width: "100%", zIndex: 9998 }),
+              menuList: (base) => ({
+                ...base,
+                maxHeight: "50vh",
+                overflowY: "auto",
+              }),
+              menuPortal: (base) => ({ ...base, zIndex: 9998 }),
+            }}
+          />
+        </div>
+        <div className={styles.selectWrapper}>
+          <Select
+            isMulti
+            options={workerOptions}
+            value={selectedWorkers}
+            onChange={(selectedOptions) =>
+              setSelectedWorkers(selectedOptions || [])
+            }
+            placeholder="Select workers (Optional)"
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
+            styles={{
+              control: (base) => ({
+                ...base,
+                minHeight: 40,
+                fontSize: "0.9rem",
+              }),
+              menu: (base) => ({ ...base, width: "100%", zIndex: 9999 }),
+              menuList: (base) => ({
+                ...base,
+                maxHeight: "50vh",
+                overflowY: "auto",
+              }),
+              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+            }}
+          />
+        </div>
+        <button
+          type="submit"
+          className={styles.formButton}
+          disabled={formSubmitting}
+        >
+          {formSubmitting ? "Adding Job…" : "Add Job"}
         </button>
       </form>
-
       {error && <p className={styles.error}>{error}</p>}
     </div>
   );

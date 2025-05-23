@@ -5,65 +5,131 @@
   background-color: #ffffff;
   font-family: "Inter", sans-serif;
   color: #2d3748;
-  max-width: 960px;
-  margin: 2rem auto;
-  padding: 2rem;
+  max-width: 960px; /* Це може бути завеликим, якщо ActiveWorkers рендериться всередині .content в JobDetails */
+  margin: 2rem auto; /* Це також може бути зайвим, якщо це вкладка */
+  padding: 1rem; /* Зменшено з 2rem для компактності всередині вкладки */
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  /* box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); -- Тінь може бути зайвою для вмісту вкладки */
 }
 
 .title {
-  font-size: 1.75rem;
+  font-size: 1.25rem; /* Зменшено для підзаголовка вкладки */
   margin-bottom: 1rem;
   font-weight: 600;
+  color: var(--text-dark); /* Використовуємо змінні */
 }
 
 .error {
-  color: #e53e3e;
+  color: var(--text-error); /* Використовуємо змінні */
   margin-bottom: 1rem;
+  font-weight: 500; /* Трохи менш жирний */
+  font-size: 0.9rem;
 }
 
 .loading,
 .empty {
-  color: #718096;
+  color: var(--text-muted); /* Використовуємо змінні */
   text-align: center;
-  margin: 2rem 0;
+  margin: 1.5rem 0; /* Зменшено margin */
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Стилі для форми додавання працівника (з попередніх кроків) */
+.addWorkerForm {
+  display: flex;
+  gap: 0.75rem; /* Зменшено gap */
+  margin-bottom: 1.5rem;
+  align-items: center;
+}
+
+.workerSelect {
+  /* Контейнер для react-select */
+  flex-grow: 1;
+}
+/* Глобальні стилі для react-select можна винести або налаштовувати через props */
+.workerSelect :global(.react-select__control) {
+  min-height: 38px; /* Трохи менша висота */
+  border-color: var(--border-light);
+}
+.workerSelect :global(.react-select__control--is-focused) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.actionButton, /* Кнопка "Assign Worker" */
+.removeButton {
+  /* Кнопка "Remove" */
+  padding: 0.4rem 0.8rem; /* Зменшено padding */
+  font-size: 0.8rem; /* Зменшено шрифт */
+  font-weight: 500; /* Менш жирний */
+  color: var(--bg-white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.actionButton {
+  background-color: var(--accent);
+}
+.actionButton:hover {
+  background-color: var(--accent-hover);
+}
+.actionButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.removeButton {
+  background-color: var(--color-error);
+  margin-left: auto;
+}
+.removeButton:hover {
+  background-color: var(--color-error-hover);
+}
+.removeButton:disabled {
+  background-color: #f3a1a1; /* Світліший червоний для disabled */
+  cursor: not-allowed;
 }
 
 .list {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(250px, 1fr)
+  ); /* Зменшено minmax */
+  gap: 0.75rem; /* Зменшено gap */
   list-style: none;
   padding: 0;
   margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
 }
 
 .item {
   display: flex;
   align-items: center;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: 6px; /* Зменшено радіус */
+  padding: 0.75rem; /* Зменшено padding */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); /* Зменшено тінь */
   transition: box-shadow 0.2s ease;
 }
 
 .item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); /* Зменшено тінь при ховері */
 }
 
 .index {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin-right: 0.75rem;
-  background-color: #4299e1;
-  color: #ffffff;
-  font-size: 0.875rem;
+  width: 1.5rem; /* Зменшено */
+  height: 1.5rem; /* Зменшено */
+  margin-right: 0.5rem; /* Зменшено */
+  background-color: var(--accent); /* Ваш колір #4299e1 (синій) або #3b82f6 */
+  color: var(--bg-white);
+  font-size: 0.75rem; /* Зменшено */
   font-weight: 600;
   border-radius: 50%;
 }
@@ -73,21 +139,65 @@
   flex-direction: column;
   text-decoration: none;
   color: inherit;
-  flex: 1;
+  flex-grow: 1; /* Дозволяє посиланню зайняти простір до кнопки */
   transition: color 0.2s ease;
 }
 
 .link:hover {
-  color: #3b82f6;
+  color: var(--accent); /* Ваш колір #3b82f6 */
 }
 
 .workerName {
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 0.9rem; /* Зменшено */
+  font-weight: 500; /* Менш жирний */
+  color: var(--text-dark);
 }
 
 .workerRole {
-  font-size: 0.875rem;
-  color: #718096;
-  margin-top: 0.25rem;
+  font-size: 0.8rem; /* Зменшено */
+  color: var(--text-muted);
+  margin-top: 0.15rem; /* Зменшено */
+}
+
+/* Медіа-запити для адаптивності */
+@media (max-width: 768px) {
+  .page {
+    /* Якщо це вкладка, то margin та max-width тут можуть бути зайвими */
+    /* margin: 1rem auto; */
+    /* padding: 1rem; */
+  }
+  .addWorkerForm {
+    flex-direction: column; /* Форма в стовпчик */
+    align-items: stretch; /* Розтягуємо елементи на всю ширину */
+  }
+  .workerSelect {
+    width: 100%; /* Селект на всю ширину */
+  }
+  .actionButton {
+    width: 100%; /* Кнопка на всю ширину */
+  }
+}
+
+@media (max-width: 480px) {
+  .list {
+    grid-template-columns: 1fr; /* Один елемент в рядку */
+  }
+  .item {
+    padding: 0.6rem;
+  }
+  .workerName {
+    font-size: 0.85rem;
+  }
+  .workerRole {
+    font-size: 0.75rem;
+  }
+  .removeButton {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+  }
+  .index {
+    font-size: 0.7rem;
+    width: 1.3rem;
+    height: 1.3rem;
+  }
 }

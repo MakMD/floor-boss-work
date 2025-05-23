@@ -1,0 +1,191 @@
+/* src/Pages/PhotoGallery.module.css */
+.galleryPage {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pageTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: var(--fg);
+  text-align: center;
+}
+
+.subTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--fg-accent, #333);
+  text-align: center;
+}
+
+.accessDenied,
+.noPhotos,
+.loading,
+.error {
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--muted);
+  margin-top: 2rem;
+}
+
+.error {
+  color: var(--color-error, #e53e3e);
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 600px;
+  display: block;
+  margin: 0 auto 2rem auto;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-light, #ccc);
+  border-radius: 6px;
+  font-size: 1rem;
+}
+.searchInput:focus {
+  outline: none;
+  border-color: var(--accent, #3b82f6);
+  box-shadow: 0 0 0 2px var(--accent-focus-ring, rgba(59, 130, 246, 0.2));
+}
+
+/* Сітка для папок замовлень та для підпапок типів фото */
+.folderGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.folderCard {
+  background-color: var(--surface, #fff);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.folderCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.folderIcon {
+  font-size: 3rem; /* Розмір іконки папки */
+  margin-bottom: 0.75rem;
+  color: var(--accent, #3b82f6);
+}
+
+.folderName {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 0.25rem;
+}
+
+.folderDate {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Стилі для PhotoGridDisplay */
+.photoGridContainer {
+  padding: 1rem 0;
+}
+
+.backButton {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  padding: 0.6rem 1.2rem;
+  background-color: var(--bg-light, #f0f0f0);
+  color: var(--fg-accent, #333);
+  border: 1px solid var(--border-light, #ccc);
+  border-radius: 6px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.backButton:hover {
+  background-color: var(--border-light, #e0e0e0);
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(200px, 1fr)
+  ); /* Менші картки для фото */
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.photoCard {
+  background-color: var(--surface, #fff);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.photoCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.photoThumb {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
+.photoInfo {
+  padding: 0.75rem;
+  min-height: 80px; /* Щоб картки були приблизно однакової висоти */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.caption {
+  font-size: 0.8rem;
+  color: var(--fg-muted, #4b5563);
+  margin-bottom: 0.3rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+}
+
+.date {
+  font-size: 0.7rem;
+  color: var(--muted-more, #9ca3af);
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.loadMoreButton {
+  /* ... (стилі як раніше) ... */
+}
+
+/* Модальне вікно */
+.modalOverlay {
+  /* ... (стилі як раніше) ... */
+}
+.modalContent {
+  /* ... (стилі як раніше) ... */
+}
+.modalImg {
+  /* ... (стилі як раніше) ... */
+}
+.closeBtn {
+  /* ... (стилі як раніше) ... */
+}

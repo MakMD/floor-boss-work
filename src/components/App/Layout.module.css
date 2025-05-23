@@ -8,3 +8,55 @@
 .theme-toggle:hover {
   color: var(--accent);
 }
+.mobileMenuButton {
+  display: none; /* Приховано на десктопі */
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1001; /* Над сайдбаром, якщо сайдбар fixed */
+  background: var(--color-bg-sidebar);
+  color: var(--color-text-light);
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.sidebarCloseButton {
+  display: none; /* Приховано на десктопі */
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--color-text-light);
+  font-size: 1.75rem;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1000; /* Щоб був над контентом */
+    /* width: 80%; /* Можна зробити його не на всю ширину */
+    /* max-width: 300px; */
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+
+  .mainContent {
+    margin-left: 0; /* Забираємо відступ, коли сайдбар прихований */
+    /* Можна додати overlay на контент, коли сайдбар відкритий */
+  }
+
+  .mobileMenuButton {
+    display: block;
+  }
+  .sidebarCloseButton {
+    display: block;
+  }
+}

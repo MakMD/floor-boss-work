@@ -7,30 +7,34 @@ import {
   Navigate,
 } from "react-router-dom";
 import Layout from "./Layout";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase"; //
 
 // Сторінки
-import Home from "../../Pages/Home";
-import Login from "../../Pages/Login";
-import Dashboard from "../../components/Dashboard/Dashboard";
-import ActiveWorkers from "../../Pages/ActiveWorkers";
-import Workers from "../../Pages/Workers";
-import WorkerProfile from "../../Pages/WorkerProfile";
-import Orders from "../../Pages/Orders";
-import JobDetails from "../../Pages/JobDetails";
-import Materials from "../../Pages/Materials";
-import PhotosAfter from "../../Pages/PhotosAfter";
-import Invoices from "../../Pages/Invoices";
-import CompanyInvoices from "../../Pages/CompanyInvoices";
-import Calendar from "../../Pages/Calendar";
+import Home from "../../Pages/Home"; //
+import Login from "../../Pages/Login"; //
+import ActiveWorkers from "../../Pages/ActiveWorkers"; //
+import Workers from "../../Pages/Workers"; //
+import WorkerProfile from "../../Pages/WorkerProfile"; //
+import Orders from "../../Pages/Orders"; //
+import JobDetails from "../../Pages/JobDetails"; //
+import Materials from "../../Pages/Materials"; //
+import PhotosAfter from "../../Pages/PhotosAfter"; //
+import Invoices from "../../Pages/Invoices"; //
+import Calendar from "../../Pages/Calendar"; //
+import JobOrderPhoto from "../../Pages/JobOrderPhoto"; //
+import WorkerNotes from "../../Pages/WorkerNotes"; //
+import PhotoGallery from "../../Pages/PhotoGallery"; //
 
 export const AppContext = createContext(null);
 
-// Єдиний захисний компонент
 function ProtectedRoute({ allowedRoles, element }) {
   const { user } = useContext(AppContext);
   if (!user) return <Navigate to="/login" replace />;
-  if (!allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
+
+  const userRole = user.role;
+  if (!userRole || !allowedRoles.includes(userRole)) {
+    return <Navigate to="/" replace />;
+  }
   return element;
 }
 
@@ -39,19 +43,72 @@ function AppProvider({ children }) {
   const [settings, setSettings] = useState({ theme: "light" });
   const [activityLog, setActivityLog] = useState([]);
 
+  const fetchAndSetUserWithProfile = async (authUser) => {
+    if (!authUser) {
+      setUser(null);
+      return;
+    }
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from("workers")
+        .select("role, name, id")
+        .eq("id", authUser.id)
+        .single();
+
+      if (profileError) {
+        console.error(
+          "Error fetching user worker profile:",
+          profileError.message
+        );
+        setUser({ ...authUser });
+        return;
+      }
+
+      if (profileData) {
+        setUser({ ...authUser, ...profileData });
+      } else {
+        console.warn("Worker profile not found for id:", authUser.id);
+        setUser({ ...authUser });
+      }
+    } catch (e) {
+      console.error("Error in fetchAndSetUserWithProfile:", e);
+      setUser({ ...authUser });
+    }
+  };
+
   useEffect(() => {
-    (async () => {
+    const getSession = async () => {
       const {
         data: { session },
+        error,
       } = await supabase.auth.getSession();
-      if (session?.user) setUser(session.user);
-    })();
+      if (error) {
+        console.error("Error getting session:", error.message);
+        setUser(null);
+        return;
+      }
+      await fetchAndSetUserWithProfile(session?.user || null);
+    };
+
+    getSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      await fetchAndSetUserWithProfile(session?.user || null);
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const login = (u) => setUser(u);
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Error signing out:", error.message);
+    }
   };
   const updateSettings = (s) => setSettings((prev) => ({ ...prev, ...s }));
   const addActivity = (msg) =>
@@ -59,6 +116,10 @@ function AppProvider({ children }) {
       ...prev,
       { message: msg, timestamp: Date.now() },
     ]);
+
+  useEffect(() => {
+    document.body.setAttribute("data-theme", settings.theme);
+  }, [settings.theme]);
 
   return (
     <AppContext.Provider
@@ -78,20 +139,21 @@ function AppProvider({ children }) {
 }
 
 export default function App() {
+  const ADMIN_ROLE = "admin";
+  const WORKER_ROLE = "worker";
+  const ALL_AUTHENTICATED_ROLES = [ADMIN_ROLE, WORKER_ROLE];
+
   return (
     <AppProvider>
       <Router>
         <Routes>
-          {/* Public */}
           <Route path="/login" element={<Login />} />
-
-          {/* Protected routes under Layout */}
           <Route element={<Layout />}>
             <Route
               index
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "worker"]}
+                  allowedRoles={ALL_AUTHENTICATED_ROLES}
                   element={<Home />}
                 />
               }
@@ -100,17 +162,8 @@ export default function App() {
               path="home"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "worker"]}
+                  allowedRoles={ALL_AUTHENTICATED_ROLES}
                   element={<Home />}
-                />
-              }
-            />
-            <Route
-              path="dashboard"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["admin", "company", "worker"]}
-                  element={<Dashboard />}
                 />
               }
             />
@@ -118,7 +171,7 @@ export default function App() {
               path="workers/active"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company"]}
+                  allowedRoles={[ADMIN_ROLE]}
                   element={<ActiveWorkers />}
                 />
               }
@@ -127,7 +180,7 @@ export default function App() {
               path="workers"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "worker"]}
+                  allowedRoles={[ADMIN_ROLE]}
                   element={<Workers />}
                 />
               }
@@ -136,26 +189,8 @@ export default function App() {
               path="workers/:id"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company"]}
+                  allowedRoles={[ADMIN_ROLE]}
                   element={<WorkerProfile />}
-                />
-              }
-            />
-            <Route
-              path="invoices"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["admin", "company"]}
-                  element={<Invoices />}
-                />
-              }
-            />
-            <Route
-              path="company-invoices"
-              element={
-                <ProtectedRoute
-                  allowedRoles={["company"]}
-                  element={<CompanyInvoices />}
                 />
               }
             />
@@ -163,89 +198,101 @@ export default function App() {
               path="orders"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "worker"]}
+                  allowedRoles={[ADMIN_ROLE]}
                   element={<Orders />}
                 />
               }
             />
-
-            {/* Вкладені маршрути для JobDetails */}
             <Route
               path="orders/:id"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "worker"]}
+                  allowedRoles={ALL_AUTHENTICATED_ROLES}
                   element={<JobDetails />}
                 />
               }
             >
-              {/* За замовчуванням — After Photos */}
               <Route
                 index
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "company", "worker"]}
+                    allowedRoles={ALL_AUTHENTICATED_ROLES}
                     element={<PhotosAfter />}
                   />
                 }
               />
-              {/* Materials */}
-              <Route
-                path="materials"
-                element={
-                  <ProtectedRoute
-                    allowedRoles={["admin", "company", "worker"]}
-                    element={<Materials />}
-                  />
-                }
-              />
-              {/* After Photos */}
               <Route
                 path="photos-after"
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "company", "worker"]}
+                    allowedRoles={ALL_AUTHENTICATED_ROLES}
                     element={<PhotosAfter />}
                   />
                 }
               />
-              {/* Invoices */}
+              <Route
+                path="job-order-photo"
+                element={
+                  <ProtectedRoute
+                    allowedRoles={[ADMIN_ROLE]}
+                    element={<JobOrderPhoto />}
+                  />
+                }
+              />
+              <Route
+                path="worker-notes"
+                element={
+                  <ProtectedRoute
+                    allowedRoles={ALL_AUTHENTICATED_ROLES}
+                    element={<WorkerNotes />}
+                  />
+                }
+              />
+              <Route
+                path="materials"
+                element={
+                  <ProtectedRoute
+                    allowedRoles={ALL_AUTHENTICATED_ROLES}
+                    element={<Materials />}
+                  />
+                }
+              />
               <Route
                 path="invoices"
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin", "company", "worker"]}
+                    allowedRoles={ALL_AUTHENTICATED_ROLES}
                     element={<Invoices />}
                   />
                 }
               />
-              {/* Company Invoices */}
-              <Route
-                path="company-invoices"
-                element={
-                  <ProtectedRoute
-                    allowedRoles={["admin", "company", "worker"]}
-                    element={<CompanyInvoices />}
-                  />
-                }
-              />
-              {/* Workers (Admin only) */}
               <Route
                 path="workers"
                 element={
                   <ProtectedRoute
-                    allowedRoles={["admin"]}
+                    allowedRoles={[ADMIN_ROLE]}
                     element={<ActiveWorkers />}
                   />
                 }
               />
-            </Route>
-
+              {/* Маршрут photo-gallery НЕ МАЄ бути тут, якщо це окрема сторінка */}
+            </Route>{" "}
+            {/* Кінець orders/:id */}
+            {/* ПРАВИЛЬНЕ МІСЦЕ для маршруту photo-gallery */}
+            <Route
+              path="photo-gallery"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[ADMIN_ROLE]}
+                  element={<PhotoGallery />}
+                />
+              }
+            />
             <Route
               path="calendar"
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "company", "worker"]}
+                  allowedRoles={ALL_AUTHENTICATED_ROLES}
                   element={<Calendar />}
                 />
               }

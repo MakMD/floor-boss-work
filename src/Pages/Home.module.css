@@ -19,19 +19,22 @@
 }
 
 .activityItem {
+  position: relative; /* Додано для позиціонування кнопки видалення */
   display: flex;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1rem; /* Збільшено padding для кращого вигляду */
   background: #ffffff;
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 0.75rem;
+  align-items: center; /* Вирівнюємо по центру по вертикалі */
 }
 
 .activityTime {
   font-size: 0.85rem;
   color: #718096;
-  min-width: 6.5rem;
+  min-width: 6.5rem; /* Забезпечує достатньо місця для дати */
+  flex-shrink: 0; /* Щоб час не стискався */
 }
 
 .activityLink {
@@ -39,6 +42,7 @@
   font-size: 1rem;
   color: #3182ce;
   text-decoration: none;
+  margin-right: 2.5rem; /* Додаємо відступ справа, щоб текст не залазив під кнопку видалення */
 }
 
 .activityLink:hover {
@@ -46,14 +50,25 @@
 }
 
 .activityText {
+  /* Цей клас не використовується в Home.jsx, можна видалити */
   flex: 1;
   font-size: 1rem;
 }
 
-.empty {
+.empty,
+.loading,
+.error {
+  /* Об'єднано стилі */
   text-align: center;
   color: #718096;
   padding: 1rem 0;
+  font-style: italic; /* Додано для кращого візуального розрізнення */
+}
+.error {
+  /* Специфічний стиль для помилки */
+  color: #e53e3e; /* Червоний колір для помилок */
+  font-style: normal;
+  font-weight: 600;
 }
 
 /* ---- Стилі футера ---- */
@@ -97,30 +112,101 @@
   color: #4a5568;
   margin: 0;
 }
-/* src/Pages/Home.module.css */
-/* … ваші існуючі стилі … */
-
-.activityItem {
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 0.5rem;
-  background: #ffffff;
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
-}
 
 .deleteBtn {
   position: absolute;
   right: 0.75rem;
+  top: 50%; /* Вирівнюємо по центру вертикально */
+  transform: translateY(-50%); /* Точне центрування */
   background: transparent;
   border: none;
   color: #e53e3e;
-  font-size: 1rem;
+  font-size: 1.25rem; /* Трохи збільшимо розмір для кращого тапу */
   cursor: pointer;
   transition: color 0.2s;
+  padding: 0.25rem; /* Додамо трохи padding для збільшення зони кліку */
 }
 
 .deleteBtn:hover {
   color: #c53030;
+}
+@media (max-width: 768px) {
+  /* Планшети та великі телефони */
+  .homePage {
+    padding: 1.5rem; /* Зменшуємо загальний padding */
+  }
+
+  .title {
+    font-size: 1.3rem; /* Трохи зменшуємо заголовок */
+  }
+
+  .activityItem {
+    padding: 0.75rem 0.5rem; /* Зменшуємо padding елемента списку */
+    /* Можна розглянути flex-direction: column, якщо контенту багато і він не вміщується */
+  }
+
+  .activityTime {
+    font-size: 0.8rem;
+    min-width: auto; /* Дозволяємо часу займати менше місця, якщо потрібно */
+    margin-bottom: 0.25rem; /* Додаємо відступ, якщо буде flex-direction: column */
+  }
+
+  .activityLink {
+    font-size: 0.9rem;
+    margin-right: 2rem; /* Трохи зменшуємо відступ для кнопки */
+  }
+
+  .deleteBtn {
+    font-size: 1.1rem; /* Трохи зменшуємо кнопку */
+    right: 0.5rem;
+  }
+
+  .footer {
+    padding: 1rem;
+  }
+
+  .footerTitle {
+    font-size: 1.1rem;
+  }
+
+  .contactLink,
+  .address {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Маленькі телефони */
+  .homePage {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.2rem;
+  }
+
+  .activityItem {
+    /* Якщо потрібно, щоб час і посилання були одне під одним: */
+    /* flex-direction: column; 
+    align-items: flex-start; */
+    gap: 0.25rem; /* Зменшуємо gap, якщо елементи вертикально */
+  }
+  .activityLink {
+    /* Якщо flex-direction: column для .activityItem, то margin-right не потрібен */
+    /* margin-right: 0; */
+  }
+
+  .deleteBtn {
+    /* Якщо flex-direction: column, позиціонування кнопки може потребувати корекції, 
+       або її можна перемістити в потік документа для цього розміру екрану.
+       Наприклад, зробити її менш абсолютною або змінити top/right.
+       Поки що залишаємо абсолютне, але тестуйте. */
+  }
+
+  .footerTitle {
+    font-size: 1rem;
+  }
+  .contactItem {
+    margin-bottom: 0.35rem;
+  }
 }

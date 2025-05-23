@@ -82,3 +82,18 @@
   text-align: center;
   margin: 2rem 0;
 }
+.searchInput {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0; /* Або var(--border-light) */
+  border-radius: 6px; /* Або var(--border-radius-md) */
+  font-size: 0.9rem;
+  box-sizing: border-box; /* Щоб padding не збільшував загальну ширину */
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3b82f6; /* Або var(--accent) */
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); /* Або var(--accent-focus-ring) */
+}

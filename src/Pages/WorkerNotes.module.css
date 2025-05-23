@@ -1,0 +1,108 @@
+/* src/Pages/WorkerNotes.module.css */
+.workerNotesPage {
+  padding: 0.5rem;
+}
+
+.subTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--fg);
+}
+
+.noteForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.noteTextarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: var(--fg);
+  background-color: var(--bg-light, #f7fafc);
+  resize: vertical;
+  min-height: 60px;
+}
+
+.noteTextarea:focus {
+  outline: none;
+  border-color: var(--accent, #3b82f6);
+  box-shadow: 0 0 0 2px var(--accent-focus-ring, rgba(59, 130, 246, 0.3));
+}
+
+.addButton {
+  align-self: flex-start;
+  padding: 0.6rem 1.2rem;
+  background: var(--accent, #3b82f6);
+  color: var(--bg, #ffffff);
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.addButton:hover {
+  background-color: var(--accent-hover, #2563eb);
+}
+
+.addButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.notesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.noteItem {
+  background-color: var(--surface, #f9fafb); /* Або var(--bg-white) */
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.noteContent {
+  margin: 0 0 0.75rem 0;
+  white-space: pre-wrap; /* Зберігає переноси рядків */
+  word-break: break-word;
+  color: var(--fg);
+}
+
+.noteMeta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.noteAuthor {
+  font-weight: 500;
+}
+
+.noteDate {
+  /* Стилі для дати, якщо потрібні */
+}
+
+.loading,
+.error,
+.noNotes {
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--muted);
+}
+
+.error {
+  color: var(--color-error, #dc2626);
+}

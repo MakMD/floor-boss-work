@@ -2,90 +2,55 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { AppContext } from "../components/App/App";
 import styles from "./Invoices.module.css";
+// AppContext тут може бути не потрібний, якщо ми не використовуємо user або addActivity
+// import { AppContext } from "../components/App/App";
 
 export default function Invoices() {
   const { id: jobId } = useParams();
-  const { user } = useContext(AppContext);
+  // const { user } = useContext(AppContext); // Можливо, не потрібен
 
   const [invoices, setInvoices] = useState([]);
-  const [date, setDate] = useState("");
-  const [amount, setAmount] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [error, setError] = useState(null);
 
-  // Завантаження рахунків
+  // Завантаження існуючих рахунків
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("invoices")
-        .select("id, invoice_date, amount")
-        .eq("job_id", jobId)
-        .order("created_at", { ascending: true });
-      if (error) {
-        setError(error.message);
+    const fetchInvoices = async () => {
+      if (!jobId) return;
+      setLoadingInvoices(true);
+      setError(null); // Скидаємо помилку перед завантаженням
+      try {
+        const { data, error: fetchError } = await supabase
+          .from("invoices")
+          .select("id, invoice_date, amount")
+          .eq("job_id", jobId)
+          .order("created_at", { ascending: true });
+
+        if (fetchError) {
+          throw fetchError;
+        }
+        setInvoices(data || []);
+      } catch (e) {
+        setError(`Failed to load invoices: ${e.message}`);
         setInvoices([]);
-      } else {
-        setInvoices(data);
       }
-      setLoading(false);
-    })();
+      setLoadingInvoices(false);
+    };
+    fetchInvoices();
   }, [jobId]);
 
-  // Додавання нового рахунку
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    if (!date || !amount) return;
-    setLoading(true);
-
-    const { data, error } = await supabase
-      .from("invoices")
-      .insert([{ job_id: jobId, invoice_date: date, amount: Number(amount) }])
-      .single();
-
-    if (error) {
-      setError(error.message);
-    } else {
-      setInvoices((prev) => [...prev, data]);
-      setDate("");
-      setAmount("");
-    }
-    setLoading(false);
-  };
+  if (loadingInvoices) {
+    return <p className={styles.loading}>Loading invoices...</p>;
+  }
 
   return (
     <div className={styles.page}>
       <h2 className={styles.title}>Invoices for Order #{jobId}</h2>
 
-      <form onSubmit={handleAdd} className={styles.form}>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-          className={styles.input}
-        />
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-          className={styles.input}
-        />
-        <button type="submit" className={styles.addButton} disabled={loading}>
-          {loading ? "Adding…" : "Add Invoice"}
-        </button>
-      </form>
-
       {error && <p className={styles.error}>{error}</p>}
 
-      {loading ? (
-        <p className={styles.loading}>Loading invoices...</p>
-      ) : invoices.length > 0 ? (
+      {invoices.length > 0 ? (
         <ul className={styles.list}>
           {invoices.map((inv) => (
             <li key={inv.id} className={styles.item}>
@@ -97,7 +62,9 @@ export default function Invoices() {
           ))}
         </ul>
       ) : (
-        <p className={styles.noResults}>No invoices yet.</p>
+        !error && (
+          <p className={styles.noResults}>No invoices found for this job.</p>
+        )
       )}
     </div>
   );

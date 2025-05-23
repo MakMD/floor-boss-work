@@ -1,117 +1,171 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
-
-/* src/components/App/App.module.css */
-
-/* Global font */
 :root {
   --font-family: "Inter", sans-serif;
-  --color-bg-primary: #1f2937; /* Dark Blue */
+  --color-bg-primary: #1f2937;
+  --color-bg-sidebar: #111827;
   --color-text-light: #f9fafb;
-  --color-accent: #6366f1; /* Indigo */
-  --color-error: #dc2626; /* Red */
+  --color-text-sidebar-link: #d1d5db;
+  --color-text-sidebar-link-hover: #ffffff;
+  --color-accent: #6366f1;
+  --color-accent-hover: #4f46e5;
+  --color-error: #dc2626;
+  --sidebar-width: 260px;
+  --header-height: 0px;
+  --bg-light: #f3f4f6; /* Додано для body background */
 }
 
 body {
   margin: 0;
   font-family: var(--font-family);
+  background-color: var(--bg-light);
 }
 
-/* Navigation Bar */
-.nav {
+.layoutContainer {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: var(--color-bg-primary);
-  padding: 0.75rem 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  min-height: 100vh;
 }
 
-/* Menu links container */
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--color-bg-sidebar);
+  color: var(--color-text-light);
+  padding-top: 1rem; /* Зменшено верхній padding */
+  padding-bottom: 1rem; /* Додано нижній padding */
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000; /* Важливо для мобільного меню */
+  transition: transform 0.3s ease-in-out; /* Для плавної анімації */
+}
+
+.sidebarHeader {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 0 1.5rem 1rem 1.5rem; /* Зменшено нижній padding */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1rem;
+}
+
+.nav {
+  flex-grow: 1;
+}
+
 .navMenu {
   display: flex;
-  gap: 1.5rem;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .navLink {
+  display: block;
   text-decoration: none;
-  color: var(--color-text-light);
-  font-weight: 600;
+  color: var(--color-text-sidebar-link);
+  font-weight: 500;
   font-size: 0.95rem;
-  text-transform: uppercase;
-  position: relative;
-  padding: 0.5rem 0;
-  transition: background-color 0.2s;
+  padding: 0.75rem 1.5rem;
+  border-left: 3px solid transparent;
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-left-color 0.2s ease;
 }
 
-.navLink:hover,
-.navLink:focus {
-  background-color: rgba(255, 255, 255, 0.1);
-  outline: none;
-  border-radius: 4px;
+.navLink:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-sidebar-link-hover);
 }
 
-.navLink.active::after {
-  content: "";
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background-color: var(--color-accent);
-  border-radius: 2px 2px 0 0;
+.activeNavLink {
+  color: var(--color-text-sidebar-link-hover);
+  background-color: rgba(
+    79,
+    70,
+    229,
+    0.2
+  ); /* Змінено на напівпрозорий accent */
+  border-left-color: var(--color-accent);
+  font-weight: 600;
 }
 
-/* Logout button styling */
 .logoutBtn {
-  background-color: var(--color-error);
-  color: var(--color-text-light);
-  border: none;
-  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: var(--color-text-sidebar-link);
+  border: 1px solid var(--color-text-sidebar-link);
+  padding: 0.6rem 1rem;
   border-radius: 4px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  margin: 1.5rem;
+  text-align: center;
 }
 
 .logoutBtn:hover,
 .logoutBtn:focus {
-  background-color: darken(var(--color-error), 10%);
+  background-color: var(--color-error);
+  border-color: var(--color-error);
+  color: var(--color-text-light);
   outline: none;
 }
 
-/* Main Content Area */
-.content {
-  padding: 2rem;
-  background-color: #f3f4f6;
-  min-height: calc(100vh - 64px);
+.mainContent {
+  flex-grow: 1;
+  padding: 1.5rem; /* Зменшено padding для контенту */
+  margin-left: var(--sidebar-width);
 }
 
-/* Responsive: collapse menu on narrower screens */
+/* Мобільне меню */
+.mobileMenuButton {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1001;
+  background: var(--color-bg-sidebar);
+  color: var(--color-text-light);
+  border: 1px solid var(--color-text-light);
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.sidebarCloseButton {
+  display: none;
+  position: absolute;
+  top: 0.5rem; /* Трохи вище */
+  right: 0.75rem; /* Трохи ближче до краю */
+  background: none;
+  border: none;
+  color: var(--color-text-light);
+  font-size: 2rem; /* Збільшено для кращого тапу */
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
 @media (max-width: 768px) {
-  .nav {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0.5rem 1rem;
+  .sidebar {
+    transform: translateX(-100%); /* Приховано за замовчуванням */
   }
-  .navMenu {
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 0.5rem;
-  }
-  .logoutBtn {
-    align-self: flex-end;
-    margin-top: 0.5rem;
-  }
-}
 
-@media (max-width: 480px) {
-  .navLink,
-  .logoutBtn {
-    font-size: 0.85rem;
-    padding: 0.4rem 0.8rem;
+  .sidebarOpen {
+    transform: translateX(0); /* Показуємо, коли isSidebarOpen true */
+  }
+
+  .mainContent {
+    margin-left: 0;
+  }
+
+  .mobileMenuButton {
+    display: block;
+  }
+  .sidebarCloseButton {
+    display: block;
   }
 }

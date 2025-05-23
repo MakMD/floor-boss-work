@@ -156,3 +156,121 @@
 .selectWrapper .react-select__menu {
   z-index: 9999;
 }
+.formLabel {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: var(
+    --fg-accent,
+    #374151
+  ); /* Використовуйте змінну, якщо є, або колір за замовчуванням */
+}
+
+.fileInput {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border, #d1d5db); /* Використовуйте змінну, якщо є, або колір за замовчуванням /
+border-radius: 0.375rem;
+box-sizing: border-box;
+font-size: 0.875rem;
+color: var(--fg-muted, #6b7280); / Використовуйте змінну, якщо є, або колір за замовчуванням */
+}
+
+.fileInput:focus {
+  outline: none;
+  border-color: var(
+    --primary,
+    #2563eb
+  ); /* Використовуйте вашу основну колірну змінну /
+box-shadow: 0 0 0 0.125rem var(--primary-focus, rgba(37, 99, 235, 0.25)); / Використовуйте змінну для фокусу */
+}
+
+.previewContainer {
+  margin-top: 1rem;
+  border: 1px dashed var(--border-dashed, #9ca3af); /* Використовуйте змінну, якщо є, або колір за замовчуванням */
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.previewImg {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.noPreview {
+  font-style: italic;
+  color: var(
+    --fg-muted,
+    #6b7280
+  ); /* Використовуйте змінну, якщо є, або колір за замовчуванням */
+}
+.formLabel {
+  /* Додаємо стиль для лейбла, якщо його немає, або оновлюємо */
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600; /* Зробимо трохи жирнішим, як у формах */
+  color: var(--fg, #1f2937); /* Адаптуйте до ваших змінних */
+}
+
+.fileInput {
+  font-family: "Inter", sans-serif; /* Або var(--font-sans) */
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-light, #e2e8f0); /* Адаптуйте до ваших змінних */
+  border-radius: 4px; /* Або var(--border-radius-md) */
+  font-size: 0.9rem;
+  color: var(--fg, #1f2937);
+  background-color: var(--bg-light, #f7fafc); /* Адаптуйте до ваших змінних */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box; /* Додано для узгодження з іншими інпутами */
+}
+
+.fileInput:focus {
+  outline: none;
+  border-color: var(--accent, #3b82f6); /* Адаптуйте до ваших змінних */
+  box-shadow: 0 0 0 2px var(--accent-focus-ring, rgba(59, 130, 246, 0.3)); /* Адаптуйте */
+}
+
+.fileInput::file-selector-button {
+  padding: 0.5rem 1rem; /* Зменшено вертикальний padding для кращої відповідності інпуту */
+  margin-right: 0.75rem; /* Додано відступ справа від кнопки */
+  background-color: var(--accent, #3b82f6);
+  color: var(--bg, #ffffff); /* Текст кнопки білий */
+  border: none;
+  border-radius: 4px; /* Або var(--border-radius-sm) */
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.fileInput::file-selector-button:hover {
+  background-color: var(--accent-hover, #2563eb); /* Адаптуйте */
+}
+
+.previewContainer {
+  text-align: center; /* Залишаємо як є, якщо це підходить */
+  margin-top: 1rem; /* Додаємо відступ зверху */
+  margin-bottom: 1rem; /* І знизу, щоб відокремити від наступного поля */
+  border: 1px dashed var(--border-light, #e2e8f0); /* Легка рамка для позначення зони прев'ю */
+  padding: 1rem;
+  border-radius: 4px; /* Або var(--border-radius-md) */
+}
+
+.previewImg {
+  max-width: 200px; /* Зберігаємо розміри з PhotosAfter */
+  max-height: 150px;
+  object-fit: contain;
+  border: 1px solid var(--border-light, #ddd); /* Рамка для самого зображення */
+  border-radius: 4px; /* Або var(--border-radius-sm) */
+  margin: 0 auto; /* Центрування, якщо контейнер ширший */
+}
+
+/* Можна додати обгортку для секції завантаження фото, якщо потрібно її відокремити */
+.uploadPhotoSection {
+  grid-column: 1 / -1; /* Якщо ваша .addForm використовує grid, це розтягне секцію на всю ширину */
+  margin-bottom: 1rem; /* Відступ знизу */
+}

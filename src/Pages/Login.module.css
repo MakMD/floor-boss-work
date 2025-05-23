@@ -103,11 +103,11 @@
   transform: scale(0.95);
 }
 
-/* Responsive styles */
 @media (max-width: 768px) {
+  /* Планшети та великі телефони */
   .loginCard {
     width: 85%;
-    max-width: none;
+    max-width: none; /* Дозволяє картці розтягуватися, але обмежено width: 85% */
     padding: 2rem;
   }
   .logo {
@@ -119,8 +119,9 @@
 }
 
 @media (max-width: 480px) {
+  /* Маленькі телефони */
   .loginCard {
-    width: 95%;
+    width: 95%; /* Ще ширше, майже на весь екран */
     padding: 1.5rem;
   }
   .logo {
