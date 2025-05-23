@@ -1,0 +1,192 @@
+/* src/Pages/WorkerDashboard.module.css */
+.dashboardPage {
+  padding: 1.5rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: var(--font-family);
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+.welcomeMessage {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.filterContainer {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filterButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-white);
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.filterButton:hover {
+  background-color: var(--bg-light);
+  border-color: var(--accent-light, #a5b4fc);
+}
+
+.activeFilter {
+  background-color: #3b82f6;
+  color: var(--bg-white);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.activeFilter:hover {
+  background-color: #3b82f6;
+  border-color: var(--accent-hover);
+}
+
+.jobList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.jobItem {
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  transition: box-shadow 0.2s ease-in-out;
+}
+.jobItem:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.jobLink {
+  display: block;
+  padding: 1.25rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.jobHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.jobId {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.jobDate {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.jobAddress {
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+}
+
+.jobClient,
+.jobCompany {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.jobStatus {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.statusBadge {
+  padding: 0.2em 0.6em;
+  border-radius: 10px;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--bg-white);
+  display: inline-block;
+}
+
+.statusNotStarted {
+  background-color: #a0aec0;
+}
+.statusInProgress {
+  background-color: #4299e1;
+}
+.statusPending {
+  background-color: #f59e0b;
+}
+.statusApproved {
+  background-color: #48bb78;
+}
+.statusRejected {
+  background-color: #ef4444;
+}
+
+.loading,
+.errorPage,
+.noJobs {
+  text-align: center;
+  font-size: 1rem;
+  color: var(--text-muted);
+  padding: 2rem 1rem;
+}
+
+.errorPage {
+  color: var(--text-error);
+  background-color: rgba(220, 38, 38, 0.05);
+  border: 1px solid var(--text-error);
+  border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .dashboardPage {
+    padding: 1rem;
+  }
+  .pageTitle {
+    font-size: 1.5rem;
+  }
+  .filterContainer {
+    gap: 0.5rem;
+  }
+  .filterButton {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  .jobList {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .jobList {
+    grid-template-columns: 1fr;
+  }
+  .jobItem .jobLink {
+    padding: 1rem;
+  }
+  .jobId {
+    font-size: 1rem;
+  }
+}

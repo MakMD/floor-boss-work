@@ -7,26 +7,28 @@ import {
   Navigate,
 } from "react-router-dom";
 import Layout from "./Layout";
-import { supabase } from "../../lib/supabase"; //
+import { supabase } from "../../lib/supabase";
 
 // Сторінки
-import Home from "../../Pages/Home"; //
-import Login from "../../Pages/Login"; //
-import ActiveWorkers from "../../Pages/ActiveWorkers"; //
-import Workers from "../../Pages/Workers"; //
-import WorkerProfile from "../../Pages/WorkerProfile"; //
-import Orders from "../../Pages/Orders"; //
-import JobDetails from "../../Pages/JobDetails"; //
-import Materials from "../../Pages/Materials"; //
-import PhotosAfter from "../../Pages/PhotosAfter"; //
-import Invoices from "../../Pages/Invoices"; //
-import Calendar from "../../Pages/Calendar"; //
-import JobOrderPhoto from "../../Pages/JobOrderPhoto"; //
-import WorkerNotes from "../../Pages/WorkerNotes"; //
-import PhotoGallery from "../../Pages/PhotoGallery"; //
+import Home from "../../Pages/Home";
+import Login from "../../Pages/Login";
+import ActiveWorkers from "../../Pages/ActiveWorkers";
+import Workers from "../../Pages/Workers";
+import WorkerProfile from "../../Pages/WorkerProfile";
+import Orders from "../../Pages/Orders";
+import JobDetails from "../../Pages/JobDetails";
+import Materials from "../../Pages/Materials";
+import PhotosAfter from "../../Pages/PhotosAfter";
+import Invoices from "../../Pages/Invoices";
+import Calendar from "../../Pages/Calendar";
+import JobOrderPhoto from "../../Pages/JobOrderPhoto";
+import WorkerNotes from "../../Pages/WorkerNotes";
+import PhotoGallery from "../../Pages/PhotoGallery";
+import WorkerDashboard from "../../Pages/WorkerDashboard"; // <--- НОВИЙ ІМПОРТ
 
 export const AppContext = createContext(null);
 
+// ... (ProtectedRoute та AppProvider без змін) ...
 function ProtectedRoute({ allowedRoles, element }) {
   const { user } = useContext(AppContext);
   if (!user) return <Navigate to="/login" replace />;
@@ -167,8 +169,18 @@ export default function App() {
                 />
               }
             />
+            {/* НОВИЙ МАРШРУТ */}
             <Route
-              path="workers/active"
+              path="my-dashboard"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[WORKER_ROLE]}
+                  element={<WorkerDashboard />}
+                />
+              }
+            />
+            <Route
+              path="workers/active" // Цей маршрут може потребувати перегляду, бо ActiveWorkers.jsx очікує jobId з useParams
               element={
                 <ProtectedRoute
                   allowedRoles={[ADMIN_ROLE]}
@@ -275,10 +287,7 @@ export default function App() {
                   />
                 }
               />
-              {/* Маршрут photo-gallery НЕ МАЄ бути тут, якщо це окрема сторінка */}
-            </Route>{" "}
-            {/* Кінець orders/:id */}
-            {/* ПРАВИЛЬНЕ МІСЦЕ для маршруту photo-gallery */}
+            </Route>
             <Route
               path="photo-gallery"
               element={
