@@ -4,9 +4,11 @@ import Select from "react-select";
 import { AppContext } from "../components/App/App";
 import { supabase } from "../lib/supabase";
 import styles from "./Orders.module.css";
+import { useToast } from "@chakra-ui/react"; // <--- НОВИЙ ІМПОРТ
 
 export default function Orders() {
-  const { user, addActivity } = useContext(AppContext); // Додаємо addActivity для логування
+  const { user, addActivity } = useContext(AppContext);
+  const toast = useToast(); // <--- ІНІЦІАЛІЗАЦІЯ TOAST
 
   const [workers, setWorkers] = useState([]);
   const [address, setAddress] = useState("");
@@ -25,9 +27,9 @@ export default function Orders() {
   const [jobOrderPhotoFile, setJobOrderPhotoFile] = useState(null);
   const [jobOrderPhotoPreview, setJobOrderPhotoPreview] = useState(null);
 
-  const [loading, setLoading] = useState(false);
-  const [formSubmitting, setFormSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false); // Загальне завантаження даних (worker, companies)
+  const [formSubmitting, setFormSubmitting] = useState(false); // Для процесу відправки форми
+  const [error, setError] = useState(null); // Для відображення помилок під формою, якщо потрібно
 
   const uuidRegex =
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -54,7 +56,16 @@ export default function Orders() {
         if (companiesRes.error) throw companiesRes.error;
         setCompanies(companiesRes.data || []);
       } catch (err) {
-        setError(err.message);
+        const errorMsg = `Failed to load initial data: ${err.message}`;
+        setError(errorMsg); // Встановлюємо помилку для можливого відображення під формою
+        toast({
+          title: "Error Loading Data",
+          description: errorMsg,
+          status: "error",
+          duration: 7000,
+          isClosable: true,
+          position: "top-right",
+        });
         setWorkers([]);
         setCompanies([]);
       } finally {
@@ -62,7 +73,7 @@ export default function Orders() {
       }
     };
     fetchData();
-  }, []);
+  }, [toast]); // Додаємо toast до залежностей, хоча він стабільний, але для повноти
 
   const handleJobOrderPhotoChange = (e) => {
     const file = e.target.files[0];
@@ -82,7 +93,16 @@ export default function Orders() {
   const handleAddJob = async (e) => {
     e.preventDefault();
     if (!address.trim() || !date) {
-      setError("Address and Date are required.");
+      const errorMsg = "Address and Date are required.";
+      setError(errorMsg); // Залишаємо для можливого локального відображення помилки
+      toast({
+        title: "Validation Error",
+        description: errorMsg,
+        status: "warning", // 'warning' для помилок валідації
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
       return;
     }
 
@@ -90,7 +110,16 @@ export default function Orders() {
     setFormSubmitting(true);
     try {
       if (!user || typeof user.id !== "string" || !uuidRegex.test(user.id)) {
-        setError("User ID is invalid. Cannot create job.");
+        const errorMsg = "User ID is invalid. Cannot create job.";
+        setError(errorMsg);
+        toast({
+          title: "Authentication Error",
+          description: errorMsg,
+          status: "error",
+          duration: 7000,
+          isClosable: true,
+          position: "top-right",
+        });
         setFormSubmitting(false);
         return;
       }
@@ -139,10 +168,10 @@ export default function Orders() {
         .single();
       if (insertError) throw insertError;
 
-      // --- АВТОМАТИЧНЕ СТВОРЕННЯ ІНВОЙСУ ПІСЛЯ СТВОРЕННЯ ЗАМОВЛЕННЯ ---
+      let invoiceCreationMessage = "";
       if (newJob && newJob.id) {
-        const sfValue = parseFloat(newJob.sf); // Беремо sf з newJob (щойно створеного)
-        const rateValue = parseFloat(newJob.rate); // Беремо rate з newJob
+        const sfValue = parseFloat(newJob.sf);
+        const rateValue = parseFloat(newJob.rate);
 
         if (
           !isNaN(sfValue) &&
@@ -168,17 +197,22 @@ export default function Orders() {
               "Failed to create automatic invoice:",
               invoiceInsertError.message
             );
-            // Вирішіть, чи потрібно показувати цю помилку користувачеві
-            // setError(prev => prev ? `${prev}\nFailed to create auto-invoice: ${invoiceInsertError.message}` : `Failed to create auto-invoice: ${invoiceInsertError.message}`);
+            invoiceCreationMessage = ` Auto-invoice creation failed.`;
             addActivity(
               `Order #${newJob.id} created. Auto-invoice creation failed: ${invoiceInsertError.message}`
             );
+            toast({
+              title: "Invoice Warning",
+              description: `Order #${newJob.id} created, but auto-invoice creation failed: ${invoiceInsertError.message}`,
+              status: "warning",
+              duration: 7000,
+              isClosable: true,
+              position: "top-right",
+            });
           } else {
-            console.log(
-              `Automatic invoice for $${calculatedInvoiceAmount.toFixed(
-                2
-              )} created for order #${newJob.id}`
-            );
+            invoiceCreationMessage = ` Auto-invoice for $${calculatedInvoiceAmount.toFixed(
+              2
+            )} generated.`;
             addActivity(
               `Order #${
                 newJob.id
@@ -188,15 +222,12 @@ export default function Orders() {
             );
           }
         } else {
-          console.warn(
-            `Order #${newJob.id} created, but sf/rate are invalid for auto-invoice. sf: ${newJob.sf}, rate: ${newJob.rate}`
-          );
+          invoiceCreationMessage = ` Auto-invoice not generated (invalid SF/Rate).`;
           addActivity(
             `Order #${newJob.id} created. Auto-invoice not generated (invalid sf/rate).`
           );
         }
       }
-      // --- КІНЕЦЬ АВТОМАТИЧНОГО СТВОРЕННЯ ІНВОЙСУ ---
 
       if (selectedWorkers.length > 0 && newJob) {
         const relations = selectedWorkers.map((workerOption) => {
@@ -235,10 +266,33 @@ export default function Orders() {
       setSelectedCompany(null);
       setJobOrderPhotoFile(null);
       setJobOrderPhotoPreview(null);
-      alert("Job added successfully!"); // Можна додати інформацію про інвойс, якщо потрібно
+
+      toast({
+        title: "Order Created",
+        description: `Job #${newJob.id} added successfully.${invoiceCreationMessage}`,
+        status: "success",
+        duration: 7000,
+        isClosable: true,
+        position: "top-right",
+      });
+      addActivity(
+        `User ${user.name || user.id} created new order #${
+          newJob.id
+        }: ${address}.${invoiceCreationMessage}`
+      );
     } catch (err) {
       console.error("Error in handleAddJob:", err);
-      setError(err.message || "An unexpected error occurred.");
+      const errorMsg =
+        err.message || "An unexpected error occurred while creating the order.";
+      setError(errorMsg);
+      toast({
+        title: "Error Creating Order",
+        description: errorMsg,
+        status: "error",
+        duration: 7000,
+        isClosable: true,
+        position: "top-right",
+      });
     } finally {
       setFormSubmitting(false);
     }
@@ -248,14 +302,16 @@ export default function Orders() {
   const companyOptions = companies.map((c) => ({ value: c.id, label: c.name }));
 
   if (loading) {
-    return <div className={styles.loading}>Loading data...</div>;
+    // Показуємо завантаження, поки вантажаться працівники/компанії
+    return <div className={styles.loading}>Loading initial data...</div>;
   }
 
   return (
     <div className={styles.homePage}>
       <h1 className={styles.title}>Create New Order</h1>
+      {error && !formSubmitting && <p className={styles.error}>{error}</p>}{" "}
+      {/* Помилка завантаження даних */}
       <form onSubmit={handleAddJob} className={styles.addForm}>
-        {/* ... JSX форми залишається без змін ... */}
         <input
           type="text"
           placeholder="Address"
@@ -277,6 +333,7 @@ export default function Orders() {
           value={sf}
           onChange={(e) => setSf(e.target.value)}
           className={styles.formInput}
+          step="any"
         />
         <input
           type="number"
@@ -284,6 +341,7 @@ export default function Orders() {
           value={rate}
           onChange={(e) => setRate(e.target.value)}
           className={styles.formInput}
+          step="any"
         />
         <input
           type="text"
@@ -345,6 +403,7 @@ export default function Orders() {
             onChange={(selectedOption) => setSelectedCompany(selectedOption)}
             placeholder="Select Company (Optional)"
             isClearable
+            isLoading={loading}
             menuPortalTarget={document.body}
             menuPosition="fixed"
             styles={{
@@ -372,6 +431,7 @@ export default function Orders() {
               setSelectedWorkers(selectedOptions || [])
             }
             placeholder="Select workers (Optional)"
+            isLoading={loading}
             menuPortalTarget={document.body}
             menuPosition="fixed"
             styles={{
@@ -393,12 +453,11 @@ export default function Orders() {
         <button
           type="submit"
           className={styles.formButton}
-          disabled={formSubmitting}
+          disabled={formSubmitting || loading} // Також деактивуємо, якщо йде завантаження початкових даних
         >
           {formSubmitting ? "Adding Job…" : "Add Job"}
         </button>
       </form>
-      {error && <p className={styles.error}>{error}</p>}
     </div>
   );
 }

@@ -7,62 +7,129 @@ import {
   Outlet,
   useLocation,
 } from "react-router-dom";
-import styles from "./JobDetails.module.css"; //
-import { AppContext } from "../components/App/App"; //
-import { supabase } from "../lib/supabase"; //
+import styles from "./JobDetails.module.css";
+import { AppContext } from "../components/App/App";
+import { supabase } from "../lib/supabase";
+import { useToast } from "@chakra-ui/react"; // <--- НОВИЙ ІМПОРТ
 
 export default function JobDetails() {
-  const { id: jobId } = useParams(); // Змінено id на jobId для ясності
+  const { id: jobId } = useParams();
   const navigate = useNavigate();
   const { user, addActivity } = useContext(AppContext);
-  const location = useLocation(); // Отримуємо об'єкт location за допомогою хука
+  const location = useLocation();
+  const toast = useToast(); // <--- ІНІЦІАЛІЗАЦІЯ TOAST
 
   const [job, setJob] = useState(null);
-  const [companyName, setCompanyName] = useState(""); // Для назви компанії
-  const [loading, setLoading] = useState(true);
+  const [companyName, setCompanyName] = useState("");
+  const [loading, setLoading] = useState(true); // Для початкового завантаження деталей замовлення
+  const [actionLoading, setActionLoading] = useState(false); // Для операцій зміни статусу
   const [error, setError] = useState(null);
 
   const updateField = async (field, value) => {
-    // Можна використовувати окремий лоадер для оновлення, щоб не блокувати всю сторінку
-    // setLoading(true);
-    const { error: jobErr } = await supabase
-      .from("jobs")
-      .update({ [field]: value })
-      .eq("id", jobId);
+    setActionLoading(true); // Блокуємо кнопки на час виконання
+    setError(null); // Скидаємо попередні помилки (якщо вони відображаються локально)
 
-    if (jobErr) {
-      alert("Не вдалося оновити статус: " + jobErr.message);
-    } else {
-      setJob((prev) => ({
-        ...prev,
-        [field === "worker_status" ? "workerStatus" : "adminStatus"]: value,
+    try {
+      const { error: jobErr } = await supabase
+        .from("jobs")
+        .update({ [field]: value })
+        .eq("id", jobId);
+
+      if (jobErr) throw jobErr;
+
+      // Оновлюємо локальний стан для негайного відображення змін
+      // Використовуємо функціональну форму setJob для гарантії актуальності prev
+      setJob((prevJob) => ({
+        ...prevJob,
+        ...(field === "worker_status" ? { workerStatus: value } : {}),
+        ...(field === "admin_status" ? { adminStatus: value } : {}),
       }));
 
-      const actor = user?.name || user?.id;
-      const msg =
-        field === "worker_status"
-          ? `User ${actor} set status "${value}" for order #${jobId}`
-          : `Admin ${actor} ${
-              value === "approved" ? "approved" : "rejected"
-            } completion for order #${jobId}`;
-      addActivity(msg);
+      const actor = user?.name || user?.email || `User ID: ${user?.id}`;
+      const statusType =
+        field === "worker_status" ? "Worker status" : "Admin status";
+      const activityMessage = `${actor} set ${statusType.toLowerCase()} to "${value}" for order #${jobId}`;
+
+      addActivity({
+        // <--- ОНОВЛЕНИЙ ВИКЛИК
+        message: activityMessage,
+        jobId: jobId, // Переконайтеся, що jobId тут правильного типу (UUID або BIGINT, як у вашій БД)
+        details: {
+          fieldUpdated: field,
+          newValue: value,
+          previousStatus:
+            job[field === "worker_status" ? "workerStatus" : "adminStatus"],
+        },
+      });
 
       if (field === "worker_status" && value === "in_progress" && user?.id) {
-        // Додано перевірку user.id
-        try {
-          await supabase.from("job_updates").insert([
-            {
-              job_id: jobId,
-              worker_id: user.id,
-              message: `Worker ${actor} started order #${jobId}`,
-            },
-          ]);
-        } catch (updErr) {
-          console.error("Не вдалося додати job_update:", updErr);
+        const startWorkMessage = `Worker ${actor} started order #${jobId}`;
+        const { error: updErr } = await supabase.from("job_updates").insert([
+          // Це окремий лог для job_updates
+          {
+            job_id: jobId,
+            worker_id: user.id,
+            message: startWorkMessage,
+          },
+        ]);
+        if (updErr) {
+          console.error("Failed to add job_update for starting work:", updErr);
+          toast({
+            title: "Activity Log Warning",
+            description:
+              "Could not log work start to job_updates, but status was updated.",
+            status: "warning",
+            duration: 5000,
+            isClosable: true,
+            position: "top-right",
+          });
+        } else {
+          // Додатково логуємо цю ж подію в activity_log для централізації
+          addActivity({
+            // <--- ОНОВЛЕНИЙ ВИКЛИК
+            message: startWorkMessage,
+            jobId: jobId,
+            details: { action: "work_started_in_job_updates" },
+          });
         }
       }
+
+      if (field === "worker_status" && value === "in_progress" && user?.id) {
+        const { error: updErr } = await supabase.from("job_updates").insert([
+          {
+            job_id: jobId,
+            worker_id: user.id, // Переконуємося, що user.id існує
+            message: `Worker ${actor} started order #${jobId}`,
+          },
+        ]);
+        if (updErr) {
+          // Не блокуємо основний потік, але логуємо помилку додавання job_update
+          console.error("Failed to add job_update for starting work:", updErr);
+          toast({
+            title: "Activity Log Warning",
+            description:
+              "Could not log work start activity, but status was updated.",
+            status: "warning",
+            duration: 5000,
+            isClosable: true,
+            position: "top-right",
+          });
+        }
+      }
+    } catch (jobErr) {
+      const errorMsg = `Failed to update status: ${jobErr.message}`;
+      setError(errorMsg); // Можна залишити для відображення помилки на сторінці, якщо потрібно
+      toast({
+        title: "Error Updating Status",
+        description: errorMsg,
+        status: "error",
+        duration: 7000,
+        isClosable: true,
+        position: "top-right",
+      });
+    } finally {
+      setActionLoading(false); // Розблоковуємо кнопки
     }
-    // setLoading(false);
   };
 
   useEffect(() => {
@@ -70,7 +137,7 @@ export default function JobDetails() {
       if (!jobId) return;
       setLoading(true);
       setError(null);
-      setCompanyName(""); // Скидаємо ім'я компанії
+      setCompanyName("");
       try {
         const { data, error: fetchErr } = await supabase
           .from("jobs")
@@ -83,7 +150,7 @@ export default function JobDetails() {
             admin_instructions,
             job_order_photo_url 
           `
-          ) // Явно вказуємо поля
+          )
           .eq("id", jobId)
           .single();
 
@@ -96,7 +163,6 @@ export default function JobDetails() {
             adminStatus: data.admin_status || "pending",
           });
 
-          // Завантажуємо ім'я компанії, якщо є company_id
           if (data.company_id) {
             const { data: companyData, error: companyError } = await supabase
               .from("companies")
@@ -108,28 +174,40 @@ export default function JobDetails() {
                 "Error fetching company name:",
                 companyError.message
               );
+              // Не показуємо тост за помилку завантаження назви компанії,
+              // оскільки це не критично для основного функціоналу сторінки.
             } else if (companyData) {
               setCompanyName(companyData.name);
             }
           }
         } else {
-          setError("Job not found.");
+          setError("Job not found."); // Це буде оброблено нижче
         }
       } catch (err) {
-        setError(err.message);
+        const errorMsg = `Failed to load job details: ${err.message}`;
+        setError(errorMsg);
+        toast({
+          // Показуємо тост при помилці завантаження основних даних
+          title: "Error Loading Job Details",
+          description: errorMsg,
+          status: "error",
+          duration: 7000,
+          isClosable: true,
+          position: "top-right",
+        });
       } finally {
         setLoading(false);
       }
     };
     fetchJobDetails();
-  }, [jobId]);
+  }, [jobId, toast]); // Додано toast до залежностей
 
   if (loading && !job)
     return <p className={styles.loading}>Loading job details...</p>;
-  if (error) return <p className={styles.error}>Error: {error}</p>;
-  if (!job && !loading) return <p className={styles.error}>Job not found.</p>;
+  if (error && !job) return <p className={styles.errorMsg}>Error: {error}</p>; // Використовуємо errorMsg для консистентності
+  if (!job && !loading)
+    return <p className={styles.errorMsg}>Job not found.</p>; // Використовуємо errorMsg
 
-  // Вкладки
   const tabs = [
     { path: "photos-after", label: "After Photos" },
     ...(user?.role === "admin"
@@ -146,14 +224,17 @@ export default function JobDetails() {
   return (
     <div className={styles.jobDetails}>
       <div className={styles.btnContainer}>
-        <button className={styles.backBtn} onClick={() => navigate(-1)}>
+        <button
+          className={styles.backBtn}
+          onClick={() => navigate(-1)}
+          disabled={actionLoading}
+        >
           ← Back
         </button>
       </div>
 
       <h1 className={styles.title}>Order #{job.id}</h1>
 
-      {/* Основна інформація про замовлення */}
       <div className={styles.jobInfoBlock}>
         <p className={styles.detail}>
           <strong>Address:</strong> {job.address || "N/A"}
@@ -163,11 +244,10 @@ export default function JobDetails() {
         </p>
         {job.date && (
           <p className={styles.detail}>
-            <strong>Date:</strong> {new Date(job.date).toLocaleDateString()}
+            <strong>Date:</strong>{" "}
+            {new Date(job.date.replace(/-/g, "/")).toLocaleDateString()}
           </p>
         )}
-
-        {/* Додаткові поля */}
         {job.work_order_number && (
           <p className={styles.detail}>
             <strong>Work Order #:</strong> {job.work_order_number}
@@ -183,7 +263,6 @@ export default function JobDetails() {
             <strong>Storage Info:</strong> {job.storage_info}
           </p>
         )}
-
         {job.admin_instructions &&
           (user?.role === "admin" || user?.role === "worker") && (
             <div className={styles.instructionsBlock}>
@@ -216,7 +295,7 @@ export default function JobDetails() {
             <button
               className={styles.actionBtn}
               onClick={() => updateField("worker_status", "in_progress")}
-              // disabled={loading} // Використовуйте окремий actionLoading, якщо потрібно
+              disabled={actionLoading || loading}
             >
               Start Work
             </button>
@@ -225,7 +304,7 @@ export default function JobDetails() {
             <button
               className={styles.actionBtn}
               onClick={() => updateField("worker_status", "done")}
-              // disabled={loading}
+              disabled={actionLoading || loading}
             >
               Finish Work
             </button>
@@ -251,7 +330,7 @@ export default function JobDetails() {
                   ? "Approved"
                   : job.adminStatus === "rejected"
                   ? "Rejected"
-                  : "Awaiting worker"}
+                  : "Awaiting Worker Action"}
               </div>
 
               {job.workerStatus === "done" && job.adminStatus === "pending" && (
@@ -259,7 +338,7 @@ export default function JobDetails() {
                   <button
                     className={styles.actionBtn}
                     onClick={() => updateField("admin_status", "approved")}
-                    // disabled={loading}
+                    disabled={actionLoading || loading}
                   >
                     Approve Completion
                   </button>
@@ -267,25 +346,45 @@ export default function JobDetails() {
                     className={styles.rejectBtn}
                     onClick={() => {
                       updateField("admin_status", "rejected");
+                      // Додатково можна скинути статус працівника, якщо це бізнес-логіка
+                      // updateField("worker_status", "not_started");
                     }}
-                    // disabled={loading}
+                    disabled={actionLoading || loading}
                   >
                     Reject Completion
                   </button>
                 </>
               )}
+              {/* Дозволяємо адміну повторно відкрити роботу, якщо вона відхилена */}
               {job.adminStatus === "rejected" && (
                 <button
                   className={styles.actionBtn}
                   onClick={() => {
-                    updateField("worker_status", "in_progress");
-                    updateField("admin_status", "pending");
+                    updateField("worker_status", "not_started"); // Повертаємо до початкового стану працівника
+                    updateField("admin_status", "pending"); // Адмін знову очікує дій
                   }}
-                  // disabled={loading}
+                  disabled={actionLoading || loading}
                 >
                   Re-open Job
                 </button>
               )}
+              {/* Додаємо можливість адміну змінювати статус працівника, якщо потрібно */}
+              {user.role === "admin" &&
+                job.workerStatus !== "done" &&
+                job.adminStatus !== "approved" && (
+                  <button
+                    className={styles.actionBtn}
+                    style={{
+                      backgroundColor: "#ffc107",
+                      color: "#212529",
+                      marginLeft: "auto",
+                    }} // Приклад іншого стилю
+                    onClick={() => updateField("worker_status", "done")}
+                    disabled={actionLoading || loading}
+                  >
+                    Force Worker Done
+                  </button>
+                )}
             </>
           )}
         </div>
@@ -306,6 +405,7 @@ export default function JobDetails() {
                 ? styles.activeTab
                 : styles.tab;
             }}
+            onClick={(e) => actionLoading && e.preventDefault()} // Запобігаємо навігації під час дії
           >
             {label}
           </NavLink>

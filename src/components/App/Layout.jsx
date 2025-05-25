@@ -2,7 +2,8 @@
 import React, { useContext, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { AppContext } from "./App";
-import styles from "./App.module.css";
+import styles from "./App.module.css"; // Використовуємо App.module.css для узгодженості
+// Layout.module.css може бути видалений або його стилі перенесені, якщо він не використовується для іншого
 
 export default function Layout() {
   const { user, logout } = useContext(AppContext);
@@ -19,11 +20,10 @@ export default function Layout() {
   };
 
   const navLinks = [
-    // Посилання "Home" може бути різним або вести на різний компонент для адміна і воркера
-    // Якщо "/home" - це загальна сторінка, яка адаптується під роль:
-    { to: "/home", text: "Home", roles: ["admin", "worker"] },
+    // Посилання "Home" тепер тільки для адміна
+    { to: "/home", text: "Home", roles: ["admin"] },
 
-    // Нове посилання для кабінету працівника
+    // Посилання для кабінету працівника
     { to: "/my-dashboard", text: "My Dashboard", roles: ["worker"] },
 
     // Посилання тільки для адміна
@@ -34,9 +34,6 @@ export default function Layout() {
     // Спільне посилання
     { to: "/calendar", text: "Calendar", roles: ["admin", "worker"] },
   ];
-
-  // Сортуємо для кращого порядку, якщо потрібно
-  // const sortedNavLinks = navLinks.sort(...);
 
   return (
     <div className={styles.layoutContainer}>
@@ -58,6 +55,7 @@ export default function Layout() {
         <nav className={styles.nav}>
           <div className={styles.navMenu}>
             {navLinks.map((link) => {
+              // Перевіряємо, чи користувач існує, чи має роль, і чи ця роль дозволена для посилання
               if (user && user.role && link.roles.includes(user.role)) {
                 return (
                   <NavLink
@@ -68,8 +66,9 @@ export default function Layout() {
                         ? `${styles.navLink} ${styles.activeNavLink}`
                         : styles.navLink
                     }
-                    onClick={() => setIsSidebarOpen(false)}
-                    end={link.to === "/home" || link.to === "/my-dashboard"} // `end` для коректного підсвічування "головних" сторінок
+                    onClick={() => setIsSidebarOpen(false)} // Закриваємо сайдбар при кліку на посилання
+                    // `end` для `/home` та `/my-dashboard` щоб вони були активні тільки при точному співпадінні шляху
+                    end={link.to === "/home" || link.to === "/my-dashboard"}
                   >
                     {link.text}
                   </NavLink>
@@ -79,9 +78,11 @@ export default function Layout() {
             })}
           </div>
         </nav>
-        <button className={styles.logoutBtn} onClick={handleLogout}>
-          Logout
-        </button>
+        {user && ( // Показуємо кнопку Logout тільки якщо користувач залогінений
+          <button className={styles.logoutBtn} onClick={handleLogout}>
+            Logout
+          </button>
+        )}
       </aside>
 
       <main className={styles.mainContent}>

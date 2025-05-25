@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import Layout from "./Layout";
 import { supabase } from "../../lib/supabase";
+import ErrorBoundary from "./ErrorBoundary"; // <--- НОВИЙ ІМПОРТ
 
 // Сторінки
 import Home from "../../Pages/Home";
@@ -24,18 +25,19 @@ import Calendar from "../../Pages/Calendar";
 import JobOrderPhoto from "../../Pages/JobOrderPhoto";
 import WorkerNotes from "../../Pages/WorkerNotes";
 import PhotoGallery from "../../Pages/PhotoGallery";
-import WorkerDashboard from "../../Pages/WorkerDashboard"; // <--- НОВИЙ ІМПОРТ
+import WorkerDashboard from "../../Pages/WorkerDashboard";
 
 export const AppContext = createContext(null);
 
-// ... (ProtectedRoute та AppProvider без змін) ...
 function ProtectedRoute({ allowedRoles, element }) {
   const { user } = useContext(AppContext);
   if (!user) return <Navigate to="/login" replace />;
 
   const userRole = user.role;
   if (!userRole || !allowedRoles.includes(userRole)) {
-    return <Navigate to="/" replace />;
+    // Якщо роль не відповідає — перенаправляємо на головну сторінку або логін,
+    // залежно від логіки (тут /home, але можна змінити на /login якщо це доцільніше для неавторизованих ролей)
+    return <Navigate to="/" replace />; // Або "/login"
   }
   return element;
 }
@@ -53,7 +55,7 @@ function AppProvider({ children }) {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from("workers")
-        .select("role, name, id")
+        .select("id, name, role") // Додано id, name, role для повноти профілю
         .eq("id", authUser.id)
         .single();
 
@@ -62,19 +64,25 @@ function AppProvider({ children }) {
           "Error fetching user worker profile:",
           profileError.message
         );
-        setUser({ ...authUser });
+        // Встановлюємо користувача з даними сесії, навіть якщо профіль не знайдено
+        setUser({ ...authUser, role: null, name: authUser.email }); // Запасний варіант
         return;
       }
 
       if (profileData) {
         setUser({ ...authUser, ...profileData });
       } else {
-        console.warn("Worker profile not found for id:", authUser.id);
-        setUser({ ...authUser });
+        // Це може статися, якщо користувач є в auth.users, але немає відповідного запису в 'workers'
+        console.warn(
+          "Worker profile not found for id:",
+          authUser.id,
+          "Using default role/name."
+        );
+        setUser({ ...authUser, role: null, name: authUser.email }); // Або інша логіка за замовчуванням
       }
     } catch (e) {
       console.error("Error in fetchAndSetUserWithProfile:", e);
-      setUser({ ...authUser });
+      setUser({ ...authUser, role: null, name: authUser.email }); // Запасний варіант при будь-якій помилці
     }
   };
 
@@ -105,12 +113,13 @@ function AppProvider({ children }) {
     };
   }, []);
 
-  const login = (u) => setUser(u);
+  const login = (u) => setUser(u); // Ця функція login тепер встановлює дані з таблиці workers
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Error signing out:", error.message);
     }
+    // setUser(null); // onAuthStateChange має спрацювати і встановити user в null
   };
   const updateSettings = (s) => setSettings((prev) => ({ ...prev, ...s }));
   const addActivity = (msg) =>
@@ -147,134 +156,46 @@ export default function App() {
 
   return (
     <AppProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route element={<Layout />}>
-            <Route
-              index
-              element={
-                <ProtectedRoute
-                  allowedRoles={ALL_AUTHENTICATED_ROLES}
-                  element={<Home />}
-                />
-              }
-            />
-            <Route
-              path="home"
-              element={
-                <ProtectedRoute
-                  allowedRoles={ALL_AUTHENTICATED_ROLES}
-                  element={<Home />}
-                />
-              }
-            />
-            {/* НОВИЙ МАРШРУТ */}
-            <Route
-              path="my-dashboard"
-              element={
-                <ProtectedRoute
-                  allowedRoles={[WORKER_ROLE]}
-                  element={<WorkerDashboard />}
-                />
-              }
-            />
-            <Route
-              path="workers/active" // Цей маршрут може потребувати перегляду, бо ActiveWorkers.jsx очікує jobId з useParams
-              element={
-                <ProtectedRoute
-                  allowedRoles={[ADMIN_ROLE]}
-                  element={<ActiveWorkers />}
-                />
-              }
-            />
-            <Route
-              path="workers"
-              element={
-                <ProtectedRoute
-                  allowedRoles={[ADMIN_ROLE]}
-                  element={<Workers />}
-                />
-              }
-            />
-            <Route
-              path="workers/:id"
-              element={
-                <ProtectedRoute
-                  allowedRoles={[ADMIN_ROLE]}
-                  element={<WorkerProfile />}
-                />
-              }
-            />
-            <Route
-              path="orders"
-              element={
-                <ProtectedRoute
-                  allowedRoles={[ADMIN_ROLE]}
-                  element={<Orders />}
-                />
-              }
-            />
-            <Route
-              path="orders/:id"
-              element={
-                <ProtectedRoute
-                  allowedRoles={ALL_AUTHENTICATED_ROLES}
-                  element={<JobDetails />}
-                />
-              }
-            >
+      <ErrorBoundary>
+        {" "}
+        {/* <--- ІНТЕГРАЦІЯ ERRORBOUNDARY */}
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route element={<Layout />}>
               <Route
                 index
                 element={
                   <ProtectedRoute
                     allowedRoles={ALL_AUTHENTICATED_ROLES}
-                    element={<PhotosAfter />}
+                    element={<Home />}
                   />
                 }
               />
               <Route
-                path="photos-after"
+                path="home"
                 element={
                   <ProtectedRoute
                     allowedRoles={ALL_AUTHENTICATED_ROLES}
-                    element={<PhotosAfter />}
+                    element={<Home />}
                   />
                 }
               />
               <Route
-                path="job-order-photo"
+                path="my-dashboard"
+                element={
+                  <ProtectedRoute
+                    allowedRoles={[WORKER_ROLE]}
+                    element={<WorkerDashboard />}
+                  />
+                }
+              />
+              <Route
+                path="workers/active"
                 element={
                   <ProtectedRoute
                     allowedRoles={[ADMIN_ROLE]}
-                    element={<JobOrderPhoto />}
-                  />
-                }
-              />
-              <Route
-                path="worker-notes"
-                element={
-                  <ProtectedRoute
-                    allowedRoles={ALL_AUTHENTICATED_ROLES}
-                    element={<WorkerNotes />}
-                  />
-                }
-              />
-              <Route
-                path="materials"
-                element={
-                  <ProtectedRoute
-                    allowedRoles={ALL_AUTHENTICATED_ROLES}
-                    element={<Materials />}
-                  />
-                }
-              />
-              <Route
-                path="invoices"
-                element={
-                  <ProtectedRoute
-                    allowedRoles={ALL_AUTHENTICATED_ROLES}
-                    element={<Invoices />}
+                    element={<ActiveWorkers />} // Цей маршрут може потребувати jobId з URL
                   />
                 }
               />
@@ -283,32 +204,127 @@ export default function App() {
                 element={
                   <ProtectedRoute
                     allowedRoles={[ADMIN_ROLE]}
-                    element={<ActiveWorkers />}
+                    element={<Workers />}
                   />
                 }
               />
+              <Route
+                path="workers/:id"
+                element={
+                  <ProtectedRoute
+                    allowedRoles={[ADMIN_ROLE]}
+                    element={<WorkerProfile />}
+                  />
+                }
+              />
+              <Route
+                path="orders"
+                element={
+                  <ProtectedRoute
+                    allowedRoles={[ADMIN_ROLE]}
+                    element={<Orders />}
+                  />
+                }
+              />
+              <Route
+                path="orders/:id"
+                element={
+                  <ProtectedRoute
+                    allowedRoles={ALL_AUTHENTICATED_ROLES}
+                    element={<JobDetails />}
+                  />
+                }
+              >
+                {/* Вкладені маршрути для JobDetails */}
+                <Route
+                  index // За замовчуванням показуємо PhotosAfter
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={ALL_AUTHENTICATED_ROLES}
+                      element={<PhotosAfter />}
+                    />
+                  }
+                />
+                <Route
+                  path="photos-after"
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={ALL_AUTHENTICATED_ROLES}
+                      element={<PhotosAfter />}
+                    />
+                  }
+                />
+                <Route
+                  path="job-order-photo"
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={[ADMIN_ROLE]}
+                      element={<JobOrderPhoto />}
+                    />
+                  }
+                />
+                <Route
+                  path="worker-notes"
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={ALL_AUTHENTICATED_ROLES}
+                      element={<WorkerNotes />}
+                    />
+                  }
+                />
+                <Route
+                  path="materials"
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={ALL_AUTHENTICATED_ROLES}
+                      element={<Materials />}
+                    />
+                  }
+                />
+                <Route
+                  path="invoices"
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={ALL_AUTHENTICATED_ROLES} // Дозволено всім аутентифікованим для перегляду
+                      element={<Invoices />}
+                    />
+                  }
+                />
+                <Route
+                  path="workers" // Призначені працівники для конкретного замовлення
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={[ADMIN_ROLE]} // Тільки адмін може керувати працівниками на замовленні
+                      element={<ActiveWorkers />} // Тут ActiveWorkers отримує jobId з URL (через JobDetails)
+                    />
+                  }
+                />
+              </Route>
+              <Route
+                path="photo-gallery"
+                element={
+                  <ProtectedRoute
+                    allowedRoles={[ADMIN_ROLE]}
+                    element={<PhotoGallery />}
+                  />
+                }
+              />
+              <Route
+                path="calendar"
+                element={
+                  <ProtectedRoute
+                    allowedRoles={ALL_AUTHENTICATED_ROLES}
+                    element={<Calendar />}
+                  />
+                }
+              />
+              {/* Будь-які інші маршрути, що не знайдені, можна перенаправити на /home або /login */}
+              <Route path="*" element={<Navigate to="/home" replace />} />
             </Route>
-            <Route
-              path="photo-gallery"
-              element={
-                <ProtectedRoute
-                  allowedRoles={[ADMIN_ROLE]}
-                  element={<PhotoGallery />}
-                />
-              }
-            />
-            <Route
-              path="calendar"
-              element={
-                <ProtectedRoute
-                  allowedRoles={ALL_AUTHENTICATED_ROLES}
-                  element={<Calendar />}
-                />
-              }
-            />
-          </Route>
-        </Routes>
-      </Router>
+          </Routes>
+        </Router>
+      </ErrorBoundary>{" "}
+      {/* <--- КІНЕЦЬ ІНТЕГРАЦІЇ ERRORBOUNDARY */}
     </AppProvider>
   );
 }

@@ -215,3 +215,98 @@
   border-radius: 4px;
   /* margin: 0 auto; видалено, оскільки gap та flex-wrap керують розміщенням */
 }
+/* ... існуючі стилі ... */
+
+.photoItem {
+  /* ... існуючі стилі ... */
+  align-items: flex-start; /* Краще для вмісту з різною висотою (текст + кнопки) */
+}
+
+.photoDetails {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Проміжок між підписом та кнопками/формою редагування */
+}
+
+.editCaptionForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.editCaptionTextarea {
+  font-family: "Inter", sans-serif;
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 50px;
+}
+.editCaptionTextarea:disabled {
+  background-color: #f0f0f0;
+}
+
+.editCaptionActions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.saveCaptionBtn,
+.cancelCaptionBtn,
+.addEditCaptionBtn {
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.saveCaptionBtn {
+  background-color: #28a745; /* Зелений */
+  color: white;
+}
+.saveCaptionBtn:hover {
+  background-color: #218838;
+}
+.saveCaptionBtn:disabled {
+  background-color: #a3d8b0;
+  cursor: not-allowed;
+}
+
+.cancelCaptionBtn {
+  background-color: #6c757d; /* Сірий */
+  color: white;
+}
+.cancelCaptionBtn:hover {
+  background-color: #5a6268;
+}
+.cancelCaptionBtn:disabled {
+  background-color: #b0b3b6;
+  cursor: not-allowed;
+}
+
+.addEditCaptionBtn {
+  background-color: #007bff; /* Синій */
+  color: white;
+  align-self: flex-start; /* Щоб кнопка не розтягувалася, якщо немає підпису */
+}
+.addEditCaptionBtn:hover {
+  background-color: #0056b3;
+}
+.addEditCaptionBtn:disabled {
+  background-color: #7fbcff;
+  cursor: not-allowed;
+}
+
+/* Стиль для існуючого підпису, якщо потрібно його відокремити */
+.photoCaption {
+  /* ... існуючі стилі ... */
+  margin: 0; /* Можливо, вже є, просто для перевірки */
+  word-break: break-word; /* Для довгих підписів без пробілів */
+}

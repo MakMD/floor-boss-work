@@ -8,48 +8,54 @@ import React, {
 } from "react";
 import { Link } from "react-router-dom";
 import ReactCalendar from "react-calendar";
-import "react-calendar/dist/Calendar.css"; // Стилі для ReactCalendar
-import styles from "./Calendar.module.css"; //
-import { AppContext } from "../components/App/App"; //
-import { supabase } from "../lib/supabase"; //
+import "react-calendar/dist/Calendar.css";
+import styles from "./Calendar.module.css";
+import { AppContext } from "../components/App/App";
+import { supabase } from "../lib/supabase";
+import { useToast } from "@chakra-ui/react"; // <--- НОВИЙ ІМПОРТ
 
-// Допоміжна функція для парсингу дати з рядка YYYY-MM-DD
-// Враховує можливі проблеми з часовими поясами, замінюючи '-' на '/'
 function parseDateStringSafe(dateString) {
   if (!dateString) return null;
   return new Date(dateString.replace(/-/g, "/"));
 }
 
 export default function CalendarPage() {
-  const { user } = useContext(AppContext);
+  const { user, addActivity } = useContext(AppContext); // <--- Додано addActivity
+  const toast = useToast(); // <--- ІНІЦІАЛІЗАЦІЯ TOAST
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(null); // Для відображення загальної помилки завантаження
 
-  const [activeDate, setActiveDate] = useState(new Date()); // Обрана дата в календарі
+  const [activeDate, setActiveDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAll, setShowAll] = useState(false); // Показувати всі роботи чи лише на обрану дату/період
-  const [showHidden, setShowHidden] = useState(false); // Показувати приховані роботи (для адміна)
-  const [editingId, setEditingId] = useState(null); // Для режиму редагування (сховати/видалити)
+  const [showAll, setShowAll] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false); // Для кнопок Hide/Delete
 
-  const [selectedPeriodInDays, setSelectedPeriodInDays] = useState(null); // null, 3, 7, 10
+  const [selectedPeriodInDays, setSelectedPeriodInDays] = useState(null);
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError(null); // Скидаємо помилку перед кожним завантаженням
     try {
       let query = supabase
         .from("jobs")
         .select(
           "id, address, date, client, job_workers!inner(worker_id), is_hidden"
         )
-        .order("date", { ascending: true }); // Сортуємо за датою
+        .order("date", { ascending: true });
 
-      query = query.eq("is_hidden", showHidden);
+      // Застосовуємо фільтр is_hidden тільки якщо showHidden встановлено (для адміна)
+      if (user?.role === "admin") {
+        query = query.eq("is_hidden", showHidden);
+      } else {
+        // Для інших ролей завжди показуємо тільки не приховані
+        query = query.eq("is_hidden", false);
+      }
 
       if (user?.role === "worker" && user?.id) {
-        // Додано перевірку user та user.id
         query = query.eq("job_workers.worker_id", user.id);
       }
 
@@ -63,19 +69,27 @@ export default function CalendarPage() {
         }))
       );
     } catch (err) {
-      setError(err.message);
+      const errorMsg = `Failed to load orders: ${err.message}`;
+      setError(errorMsg);
+      toast({
+        title: "Error Loading Orders",
+        description: errorMsg,
+        status: "error",
+        duration: 7000,
+        isClosable: true,
+        position: "top-right",
+      });
       setJobs([]);
     } finally {
       setLoading(false);
     }
-  }, [showHidden, user]); // user додано як залежність, щоб перезавантажити, якщо змінився користувач
+  }, [showHidden, user, toast]); // Додано user і toast до залежностей
 
   useEffect(() => {
     if (user) {
-      // Завантажуємо роботи тільки якщо є користувач
       fetchJobs();
     } else {
-      setJobs([]); // Очищаємо роботи, якщо користувач вийшов
+      setJobs([]);
     }
   }, [fetchJobs, user]);
 
@@ -85,7 +99,7 @@ export default function CalendarPage() {
       if (job.date) {
         const jobDate = parseDateStringSafe(job.date);
         if (jobDate) {
-          const jobDateKey = jobDate.toDateString(); // Нормалізуємо дату до рядка для ключа
+          const jobDateKey = jobDate.toDateString();
           counts[jobDateKey] = (counts[jobDateKey] || 0) + 1;
         }
       }
@@ -106,38 +120,84 @@ export default function CalendarPage() {
 
   const handleDelete = async (jobId) => {
     if (!window.confirm("Are you sure you want to delete this order?")) return;
-    // Використовуємо окремий лоадер для дій, щоб не блокувати весь календар
-    // setActionLoading(true);
-    const { error: delErr } = await supabase
-      .from("jobs")
-      .delete()
-      .eq("id", jobId);
-    // setActionLoading(false);
-    if (delErr) {
-      alert("Failed to delete order: " + delErr.message);
-    } else {
-      await fetchJobs();
+    setActionLoading(true);
+    try {
+      const { error: delErr } = await supabase
+        .from("jobs")
+        .delete()
+        .eq("id", jobId);
+
+      if (delErr) throw delErr;
+
+      toast({
+        title: "Order Deleted",
+        description: `Order #${jobId} has been successfully deleted.`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+      addActivity(`Admin ${user.name || user.id} deleted order #${jobId}`);
+      await fetchJobs(); // Оновлюємо список
       setEditingId(null);
+    } catch (err) {
+      toast({
+        title: "Error Deleting Order",
+        description: `Failed to delete order #${jobId}: ${err.message}`,
+        status: "error",
+        duration: 7000,
+        isClosable: true,
+        position: "top-right",
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleHide = async (jobId) => {
-    if (!window.confirm("Are you sure you want to hide this order?")) return;
-    // setActionLoading(true);
-    const { error: updErr } = await supabase
-      .from("jobs")
-      .update({ is_hidden: true })
-      .eq("id", jobId);
-    // setActionLoading(false);
-    if (updErr) {
-      alert("Failed to hide order: " + updErr.message);
-    } else {
-      await fetchJobs();
+  const handleHide = async (jobId, currentIsHidden) => {
+    const actionText = currentIsHidden ? "unhide" : "hide";
+    if (!window.confirm(`Are you sure you want to ${actionText} this order?`))
+      return;
+    setActionLoading(true);
+    try {
+      const { error: updErr } = await supabase
+        .from("jobs")
+        .update({ is_hidden: !currentIsHidden })
+        .eq("id", jobId);
+
+      if (updErr) throw updErr;
+
+      toast({
+        title: `Order ${currentIsHidden ? "Unhidden" : "Hidden"}`,
+        description: `Order #${jobId} has been successfully ${
+          actionText === "hide" ? "hidden" : "made visible"
+        }.`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+      addActivity(
+        `Admin ${user.name || user.id} ${
+          actionText === "hide" ? "hid" : "unhid"
+        } order #${jobId}`
+      );
+      await fetchJobs(); // Оновлюємо список
       setEditingId(null);
+    } catch (err) {
+      toast({
+        title: `Error ${currentIsHidden ? "Unhiding" : "Hiding"} Order`,
+        description: `Failed to ${actionText} order #${jobId}: ${err.message}`,
+        status: "error",
+        duration: 7000,
+        isClosable: true,
+        position: "top-right",
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  // Фільтрація за пошуковим запитом
   const searchedJobs = useMemo(
     () =>
       jobs.filter((job) => {
@@ -151,7 +211,6 @@ export default function CalendarPage() {
     [jobs, searchTerm]
   );
 
-  // Фільтрація за датою або періодом
   const dateFilteredJobs = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -162,18 +221,19 @@ export default function CalendarPage() {
 
     if (selectedPeriodInDays !== null) {
       const endDate = new Date(today);
-      endDate.setDate(today.getDate() + selectedPeriodInDays - 1);
+      endDate.setDate(today.getDate() + selectedPeriodInDays - 1); // -1 тому що включаємо сьогоднішній день
       endDate.setHours(23, 59, 59, 999);
 
       return searchedJobs.filter((job) => {
         if (!job.date) return false;
         const jobDate = parseDateStringSafe(job.date);
         if (!jobDate) return false;
-        jobDate.setHours(0, 0, 0, 0);
+        jobDate.setHours(0, 0, 0, 0); // Нормалізуємо час для порівняння
         return jobDate >= today && jobDate <= endDate;
       });
     }
 
+    // Фільтрація за активною датою календаря
     return searchedJobs.filter((job) => {
       if (!job.date) return false;
       const jobDate = parseDateStringSafe(job.date);
@@ -181,12 +241,10 @@ export default function CalendarPage() {
     });
   }, [searchedJobs, activeDate, showAll, selectedPeriodInDays]);
 
-  // Групування відфільтрованих робіт за датою для відображення
   const groupedByDateJobs = useMemo(
     () =>
       dateFilteredJobs.reduce((acc, job) => {
         const jobDate = job.date ? parseDateStringSafe(job.date) : null;
-        // Використовуємо toLocaleDateString для більш читабельного формату дати як ключа
         const key = jobDate
           ? jobDate.toLocaleDateString(undefined, {
               year: "numeric",
@@ -202,13 +260,11 @@ export default function CalendarPage() {
     [dateFilteredJobs]
   );
 
-  // Сортування ключів-дат для відображення
   const sortedDateKeys = useMemo(
     () =>
       Object.keys(groupedByDateJobs).sort((a, b) => {
-        if (a === "Jobs with Unspecified Date") return 1; // "Unspecified Date" завжди в кінці
+        if (a === "Jobs with Unspecified Date") return 1;
         if (b === "Jobs with Unspecified Date") return -1;
-        // Сортуємо дати в хронологічному порядку (від старіших до новіших)
         return new Date(a) - new Date(b);
       }),
     [groupedByDateJobs]
@@ -216,8 +272,8 @@ export default function CalendarPage() {
 
   const handlePeriodSelect = (days) => {
     setSelectedPeriodInDays(days);
-    setShowAll(false);
-    setActiveDate(new Date()); // При виборі періоду, activeDate можна скинути на сьогодні або залишити як є
+    setShowAll(false); // Якщо обрано період, не показуємо "всі"
+    setActiveDate(new Date());
   };
 
   return (
@@ -226,7 +282,12 @@ export default function CalendarPage() {
         <div className={styles.hiddenToggle}>
           <button
             className={styles.toggleBtn}
-            onClick={() => setShowHidden((prev) => !prev)}
+            onClick={() => {
+              setShowHidden((prev) => !prev);
+              // При зміні фільтра прихованих, скидаємо editingId, щоб меню дій закрилося
+              setEditingId(null);
+            }}
+            disabled={actionLoading || loading}
           >
             {showHidden ? "Show Visible Orders" : "Show Hidden Orders"}
           </button>
@@ -240,6 +301,7 @@ export default function CalendarPage() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className={styles.searchInput}
+          disabled={loading}
         />
       </div>
 
@@ -248,7 +310,8 @@ export default function CalendarPage() {
           onChange={(date) => {
             setActiveDate(date);
             setShowAll(false);
-            setSelectedPeriodInDays(null); // Скидаємо фільтр за періодом
+            setSelectedPeriodInDays(null);
+            setEditingId(null); // Скидаємо редагування при зміні дати
           }}
           value={showAll || selectedPeriodInDays !== null ? null : activeDate}
           className={styles.reactCalendar}
@@ -260,39 +323,50 @@ export default function CalendarPage() {
         {[3, 7, 10].map((days) => (
           <button
             key={days}
-            onClick={() => handlePeriodSelect(days)}
+            onClick={() => {
+              handlePeriodSelect(days);
+              setEditingId(null); // Скидаємо редагування
+            }}
             className={`${styles.periodButton} ${
               selectedPeriodInDays === days ? styles.activePeriodButton : ""
             }`}
+            disabled={loading || actionLoading}
           >
             Next {days} Days
           </button>
         ))}
-        {selectedPeriodInDays !== null && (
+        {(selectedPeriodInDays !== null || showAll) && ( // Кнопка Clear активна, якщо обрано період або "Show All"
           <button
             onClick={() => {
               setSelectedPeriodInDays(null);
-              setActiveDate(new Date()); // Повертаємо календар на сьогодні
+              setShowAll(false); // Скидаємо і "Show All"
+              setActiveDate(new Date());
+              setEditingId(null); // Скидаємо редагування
             }}
             className={styles.clearPeriodButton}
+            disabled={loading || actionLoading}
           >
-            Clear Period
+            Clear Filters & Show Today
           </button>
         )}
       </div>
 
-      <div className={styles.buttonContainer}>
-        <button
-          className={styles.showAllBtn}
-          onClick={() => {
-            setShowAll(true);
-            setSelectedPeriodInDays(null);
-            // setActiveDate(null); // Можна скинути activeDate або залишити
-          }}
-        >
-          Show All Filtered Orders
-        </button>
-      </div>
+      {!showAll &&
+        selectedPeriodInDays === null && ( // Показуємо кнопку "Show All" тільки якщо не обрано період і не активний режим "Show All"
+          <div className={styles.buttonContainer}>
+            <button
+              className={styles.showAllBtn}
+              onClick={() => {
+                setShowAll(true);
+                setSelectedPeriodInDays(null);
+                setEditingId(null);
+              }}
+              disabled={loading || actionLoading}
+            >
+              Show All Filtered Orders
+            </button>
+          </div>
+        )}
 
       <div className={styles.eventsContainer}>
         <h2 className={styles.title}>
@@ -300,33 +374,34 @@ export default function CalendarPage() {
             ? `Orders for Next ${selectedPeriodInDays} Days (from today)`
             : showAll
             ? showHidden
-              ? "Hidden Orders (All Dates, Filtered)"
-              : "All Filtered Orders (All Dates)"
+              ? "Hidden Orders (All Dates, Filtered by Search)"
+              : "All Orders (Filtered by Search)"
             : `Orders on ${activeDate.toLocaleDateString(undefined, {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
               })}`}
         </h2>
-
         {loading && <p className={styles.loading}>Loading orders...</p>}
-        {error && <p className={styles.error}>{error}</p>}
-        {!loading && sortedDateKeys.length === 0 && (
-          <p className={styles.noResults}>
-            {searchTerm
-              ? "No orders match your search criteria."
-              : showAll || selectedPeriodInDays !== null
-              ? "No orders found for the current filters/period."
-              : "No orders for the selected date."}
-          </p>
-        )}
-
+        {error && !loading && <p className={styles.error}>{error}</p>}{" "}
+        {/* Показуємо помилку, якщо не йде завантаження */}
+        {!loading &&
+          sortedDateKeys.length === 0 &&
+          !error && ( // Додано !error
+            <p className={styles.noResults}>
+              {searchTerm && dateFilteredJobs.length === 0 // Якщо є пошуковий запит і він не дав результатів
+                ? "No orders match your search criteria for the selected date/period."
+                : showAll || selectedPeriodInDays !== null
+                ? "No orders found for the current filters/period."
+                : "No orders for the selected date."}
+            </p>
+          )}
         {sortedDateKeys.map((dateKey) => (
           <div key={dateKey} className={styles.dateGroup}>
             <h3 className={styles.dateHeader}>{dateKey}</h3>
             <ul className={styles.jobList}>
               {groupedByDateJobs[dateKey]
-                .sort((a, b) => Number(a.id) - Number(b.id)) // Сортуємо за ID (старіші зверху)
+                .sort((a, b) => Number(a.id) - Number(b.id))
                 .map((job) => (
                   <li key={job.id} className={styles.jobItem}>
                     <Link to={`/orders/${job.id}`} className={styles.jobLink}>
@@ -335,29 +410,31 @@ export default function CalendarPage() {
                         ` (Scheduled: ${new Date(
                           job.date.replace(/-/g, "/")
                         ).toLocaleDateString()})`}
+                      {job.is_hidden && user?.role === "admin" && " (Hidden)"}
                     </Link>
 
                     {user?.role === "admin" && (
                       <div className={styles.jobActions}>
                         {editingId === job.id ? (
                           <>
-                            {!showHidden && (
-                              <button
-                                className={styles.hideBtn}
-                                onClick={() => handleHide(job.id)}
-                              >
-                                Hide
-                              </button>
-                            )}
+                            <button
+                              className={styles.hideBtn}
+                              onClick={() => handleHide(job.id, job.is_hidden)}
+                              disabled={actionLoading}
+                            >
+                              {job.is_hidden ? "Unhide" : "Hide"}
+                            </button>
                             <button
                               className={styles.deleteBtn}
                               onClick={() => handleDelete(job.id)}
+                              disabled={actionLoading}
                             >
                               Delete
                             </button>
                             <button
                               className={styles.cancelBtn}
                               onClick={() => setEditingId(null)}
+                              disabled={actionLoading}
                             >
                               Cancel
                             </button>
@@ -366,8 +443,9 @@ export default function CalendarPage() {
                           <button
                             className={styles.editBtn}
                             onClick={() => setEditingId(job.id)}
+                            disabled={actionLoading}
                           >
-                            Edit
+                            Actions
                           </button>
                         )}
                       </div>
