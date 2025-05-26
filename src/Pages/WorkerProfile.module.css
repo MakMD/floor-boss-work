@@ -1,99 +1,337 @@
 /* src/Pages/WorkerProfile.module.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
-.page {
-  max-width: 800px;
-  margin: 0 auto;
+.profilePage {
+  padding: 1.5rem;
+  font-family: var(--font-sans, "Inter", sans-serif);
+  background-color: var(--bg-page-alt, #f0f4f8);
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.centeredStatus {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
   padding: 2rem;
-  font-family: "Inter", sans-serif;
-  color: #2d3748;
-  background: #ffffff;
+  color: var(--fg-muted-darker, #4a5568);
+}
+
+.loadingText,
+.errorText,
+.noResultsText {
+  /* .noResultsText замість .empty */
+  font-size: 1.1rem;
+  margin-top: 1rem;
+}
+
+.errorIcon,
+.emptyIcon {
+  color: var(--text-error, #e53e3e);
+  margin-bottom: 0.5rem;
+}
+.emptyIcon {
+  color: var(--fg-muted, #718096);
+}
+
+.profileHeader {
+  background-color: var(--bg-card, #fff);
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column; /* Кнопка назад зверху, потім інфо */
+  gap: 1rem;
 }
 
 .backButton {
-  display: inline-block;
-  margin-bottom: 1rem;
-  padding: 0.5rem 1rem;
-  background-color: #edf2f7;
-  border: none;
-  border-radius: 4px;
+  display: inline-flex; /* Щоб іконка була поруч з текстом */
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background-color: var(--button-secondary-bg, transparent);
+  color: var(--button-secondary-fg, var(--text-dark));
+  border: 1px solid var(--button-secondary-border, var(--border-light));
+  border-radius: 6px;
+  font-weight: 500;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease;
+  align-self: flex-start; /* Кнопка зліва */
 }
-
 .backButton:hover {
-  background-color: #e2e8f0;
+  background-color: var(--surface-hover, #e9ecef);
+  color: var(--accent, #3b82f6);
+  border-color: var(--accent-light, #a5b4fc);
 }
 
-.title {
-  font-size: 1.75rem;
+.workerIdentity {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.avatarPlaceholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--accent-bg-light, #e0e7ff);
+  color: var(--accent-dark, #3730a3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+.avatarPlaceholder svg {
+  /* Якщо використовується іконка */
+  width: 32px;
+  height: 32px;
 }
 
-.detail {
+.workerNameTitle {
+  /* Перейменовано з .title */
+  font-size: 1.8rem; /* Більший розмір для імені */
+  font-weight: 700;
+  color: var(--fg-header, #2d3748);
+  margin: 0 0 0.25rem 0;
+}
+
+.workerRoleDetail {
+  /* Перейменовано з .detail */
   font-size: 1rem;
-  margin-bottom: 1.5rem;
-  color: #4a5568;
+  color: var(--fg-muted-darker, #5a6572);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+.roleIcon {
+  color: var(--fg-muted, #718096);
 }
 
 .jobsSection {
-  margin-top: 2rem;
+  background-color: var(--bg-card, #fff);
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+  flex-grow: 1; /* Щоб секція займала решту висоти */
+  display: flex;
+  flex-direction: column;
 }
 
-.subtitle {
-  font-size: 1.25rem;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-  color: #2d3748;
+.jobsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap; /* Для переносу на малих екранах */
+  gap: 1rem;
+}
+
+.sectionSubtitle {
+  /* Перейменовано з .subtitle */
+  font-size: 1.3rem; /* Розмір підзаголовка */
+  font-weight: 600;
+  color: var(--fg-secondary-header, #4a5568);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.subtitleIcon {
+  color: var(--accent-medium, #7c8ee6);
+}
+
+.searchInputContainer {
+  display: flex;
+  align-items: center;
+  background-color: var(
+    --bg-input-alt,
+    #f8f9fa
+  ); /* Фон для контейнера пошуку */
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--border-input, var(--border-light));
+  flex-grow: 1; /* Дозволяє зайняти доступний простір */
+  max-width: 400px; /* Обмеження ширини */
+}
+.searchInputContainer:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-focus-ring, rgba(59, 130, 246, 0.15));
+}
+.searchIcon {
+  color: var(--fg-muted, #6b7280);
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+.searchInput {
+  width: 100%;
+  padding: 0.4rem 0; /* Вертикальний padding вже є в контейнері */
+  border: none;
+  background-color: transparent; /* Прозорий фон, бо є фон контейнера */
+  font-size: 0.9rem;
+  color: var(--text-dark);
+}
+.searchInput:focus {
+  outline: none;
 }
 
 .jobList {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: grid;
+  grid-template-columns: 1fr; /* Один стовпець для карток */
+  gap: 1rem; /* Проміжок між картками */
+  overflow-y: auto; /* Додаємо скрол, якщо список довгий */
+  flex-grow: 1; /* Щоб список займав доступну висоту */
 }
 
-.jobItem {
-  margin-bottom: 0.75rem;
-  padding: 0.75rem 1rem;
-  background-color: #f7fafc;
+.jobItemCard {
+  /* Перейменовано з .jobItem */
+  background-color: var(--surface, #f8f9fa); /* Трохи інший фон для карток */
+  border: 1px solid var(--border-subtle, #e9ecef);
   border-radius: 6px;
-  transition: background-color 0.2s ease;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.jobItemCard:hover {
+  border-color: var(--accent-light, #a5b4fc);
+  transform: translateY(-2px);
 }
 
-.jobItem:hover {
-  background-color: #edf2f7;
+.jobCardContent {
+  flex-grow: 1;
+  margin-right: 1rem;
+}
+.jobCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline; /* Вирівнювання по базовій лінії */
+  margin-bottom: 0.3rem;
+}
+.jobId {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--fg-header, #2d3748);
+}
+.jobAddress,
+.jobClient,
+.jobDate {
+  font-size: 0.875rem;
+  color: var(--fg-muted-darker, #5a6572);
+  margin: 0.15rem 0;
+}
+.jobDate {
+  font-style: italic;
 }
 
-.jobLink {
+/* Стилі для статусних бейджів (якщо використовуються) */
+.statusBadge {
+  padding: 0.25em 0.6em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  color: white;
+  line-height: 1;
+  white-space: nowrap;
+  margin-left: 0.5rem; /* Відступ від ID */
+}
+.statusBadgeNotStarted {
+  background-color: #a0aec0;
+}
+.statusBadgeInProgress {
+  background-color: #4299e1;
+}
+.statusBadgePending {
+  background-color: #f6e05e;
+  color: #744210;
+}
+.statusBadgeApproved {
+  background-color: #48bb78;
+}
+.statusBadgeRejected {
+  background-color: #f56565;
+}
+.statusBadgeUnknown {
+  background-color: #cbd5e0;
+  color: #2d3748;
+}
+
+.viewJobLink {
+  /* Перейменовано з .jobLink */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  background-color: transparent;
+  color: var(--accent, #3b82f6);
+  border: 1px solid transparent; /* Для консистенції, якщо буде рамка при ховері */
+  border-radius: 6px;
   text-decoration: none;
-  color: #2b6cb0;
   font-weight: 500;
-  display: block;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+.viewJobLink:hover {
+  background-color: var(--accent-bg-light, #e0e7ff);
+  color: var(--accent-dark, #2563eb);
+  text-decoration: none;
 }
 
-.jobLink:hover {
-  text-decoration: underline;
+/* Адаптивність */
+@media (max-width: 768px) {
+  .profilePage {
+    padding: 1rem;
+  }
+  .profileHeader {
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .workerNameTitle {
+    font-size: 1.5rem;
+  }
+  .jobsSection {
+    padding: 1rem 1.25rem;
+  }
+  .jobsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .searchInputContainer {
+    width: 100%;
+    max-width: none;
+  }
 }
-
-.error {
-  color: #e53e3e;
-  text-align: center;
-  margin: 2rem 0;
-}
-.searchInput {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  margin-bottom: 1rem;
-  border: 1px solid #e2e8f0; /* Або var(--border-light) */
-  border-radius: 6px; /* Або var(--border-radius-md) */
-  font-size: 0.9rem;
-  box-sizing: border-box; /* Щоб padding не збільшував загальну ширину */
-}
-
-.searchInput:focus {
-  outline: none;
-  border-color: #3b82f6; /* Або var(--accent) */
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); /* Або var(--accent-focus-ring) */
+@media (max-width: 480px) {
+  .workerIdentity {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .jobItemCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .jobCardContent {
+    margin-right: 0;
+    width: 100%;
+  }
+  .viewJobLink {
+    width: 100%;
+    justify-content: center;
+  }
 }

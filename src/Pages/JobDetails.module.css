@@ -1,110 +1,183 @@
 /* src/Pages/JobDetails.module.css */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 .jobDetails {
-  font-family: var(--font-family);
-  max-width: 960px;
-  margin: 2rem auto;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
+  font-family: var(--font-family, "Inter", sans-serif);
+  /* Прибираємо стилі, що робили його карткою, для заповнення mainContent */
+  /* max-width: 960px; */
+  /* margin: 2rem auto; */
+  /* background-color: #ffffff; */ /* Фон буде від mainContent або встановимо var(--bg-page) */
+  /* border-radius: 8px; */
+  /* box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); */
+  /* overflow: hidden; */
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(
+    --bg-page,
+    var(--bg-light, #f3f4f6)
+  ); /* Загальний фон сторінки */
 }
 
-.btnContainer {
+.headerSection {
+  /* Новий контейнер для кнопки "Назад" та заголовка */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #f7fafc;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.backBtn {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #ffffff;
-  background-color: #3b82f6; /* var(--accent, #3b82f6) */
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.logoutBtn {
-  background-color: #ef4444; /* var(--color-error, #ef4444) */
-}
-
-.backBtn:hover {
-  background-color: #2563eb; /* var(--accent-hover, #2563eb) */
-}
-
-.logoutBtn:hover {
-  background-color: #dc2626; /* var(--color-error-hover, #dc2626) */
+  background-color: var(
+    --bg-header-section,
+    var(--bg-white, #fff)
+  ); /* Фон для шапки */
+  border-bottom: 1px solid var(--border-light, #e2e8f0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04); /* Легка тінь для шапки */
 }
 
 .title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1f2937; /* var(--text-dark) */
-  text-align: center;
-  padding: 1.5rem 2rem;
+  color: var(--fg-header, var(--text-dark, #1f2937));
   margin: 0;
-  border-bottom: 1px solid #e2e8f0; /* var(--border-light) */
+  flex-grow: 1; /* Дозволяє заголовку зайняти місце, якщо кнопка "Назад" має фіксовану ширину */
+  text-align: left; /* Або center, якщо потрібно */
+  padding-left: 1rem; /* Відступ, якщо кнопка "Назад" зліва */
+}
+
+.backBtn {
+  padding: 0.6rem 1.2rem; /* Збільшено для кращого вигляду */
+  font-size: 0.9rem;
+  font-weight: 500; /* Менш жирний */
+  color: var(--button-secondary-fg, var(--text-dark, #374151));
+  background-color: var(--button-secondary-bg, var(--bg-white, #fff));
+  border: 1px solid
+    var(--button-secondary-border, var(--border-medium, #d1d5db));
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.backBtn:hover {
+  background-color: var(
+    --button-secondary-hover-bg,
+    var(--surface-hover, #f3f4f6)
+  );
+  border-color: var(
+    --button-secondary-hover-border,
+    var(--border-dark, #adb5bd)
+  );
+  color: var(--button-secondary-hover-fg, var(--accent, #3b82f6));
+}
+.backBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Прибираємо старий .btnContainer, якщо він більше не потрібен */
+.btnContainer {
+  display: none;
+}
+
+.mainContentWrapper {
+  /* Обгортка для jobInfoBlock, statusContainer та вкладок */
+  padding: 1.5rem; /* Загальні відступи для основного контенту */
+  flex-grow: 1; /* Дозволяє цьому блоку зайняти доступну висоту */
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Проміжок між блоками інформації, статусами та вкладками */
 }
 
 .jobInfoBlock {
-  padding: 1rem 1.5rem;
-  background-color: #f9fafb; /* var(--surface, #f9fafb) */
-  border-bottom: 1px solid #e2e8f0; /* var(--border-light) */
-  margin-bottom: 1rem;
+  padding: 1.5rem; /* Внутрішні відступи */
+  background-color: var(--bg-card, var(--bg-white, #fff));
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); /* Тінь для блоку */
+  /* border-bottom: 1px solid var(--border-light); -- Прибираємо, якщо є тінь */
+  /* margin-bottom: 1.5rem; -- Тепер керується gap в .mainContentWrapper */
 }
 .jobInfoBlock .detail {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem; /* Збільшено відступ */
   font-size: 0.95rem;
-  color: #4a5568; /* var(--fg-muted, #4a5568) */
+  color: var(--fg-muted, #4a5568);
+  display: flex; /* Для іконок */
+  align-items: center;
+  gap: 0.5rem; /* Проміжок для іконки */
 }
 .jobInfoBlock .detail strong {
-  color: #2d3748; /* var(--fg, #2d3748) */
+  color: var(--fg, #2d3748);
+  font-weight: 500; /* Менш жирний */
+  min-width: 120px; /* Мінімальна ширина для міток */
 }
+.jobInfoBlock .detail .icon {
+  /* Стиль для іконок */
+  color: var(--accent-medium, #7c8ee6);
+}
+
 .instructionsBlock {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background-color: #ffffff; /* var(--bg-white) */
-  border: 1px solid #e2e8f0; /* var(--border-light) */
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background-color: var(--surface-subtle, #f8f9fa); /* Легкий фон */
+  border: 1px solid var(--border-subtle, #e9ecef);
   border-radius: 6px;
 }
 .instructionsBlock strong {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #2d3748; /* var(--fg, #2d3748) */
+  color: var(--fg-emphasis, #343a40); /* Трохи темніший */
 }
 .instructionText {
   white-space: pre-wrap;
   word-break: break-word;
-  color: #4b5563; /* var(--fg-muted, #4b5563) */
+  color: var(--fg-default, #495057);
   font-size: 0.9rem;
   line-height: 1.6;
 }
 
 .statusContainer {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 0 1.5rem;
+  align-items: flex-start; /* Вирівнюємо по верху, якщо кнопки різної висоти */
+  gap: 1rem; /* Збільшено проміжок */
+  padding: 1.5rem; /* Відступи, аналогічно до jobInfoBlock */
+  background-color: var(--bg-card, var(--bg-white, #fff));
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
   flex-wrap: wrap;
+}
+.statusGroup {
+  /* Для групування бейджа та кнопок для Worker/Admin */
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+.statusGroupTitle {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+  margin-bottom: 0.25rem;
+}
+.statusActions {
+  /* Обгортка для кнопок дій для конкретного статусу */
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap; /* Дозволяє кнопкам переноситися */
 }
 
 .badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: 0.3rem 0.8rem; /* Збільшено padding */
+  border-radius: 16px; /* Більш заокруглені */
+  font-size: 0.8rem; /* Трохи менший текст */
+  font-weight: 600; /* Жирніший */
   color: #fff;
+  line-height: 1.2; /* Для кращого вигляду тексту */
+  text-align: center;
+  min-width: 110px; /* Мінімальна ширина для читабельності */
 }
+/* Кольори бейджів залишаємо як є, вони виглядають добре */
 .badgeNotStarted {
   background-color: #a0aec0;
 }
@@ -113,208 +186,220 @@
 }
 .badgeDoneGrey {
   background-color: #718096;
-}
+} /* Для Worker: Work Done, Admin: Pending */
 .badgeDoneGreen {
   background-color: #48bb78;
-}
+} /* Admin: Approved */
 .badgeError {
-  background-color: #e53e3e; /* var(--color-error, #e53e3e) */
-}
+  background-color: #e53e3e;
+} /* Admin: Rejected */
 
-.actionBtn {
-  padding: 0.5rem 1rem;
-  background-color: #2b6cb0; /* var(--accent-dark, #2b6cb0) */
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-.actionBtn:disabled {
-  background-color: #cbd5e0; /* var(--color-gray-300) */
-  cursor: default;
-}
+.actionBtn,
 .rejectBtn {
   padding: 0.5rem 1rem;
-  background-color: #e53e3e; /* var(--color-error, #e53e3e) */
-  color: #fff;
+  background-color: var(--button-primary-bg, var(--accent, #3b82f6));
+  color: var(--button-primary-fg, #fff);
   border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  border-radius: 6px;
+  font-size: 0.875rem; /* Трохи більший шрифт */
+  font-weight: 500;
   cursor: pointer;
-  margin-left: 0.5rem;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.actionBtn:hover,
+.rejectBtn:hover {
+  background-color: var(
+    --button-primary-hover-bg,
+    var(--accent-hover, #2563eb)
+  );
+  transform: translateY(-1px);
+}
+.actionBtn:disabled,
+.rejectBtn:disabled {
+  background-color: var(--button-disabled-bg, #adb5bd);
+  color: var(--button-disabled-fg, #f8f9fa);
+  cursor: not-allowed;
+  transform: none;
+}
+.rejectBtn {
+  background-color: var(--button-danger-bg, var(--color-error, #e53e3e));
 }
 .rejectBtn:hover {
-  background-color: #c53030; /* var(--color-error-hover, #c53030) */
+  background-color: var(
+    --button-danger-hover-bg,
+    var(--color-error-hover, #c53030)
+  );
 }
 
 .tabs {
   display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  background-color: #ffffff; /* var(--bg-white) */
-  padding: 0;
-  margin: 0;
-  border-bottom: 1px solid #e2e8f0; /* var(--border-light) */
+  flex-wrap: wrap; /* Дозволяємо вкладкам переноситися */
+  background-color: var(--bg-card, var(--bg-white, #fff));
+  margin: 0; /* Прибираємо відступи, якщо mainContentWrapper їх має */
+  border-bottom: 2px solid var(--border-medium, #dee2e6); /* Більш виразна лінія під вкладками */
+  border-radius: 8px 8px 0 0; /* Заокруглення тільки верхніх кутів */
+  overflow: hidden; /* Щоб заокруглення працювало */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); /* Тінь для блоку вкладок */
 }
 
-.tab {
-  flex: 1 1 auto;
+.tab,
+.activeTab {
+  flex: 1 1 auto; /* Дозволяємо вкладкам займати доступний простір */
+  min-width: 100px; /* Мінімальна ширина вкладки */
   text-align: center;
-  padding: 0.85rem 0.5rem;
-  font-size: 0.9rem;
+  padding: 0.9rem 1rem; /* Збільшено padding */
+  font-size: 0.95rem; /* Збільшено шрифт */
   font-weight: 500;
-  color: #4b5563; /* var(--text-muted) */
+  color: var(--fg-muted, #6b7280);
   text-decoration: none;
   transition: color 0.2s ease, background-color 0.2s ease,
     border-bottom-color 0.2s ease;
   border-bottom: 3px solid transparent;
+  background-color: transparent; /* Прозорий фон для неактивних */
+  border-right: 1px solid var(--border-light, #e9ecef); /* Розділювач між вкладками */
 }
+.tab:last-child,
+.activeTab:last-child {
+  border-right: none;
+}
+
 .tab:hover {
-  background-color: #f1f5f9; /* var(--bg-light) */
-  color: #1f2937; /* var(--text-dark) */
+  background-color: var(--surface-hover, #f1f5f9);
+  color: var(--accent, #3b82f6); /* Акцентний колір при наведенні */
 }
 .activeTab {
-  flex: 1 1 auto;
-  text-align: center;
-  padding: 0.85rem 0.5rem;
-  font-size: 0.9rem;
   font-weight: 600;
-  color: #1f2937; /* var(--text-dark) */
-  background-color: #f7fafc;
-  border-bottom: 3px solid #3b82f6; /* var(--accent) */
+  color: var(--accent-dark, #2563eb); /* Темніший акцентний колір для тексту */
+  background-color: var(--bg-white, #fff); /* Фон активної вкладки */
+  border-bottom-color: var(--accent, #3b82f6); /* Акцентна лінія знизу */
+  position: relative;
+  /* top: 1px; -- Ефект "піднятої" вкладки */
 }
 
 .content {
-  background-color: #f7fafc; /* var(--bg-light) */
+  background-color: var(
+    --bg-content-area,
+    var(--bg-white, #fff)
+  ); /* Фон для контенту вкладок */
   padding: 1.5rem;
-  min-height: 360px;
+  min-height: 360px; /* Залишаємо, щоб сторінка не "стрибала" */
+  border-radius: 0 0 8px 8px; /* Заокруглення нижніх кутів */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); /* Тінь для контенту */
+  margin-top: -1px; /* Щоб перекрити нижню рамку .tabs, якщо є */
 }
 
 .loading,
 .errorMsg {
   font-family: var(--font-family);
-  color: #6b7280; /* var(--text-muted) */
+  color: var(--fg-muted, #6b7280);
   text-align: center;
   margin-top: 2rem;
-  padding: 1rem;
+  padding: 1.5rem;
+  font-size: 1rem;
 }
 .errorMsg {
-  color: #dc2626; /* var(--text-error) */
-  font-weight: 600;
-  background-color: rgba(220, 38, 38, 0.1);
-  border: 1px solid #dc2626; /* var(--text-error) */
+  color: var(--text-error, #dc2626);
+  font-weight: 500;
+  background-color: var(--color-error-light-bg, rgba(220, 38, 38, 0.05));
+  border: 1px solid var(--color-error-border, rgba(220, 38, 38, 0.1));
   border-radius: 6px;
 }
 
-/* --- Медіа-запити для адаптивності --- */
+/* --- Медіа-запити --- */
 @media (max-width: 768px) {
-  /* Планшети */
-  .jobDetails {
-    margin: 1.5rem 1rem;
-    border-radius: 6px;
-  }
-  .btnContainer {
+  .headerSection {
     padding: 0.75rem 1rem;
+    flex-direction: column; /* Кнопка назад зверху, заголовок знизу */
+    align-items: flex-start;
+    gap: 0.5rem;
   }
   .title {
     font-size: 1.5rem;
-    padding: 1.25rem 1rem;
+    padding: 0; /* Прибираємо padding, якщо вже є в headerSection */
+  }
+  .mainContentWrapper {
+    padding: 1rem;
+    gap: 1rem;
   }
   .jobInfoBlock,
   .statusContainer {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding: 1rem;
   }
   .statusContainer {
-    gap: 0.5rem;
-    justify-content: center;
+    flex-direction: column; /* Статуси один під одним */
+    align-items: stretch;
   }
-  .badge {
-    font-size: 0.8rem;
-    padding: 0.2rem 0.6rem;
+  .statusGroup {
+    width: 100%;
   }
-  .actionBtn,
-  .rejectBtn {
-    font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
+  .statusActions {
+    justify-content: flex-start;
+  }
+
+  .tabs {
+    border-radius: 6px 6px 0 0;
   }
   .tab,
   .activeTab {
-    font-size: 0.85rem;
-    padding: 0.75rem 0.25rem;
+    font-size: 0.875rem;
+    padding: 0.75rem 0.5rem;
     min-width: 80px;
   }
   .content {
     padding: 1rem;
+    border-radius: 0 0 6px 6px;
   }
 }
 
 @media (max-width: 600px) {
-  /* Телефони */
-  .jobDetails {
-    margin: 1rem 0;
-    border-radius: 0;
-  }
-  .btnContainer {
-    padding: 0.75rem;
-  }
-  .backBtn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-  }
-  .title {
-    font-size: 1.3rem;
-    padding: 1rem;
-  }
-  .jobInfoBlock,
-  .statusContainer {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-  }
   .jobInfoBlock .detail {
     font-size: 0.9rem;
+    flex-direction: column; /* Метка зверху, значення знизу */
+    align-items: flex-start;
+    gap: 0.1rem;
+  }
+  .jobInfoBlock .detail strong {
+    min-width: auto;
+    margin-bottom: 0.2rem;
   }
   .instructionText {
     font-size: 0.85rem;
   }
-
-  .statusContainer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .statusContainer > * {
-    width: 100%;
-    margin-bottom: 0.5rem;
-    text-align: center;
-  }
-
-  .rejectBtn {
-    margin-left: 0;
-  }
-
   .tabs {
+    /* Вертикальні вкладки на дуже малих екранах */
     flex-direction: column;
+    border-bottom: none;
+    border-right: 2px solid var(--border-medium, #dee2e6);
+    border-radius: 6px 0 0 6px; /* Заокруглення лівих кутів */
   }
   .tab,
   .activeTab {
     flex: none;
     width: 100%;
+    text-align: left; /* Текст вкладок зліва */
     padding: 0.85rem 1rem;
-    border-bottom: 1px solid #e2e8f0; /* var(--border-light) */
+    border-bottom: 1px solid var(--border-light, #e9ecef);
+    border-right: none;
     border-left: 3px solid transparent;
   }
   .activeTab {
-    border-left-color: #3b82f6; /* var(--accent) */
+    border-left-color: var(--accent, #3b82f6);
+    border-bottom-color: var(
+      --border-light,
+      #e9ecef
+    ); /* Зберігаємо розділювач */
   }
   .tab:last-child,
   .activeTab:last-child {
     border-bottom: none;
   }
-
   .content {
-    padding: 0.75rem;
+    /* Контент тепер справа від вертикальних вкладок */
+    border-radius: 0 6px 6px 0;
+    margin-top: 0;
+    /* Можливо, потрібно буде обгорнути .tabs та .content в flex-контейнер з flex-direction: row */
   }
 }

@@ -1,22 +1,39 @@
+/* src/components/App/App.module.css */
 :root {
   --font-family: "Inter", sans-serif;
-  --color-bg-primary: #1f2937;
-  --color-bg-sidebar: #111827;
-  --color-text-light: #f9fafb;
-  --color-text-sidebar-link: #d1d5db;
-  --color-text-sidebar-link-hover: #ffffff;
-  --color-accent: #6366f1;
-  --color-accent-hover: #4f46e5;
-  --color-error: #dc2626;
+  --color-bg-primary: #1f2937; /* Темно-синій для основного фону сайдбара */
+  --color-bg-sidebar: #111827; /* Ще темніший для сайдбара (якщо потрібно розрізняти) */
+  --color-text-light: #f9fafb; /* Дуже світлий текст (майже білий) */
+  --color-text-sidebar-link: #d1d5db; /* Світло-сірий для неактивних посилань */
+  --color-text-sidebar-link-hover: #ffffff; /* Білий для ховера посилань */
+  --color-text-sidebar-link-active: #ffffff; /* Білий для активного посилання */
+
+  --color-accent: #6366f1; /* Основний акцентний (фіолетово-синій) */
+  --color-accent-hover: #4f46e5; /* Темніший акцент для ховера */
+  --color-accent-light: #a5b4fc; /* Світліший акцент */
+  --color-accent-dark: #4338ca; /* Дуже темний акцент */
+  --color-accent-bg-light: rgba(
+    99,
+    102,
+    241,
+    0.1
+  ); /* Дуже світлий фон для активного стану */
+
+  --color-error: #ef4444; /* Червоний для помилок/виходу */
+  --color-error-hover: #dc2626; /* Темніший червоний */
+  --color-error-dark: #b91c1c; /* Дуже темний червоний */
+  --color-error-light: #fca5a5; /* Світлий червоний */
+
   --sidebar-width: 260px;
-  --header-height: 0px;
-  --bg-light: #f3f4f6; /* Додано для body background */
+  --header-height: 0px; /* Якщо у вас є фіксована шапка, вкажіть її висоту */
+  --bg-light: #f3f4f6; /* Світло-сірий фон для контенту */
 }
 
 body {
   margin: 0;
   font-family: var(--font-family);
-  background-color: var(--bg-light);
+  background-color: var(--bg-light); /* Загальний фон для <main> */
+  /* Стилі з index.css для body тут не потрібні, якщо index.css підключено */
 }
 
 .layoutContainer {
@@ -26,10 +43,10 @@ body {
 
 .sidebar {
   width: var(--sidebar-width);
-  background-color: var(--color-bg-sidebar);
+  background-color: var(--color-bg-primary);
   color: var(--color-text-light);
-  padding-top: 1rem; /* Зменшено верхній padding */
-  padding-bottom: 1rem; /* Додано нижній padding */
+  padding-top: 0; /* Прибираємо верхній padding, якщо .sidebarHeader його має */
+  padding-bottom: 1rem;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -37,85 +54,126 @@ body {
   top: 0;
   bottom: 0;
   overflow-y: auto;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000; /* Важливо для мобільного меню */
-  transition: transform 0.3s ease-in-out; /* Для плавної анімації */
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15); /* Трохи виразніша тінь */
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
 }
 
 .sidebarHeader {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.6rem;
+  font-weight: 700;
   text-align: center;
-  padding: 0 1.5rem 1rem 1.5rem; /* Зменшено нижній padding */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 1rem;
+  padding: 1.5rem 1.5rem; /* Збільшено вертикальний padding */
+  /* border-bottom: 1px solid rgba(255, 255, 255, 0.1); -- Можна прибрати, якщо фон і так темний */
+  margin-bottom: 1rem; /* Зменшено відступ, якщо padding збільшено */
+  color: var(--color-text-light); /* Білий або світлий колір для заголовка */
+  /* background-color: rgba(255,255,255, 0.03); -- Ледь помітний фон для шапки сайдбару */
 }
 
 .nav {
   flex-grow: 1;
+  padding: 0 0.75rem; /* Горизонтальні відступи для блоку навігації */
 }
 
 .navMenu {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem; /* Менший проміжок між посиланнями */
 }
 
 .navLink {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem; /* Збільшено проміжок для іконки */
   text-decoration: none;
   color: var(--color-text-sidebar-link);
   font-weight: 500;
-  font-size: 0.95rem;
-  padding: 0.75rem 1.5rem;
-  border-left: 3px solid transparent;
+  font-size: 0.9rem; /* Трохи менший шрифт */
+  padding: 0.75rem 1rem; /* Оновлено padding */
+  border-left: 4px solid transparent;
   transition: background-color 0.2s ease, color 0.2s ease,
-    border-left-color 0.2s ease;
+    border-left-color 0.2s ease, padding-left 0.2s ease;
+  border-radius: 6px; /* Заокруглення для всього посилання */
+  margin: 0.1rem 0; /* Невеликий вертикальний відступ */
+}
+
+.navLinkIcon {
+  display: inline-flex;
+  align-items: center;
+  color: inherit; /* Іконка успадковує колір тексту */
+  flex-shrink: 0; /* Щоб іконка не стискалася */
+}
+.navLinkIcon svg {
+  stroke-width: 2; /* Трохи тонші лінії для іконок в меню */
+}
+
+.navLinkText {
+  /* Обгортка для тексту, якщо потрібно буде керувати переносом */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .navLink:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: var(--color-text-sidebar-link-hover);
+  background-color: var(--color-accent-bg-light);
+  color: var(--color-accent-dark); /* Акцентний колір тексту при ховері */
+  border-left-color: var(--color-accent);
+  padding-left: 1.25rem; /* Легкий зсув тексту та іконки при ховері/активності */
 }
 
 .activeNavLink {
-  color: var(--color-text-sidebar-link-hover);
-  background-color: rgba(
-    79,
-    70,
-    229,
-    0.2
-  ); /* Змінено на напівпрозорий accent */
-  border-left-color: var(--color-accent);
+  color: var(--color-text-sidebar-link-active);
+  background-color: var(--color-accent);
+  border-left-color: var(
+    --color-text-light
+  ); /* Яскравий бордер для активного стану */
   font-weight: 600;
+  padding-left: 1.25rem; /* Зсув для активного стану */
+}
+
+.activeNavLink .navLinkIcon svg {
+  /* color: var(--color-text-sidebar-link-active); -- Колір вже успадковується */
 }
 
 .logoutBtn {
-  background-color: transparent;
-  color: var(--color-text-sidebar-link);
-  border: 1px solid var(--color-text-sidebar-link);
-  padding: 0.6rem 1rem;
-  border-radius: 4px;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* Вирівнювання по лівому краю */
+  gap: 0.85rem;
+  background-color: transparent; /* Прозорий фон */
+  color: var(
+    --color-error-light,
+    #fca5a5
+  ); /* Світло-червоний для тексту та іконки */
+  border: none; /* Без рамки */
+  padding: 0.9rem 1.75rem; /* Padding як у .navLink + відступ зліва */
+  border-radius: 6px;
+  font-weight: 500;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-  margin: 1.5rem;
-  text-align: center;
+  transition: background-color 0.2s, color 0.2s;
+  margin: 1.5rem 0.75rem 1rem 0.75rem; /* Узгоджені відступи */
+  text-align: left;
+}
+.logoutBtnText {
+  /* Окремий клас для тексту кнопки виходу */
+  /* Для узгодження з .navLinkText */
 }
 
 .logoutBtn:hover,
 .logoutBtn:focus {
-  background-color: var(--color-error);
-  border-color: var(--color-error);
-  color: var(--color-text-light);
+  background-color: rgba(239, 68, 68, 0.15); /* Червонуватий фон при ховері */
+  color: var(--color-error, #ef4444);
   outline: none;
 }
 
 .mainContent {
   flex-grow: 1;
-  padding: 1.5rem; /* Зменшено padding для контенту */
+  padding: 1.5rem;
   margin-left: var(--sidebar-width);
+  background-color: var(--bg-light);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Мобільне меню */
@@ -127,45 +185,59 @@ body {
   z-index: 1001;
   background: var(--color-bg-sidebar);
   color: var(--color-text-light);
-  border: 1px solid var(--color-text-light);
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Легка рамка */
   padding: 0.5rem 0.75rem;
-  border-radius: 4px;
+  border-radius: 6px; /* Заокруглення */
   font-size: 1.5rem;
   cursor: pointer;
   line-height: 1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Тінь для кнопки */
+}
+.mobileMenuButton:hover {
+  background: var(--color-bg-primary);
 }
 
 .sidebarCloseButton {
   display: none;
   position: absolute;
-  top: 0.5rem; /* Трохи вище */
-  right: 0.75rem; /* Трохи ближче до краю */
+  top: 0.75rem;
+  right: 0.75rem;
   background: none;
   border: none;
-  color: var(--color-text-light);
-  font-size: 2rem; /* Збільшено для кращого тапу */
+  color: var(--color-text-sidebar-link); /* Колір як у посилань */
+  font-size: 2rem;
   cursor: pointer;
   padding: 0.25rem;
   line-height: 1;
+  border-radius: 50%; /* Кругла кнопка */
+  width: 36px; /* Фіксований розмір */
+  height: 36px;
+  transition: background-color 0.2s, color 0.2s;
+}
+.sidebarCloseButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-light);
 }
 
 @media (max-width: 768px) {
   .sidebar {
-    transform: translateX(-100%); /* Приховано за замовчуванням */
+    transform: translateX(-100%);
   }
-
   .sidebarOpen {
-    transform: translateX(0); /* Показуємо, коли isSidebarOpen true */
+    transform: translateX(0);
+    width: var(--sidebar-width); /* Забезпечуємо ширину на мобільних */
+    box-shadow: 3px 0 15px rgba(0, 0, 0, 0.2); /* Більш виразна тінь, коли відкритий */
   }
-
   .mainContent {
     margin-left: 0;
+    padding: 1rem; /* Менші відступи на мобільних */
   }
-
   .mobileMenuButton {
     display: block;
   }
   .sidebarCloseButton {
-    display: block;
+    display: flex; /* Для центрування хрестика */
+    align-items: center;
+    justify-content: center;
   }
 }

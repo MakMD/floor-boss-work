@@ -1,252 +1,167 @@
 /* src/Pages/Calendar.module.css */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 .calendarPage {
-  font-family: var(--font-family);
-  max-width: 960px;
-  margin: 2rem auto;
-  background-color: var(--bg-white);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  display: grid;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.calendarContainer {
-  padding: 1rem;
+  font-family: var(--font-family, "Inter", sans-serif);
+  max-width: 1000px; /* Трохи ширше для комфорту */
+  margin: 1.5rem auto; /* Зменшено верхній/нижній margin */
+  background-color: var(--bg-page, var(--bg-light, #f3f4f6));
+  border-radius: 10px; /* Трохи більше заокруглення */
+  /* box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); -- Закоментовано, якщо фон сторінки вже сірий */
   display: flex;
-  justify-content: center;
-  background-color: var(--bg-light);
-  border-bottom: 1px solid var(--border-light);
+  flex-direction: column;
+  gap: 1.25rem; /* Проміжок між основними блоками */
+  padding: 1.25rem;
 }
 
-/* --- React Calendar Global Styles --- */
-:global(.react-calendar) {
-  max-width: 500px;
-  margin: auto;
-  width: 100%;
-  border: none;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  font-family: var(--font-family);
-  background-color: var(--bg-white);
-}
-:global(.react-calendar__navigation) {
+.controlsContainer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--bg-light);
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--border-light);
-  position: relative;
+  gap: 1rem;
+  flex-wrap: wrap; /* Дозволяємо переносити на мобільних */
+  padding: 0.75rem;
+  background-color: var(--bg-white, #fff);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
-:global(.react-calendar__navigation__label) {
-  font-weight: 600;
-  color: var(--text-dark);
-  flex-grow: 1;
-  text-align: center;
-  margin: 0 0.5rem;
+
+.hiddenToggle {
+  /* Стиль для кнопки showHidden використовує .controlButton */
 }
-:global(.react-calendar__navigation button) {
-  background: none;
-  border: none;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-dark);
-  cursor: pointer;
-  padding: 0.5rem;
-  min-width: 40px;
-}
-:global(.react-calendar__navigation button:hover) {
-  color: var(--border-primary);
-  background-color: rgba(0, 0, 0, 0.03);
-  border-radius: 4px;
-}
-:global(.react-calendar__month-view__weekdays) {
-  background-color: var(--bg-light);
-  text-transform: uppercase;
-  font-weight: 600;
-  font-size: 0.75rem;
-  border-bottom: 1px solid var(--border-light);
-  padding: 0.5rem 0;
-}
-:global(.react-calendar__month-view__weekdays__weekday) {
-  text-align: center;
-  padding: 0.25rem 0;
-}
-:global(.react-calendar__tile) {
-  height: 3rem;
-  line-height: normal;
+.controlButton {
+  /* Загальний стиль для кнопок керування */
+  padding: 0.5rem 1rem;
   font-size: 0.875rem;
+  font-weight: 500;
+  background-color: var(--bg-white);
   color: var(--text-dark);
-  border: none;
-  padding: 0.25rem;
-  position: relative;
-  display: flex;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease;
+  display: inline-flex; /* Для вирівнювання іконок, якщо будуть */
   align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  gap: 0.3rem;
 }
-:global(.react-calendar__tile:enabled:hover) {
-  background-color: var(--border-light, #e2e8f0);
-  border-radius: 4px;
+.controlButton:hover {
+  background-color: var(--surface-hover, #e9ecef);
+  border-color: var(--accent, #3b82f6);
+  color: var(--accent, #3b82f6);
 }
-:global(.react-calendar__tile--now) {
-  background: rgba(230, 230, 250, 0.7);
-  border-radius: 4px;
-  font-weight: 700;
+.controlButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
-:global(.react-calendar__tile--active) {
-  background: var(--border-primary);
-  color: var(--bg-white);
-  border-radius: 4px;
-  font-weight: 700;
+.activeView {
+  /* Для активних кнопок (наприклад, фільтра) */
+  background-color: var(--accent-bg-light, #e0e7ff);
+  color: var(--accent-dark, #3730a3);
+  border-color: var(--accent-light, #a5b4fc);
+  font-weight: 600;
 }
-:global(.react-calendar__year-view__months__month),
-:global(.react-calendar__decade-view__years__year),
-:global(.react-calendar__century-view__decades__decade) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 4rem;
-  font-size: 1rem;
-  padding: 0.5rem;
+.activeView:hover {
+  background-color: var(--accent-bg-light-hover, #c7d2fe);
+  color: var(--accent-dark, #3730a3);
+  border-color: var(--accent, #3b82f6);
 }
-
-.jobCountBadge {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  background-color: var(--border-primary);
-  color: var(--bg-white);
-  font-size: 0.6rem;
-  font-weight: bold;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-}
-
-/* --- Кінець React Calendar Global Styles --- */
 
 .searchContainer {
-  padding: 1rem;
-  background-color: var(--bg-light);
-  border-bottom: 1px solid var(--border-light);
-  display: flex;
-  justify-content: center;
+  flex-grow: 1;
+  min-width: 250px; /* Мінімальна ширина для поля пошуку */
 }
 .searchInput {
   width: 100%;
-  max-width: 400px;
-  font-family: var(--font-family);
-  padding: 0.65rem 0.75rem;
-  border: 1px solid var(--border-light);
+  padding: 0.7rem 0.9rem; /* Трохи збільшено padding */
+  border: 1px solid var(--border-input, #d1d5db);
   border-radius: 6px;
   font-size: 0.9rem;
+  background-color: var(--bg-input, #fff);
 }
 .searchInput:focus {
   outline: none;
-  border-color: var(--border-primary);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-focus-ring, rgba(59, 130, 246, 0.25));
 }
 
-.periodFilterButtons {
+.showAllButtonContainer {
+  /* Перейменовано для уникнення конфлікту з .buttonContainer */
   display: flex;
   justify-content: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding: 0 1rem;
-  flex-wrap: wrap;
-}
-.periodButton,
-.clearPeriodButton {
-  padding: 0.6rem 1rem;
-  border: 1px solid var(--border-light);
-  background-color: var(--bg-white);
-  color: var(--text-dark);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease,
-    color 0.2s ease;
-  font-size: 0.875rem;
-}
-.periodButton:hover,
-.clearPeriodButton:hover {
-  border-color: var(--border-primary);
-  background-color: var(--bg-light);
-}
-.activePeriodButton {
-  background-color: var(--border-primary);
-  color: var(--bg-white);
-  border-color: var(--border-primary);
-}
-.clearPeriodButton {
-  background-color: var(--bg-light);
-}
-
-.buttonContainer {
-  display: flex;
-  justify-content: center;
-  padding-bottom: 1rem;
+  margin-top: 0.5rem; /* Невеликий відступ зверху */
 }
 .showAllBtn {
-  padding: 0.6rem 1.2rem;
-  background-color: var(--border-primary);
-  color: var(--bg-white);
+  padding: 0.6rem 1.5rem; /* Зроблено кнопку більш помітною */
+  background-color: var(--accent, #3b82f6);
+  color: var(--bg-white, #fff);
   border: none;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.1s ease;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 .showAllBtn:hover {
-  background-color: #2b6cb0; /* Потрібно var(--accent-hover) */
+  background-color: var(--accent-hover, #2563eb);
   transform: translateY(-1px);
+}
+.showAllBtn:disabled {
+  background-color: var(--button-disabled-bg, #adb5bd);
+  opacity: 0.7;
 }
 
 .eventsContainer {
-  padding: 1rem 1.5rem;
+  padding: 1.5rem; /* Відступи для контейнера подій */
+  background-color: var(--bg-section, var(--bg-white, #fff));
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  margin-top: 0; /* Прибираємо зайвий margin, якщо .calendarPage вже має gap */
 }
-.title {
-  font-size: 1.5rem;
+.eventsTitle {
+  /* Перейменовано з .title для уникнення конфлікту */
+  font-size: 1.3rem; /* Трохи менший */
   font-weight: 600;
-  color: var(--text-dark);
-  margin-bottom: 1rem;
+  color: var(--fg-header, var(--text-dark));
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-light, #e9ecef);
 }
 
+.dateGroup {
+  /* margin-bottom: 1.5rem; -- Проміжок тепер між елементами jobList */
+}
 .dateHeader {
-  font-size: 1.2rem;
+  font-size: 1.1rem; /* Трохи менший */
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--fg-secondary, var(--text-muted)); /* Менш помітний колір */
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-subtle, #f1f3f5); /* Тонша лінія */
 }
 .dateGroup:first-child .dateHeader {
   margin-top: 0;
 }
 
-.noResults,
-.loading,
-.error {
+.loadingMessage, /* Перейменовано з .loading для уникнення конфлікту */
+.errorMessage, /* Перейменовано з .error */
+.noResultsMessage {
+  /* Перейменовано з .noResults */
   color: var(--text-muted);
   text-align: center;
-  padding: 1.5rem 1rem;
+  padding: 2rem 1rem; /* Більше простору */
   font-style: italic;
+  font-size: 1rem;
 }
-.error {
+.errorMessage {
   color: var(--text-error);
-  font-weight: 600;
+  font-weight: 500;
   font-style: normal;
+  background-color: rgba(220, 38, 38, 0.05);
+  border: 1px solid rgba(220, 38, 38, 0.1);
+  border-radius: 6px;
 }
 
 .jobList {
@@ -254,199 +169,185 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
 }
 
 .jobItem {
-  background-color: var(--bg-white);
-  padding: 0.75rem 1rem;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  position: relative;
+  background-color: var(--bg-card, var(--bg-white));
+  padding: 1rem 1.25rem; /* Збільшено padding */
+  border: 1px solid var(--border-card, var(--border-light));
+  border-radius: 8px; /* Більш заокруглені */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.jobItem:hover {
+  border-color: var(--accent-light, #a5b4fc);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.jobItemContent {
+  flex-grow: 1;
+  margin-right: 1rem;
+}
+
+.jobItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.3rem;
 }
 
 .jobLink {
-  font-family: var(--font-family);
-  font-weight: 500;
-  color: var(--text-dark);
+  font-weight: 600; /* Жирніший */
+  color: var(--link-color, var(--accent-dark)); /* Акцентний колір */
   text-decoration: none;
-  transition: color 0.2s ease;
-  flex-grow: 1;
-  margin-right: 0.5rem;
+  font-size: 1.05rem; /* Трохи більший */
 }
 .jobLink:hover {
-  color: var(--border-primary);
+  color: var(--link-hover-color, var(--accent));
+  text-decoration: underline;
+}
+
+.jobDetailText {
+  font-size: 0.875rem;
+  color: var(--fg-muted, #6b7280);
+  margin: 0.25rem 0 0 0;
+}
+
+.hiddenLabel {
+  font-size: 0.75rem;
+  color: var(--text-warning, #856404);
+  background-color: var(--bg-warning-light, #fff3cd);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-style: italic;
+  margin-left: 0.5rem;
+}
+
+/* Стилі для статусних бейджів */
+.statusBadge {
+  padding: 0.25em 0.6em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  color: white;
+  line-height: 1;
+  white-space: nowrap;
+}
+.statusBadgeNotStarted {
+  background-color: #a0aec0; /* Gray */
+}
+.statusBadgeInProgress {
+  background-color: #4299e1; /* Blue */
+}
+.statusBadgePending {
+  background-color: #f6e05e;
+  color: #744210; /* Yellow with dark text */
+}
+.statusBadgeApproved {
+  background-color: #48bb78; /* Green */
+}
+.statusBadgeRejected {
+  background-color: #f56565; /* Red */
+}
+.statusBadgeUnknown {
+  background-color: #cbd5e0;
+  color: #2d3748; /* Light gray with dark text */
 }
 
 .jobActions {
   display: flex;
-  gap: 0.3rem;
+  gap: 0.4rem; /* Збільшено проміжок */
   flex-shrink: 0;
 }
 
-.editBtn,
-.hideBtn,
-.deleteBtn,
-.cancelBtn {
-  background: var(--bg-white);
-  border: 1px solid var(--border-light, #ccc);
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
+.actionButton {
+  /* Загальний стиль для кнопок дій в списку */
+  background-color: transparent;
+  border: 1px solid transparent; /* Без рамки, якщо це іконки */
+  padding: 0.4rem; /* Компактні кнопки-іконки */
+  border-radius: 50%; /* Круглі */
+  color: var(--fg-muted, #6b7280);
   cursor: pointer;
-  font-size: 0.8rem;
-  line-height: 1.2;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.actionButton:hover {
+  background-color: var(--surface-hover, #e9ecef);
+  color: var(--fg-default, #2d3748);
+}
+.actionButton:disabled {
+  color: var(--border-light, #ccc);
+  background-color: transparent;
+  cursor: not-allowed;
 }
 
 .editBtn:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
+  /* Специфічний ховер для edit (Actions) */
+  color: var(--accent, #3b82f6);
+  background-color: var(--accent-bg-light, #e0e7ff);
 }
 .hideBtn:hover {
-  background: #fff3cd;
-  border-color: #ffeeba;
+  /* Специфічний ховер для hide/unhide */
+  color: var(--text-warning-dark, #664d03);
+  background-color: var(--bg-warning-light, #fff3cd);
 }
 .deleteBtn:hover {
-  background: #f8d7da;
-  border-color: #f5c6cb;
-  color: #721c24;
+  /* Специфічний ховер для delete */
+  color: var(--color-error-dark, #721c24);
+  background-color: var(--color-error-light, #f8d7da);
 }
 .cancelBtn:hover {
-  background: #e2e3e5;
-  border-color: #d6d8db;
+  color: var(--fg-default, #2d3748);
 }
 
-.hiddenToggle {
-  text-align: right;
-  margin-bottom: 0.75rem;
-  padding: 0 1rem;
-}
-.toggleBtn {
-  background: var(--border-primary);
-  color: var(--bg-white);
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-.toggleBtn:hover {
-  background: #2b6cb0; /* Потрібно var(--accent-hover) */
-}
-
-/* --- Медіа-запити для адаптивності --- */
-
+/* Адаптивність */
 @media (max-width: 768px) {
-  /* Планшети та великі телефони */
-  .calendarPage {
-    margin: 1.5rem 1rem;
-    gap: 1rem;
-  }
-  .calendarContainer,
-  .searchContainer,
-  .eventsContainer {
-    padding: 1rem;
-  }
-  :global(.react-calendar__navigation__label) {
-    font-size: 0.95rem;
-  }
-  .title {
-    font-size: 1.35rem;
-  }
-  .dateHeader {
-    font-size: 1.1rem;
-  }
-}
-
-@media (max-width: 600px) {
-  /* Телефони */
   .calendarPage {
     margin: 1rem 0.5rem;
-    border-radius: 0;
+    padding: 0.75rem;
+    gap: 1rem;
   }
-  .calendarContainer {
+  .controlsContainer {
     padding: 0.5rem;
+    gap: 0.5rem;
   }
-  :global(.react-calendar) {
-    font-size: 0.9em;
-  }
-  :global(.react-calendar__navigation button) {
-    font-size: 0.9rem;
-    padding: 0.4rem;
-    min-width: 36px;
-  }
-  :global(.react-calendar__month-view__weekdays) {
-    font-size: 0.7rem;
-    padding: 0.4rem 0;
-  }
-  :global(.react-calendar__tile) {
-    height: 2.7rem;
-    font-size: 0.75rem;
-  }
-  .jobCountBadge {
-    width: 14px;
-    height: 14px;
-    font-size: 0.5rem;
-    top: 2px;
-    right: 2px;
-  }
-
-  .periodFilterButtons {
-    gap: 0.4rem;
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .periodButton,
-  .clearPeriodButton,
-  .showAllBtn {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-  .showAllBtn {
-    margin-top: 0.5rem;
-  }
-
-  .searchInput {
-    font-size: 0.95rem;
-  }
-
   .eventsContainer {
-    padding: 1rem 0.75rem;
+    padding: 1rem; /* Менші відступи для контейнера подій */
   }
-  .title {
-    font-size: 1.25rem;
+  .eventsTitle {
+    font-size: 1.15rem;
   }
-  .dateHeader {
-    font-size: 1.05rem;
-  }
+}
 
+@media (max-width: 480px) {
   .jobItem {
     flex-direction: column;
-    align-items: flex-start;
-    padding-right: 0.75rem;
+    align-items: stretch; /* Розтягуємо вміст */
   }
-  .jobLink {
+  .jobItemContent {
     margin-right: 0;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .jobItemHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
   }
   .jobActions {
     width: 100%;
-    justify-content: flex-start;
-    gap: 0.5rem;
+    justify-content: flex-start; /* Кнопки зліва */
     margin-top: 0.5rem;
+    gap: 0.5rem;
   }
-  .editBtn,
-  .hideBtn,
-  .deleteBtn,
-  .cancelBtn {
-    font-size: 0.75rem;
-    padding: 0.35rem 0.7rem;
-    flex-grow: 1;
-    text-align: center;
+  .jobActions > button {
+    flex-grow: 0; /* Не розтягуємо кнопки-іконки */
+    padding: 0.5rem; /* Трохи більші для тапу */
   }
 }

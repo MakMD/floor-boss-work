@@ -8,10 +8,10 @@ import {
 } from "react-router-dom";
 import Layout from "./Layout";
 import { supabase } from "../../lib/supabase";
-import ErrorBoundary from "./ErrorBoundary"; // <--- НОВИЙ ІМПОРТ
+import ErrorBoundary from "./ErrorBoundary";
 
 // Сторінки
-import Home from "../../Pages/Home";
+// import Home from "../../Pages/Home"; // ВИДАЛЕНО
 import Login from "../../Pages/Login";
 import ActiveWorkers from "../../Pages/ActiveWorkers";
 import Workers from "../../Pages/Workers";
@@ -26,26 +26,32 @@ import JobOrderPhoto from "../../Pages/JobOrderPhoto";
 import WorkerNotes from "../../Pages/WorkerNotes";
 import PhotoGallery from "../../Pages/PhotoGallery";
 import WorkerDashboard from "../../Pages/WorkerDashboard";
+import AdminDashboard from "../../Pages/AdminDashboard"; // ДОДАНО (створимо файл пізніше)
+import RoleBasedRedirect from "../RoleBasedRedirect/RoleBasedRedirect"; // ДОДАНО
 
 export const AppContext = createContext(null);
 
 function ProtectedRoute({ allowedRoles, element }) {
   const { user } = useContext(AppContext);
+  // Додамо перевірку на випадок, якщо user ще не завантажений
+  if (user === undefined) {
+    // Припускаємо, що початковий стан user може бути undefined
+    return <p>Loading session...</p>; // Або індикатор завантаження
+  }
   if (!user) return <Navigate to="/login" replace />;
 
   const userRole = user.role;
   if (!userRole || !allowedRoles.includes(userRole)) {
-    // Якщо роль не відповідає — перенаправляємо на головну сторінку або логін,
-    // залежно від логіки (тут /home, але можна змінити на /login якщо це доцільніше для неавторизованих ролей)
-    return <Navigate to="/" replace />; // Або "/login"
+    return <Navigate to="/" replace />; // Перенаправлення на кореневий шлях, який обробить RoleBasedRedirect
   }
   return element;
 }
 
 function AppProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(undefined); // Початковий стан undefined для індикації завантаження
   const [settings, setSettings] = useState({ theme: "light" });
-  const [activityLog, setActivityLog] = useState([]);
+
+  /* const [activityLog, setActivityLog] = useState([]); */ // Залишаємо закоментованим
 
   const fetchAndSetUserWithProfile = async (authUser) => {
     if (!authUser) {
@@ -55,7 +61,7 @@ function AppProvider({ children }) {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from("workers")
-        .select("id, name, role") // Додано id, name, role для повноти профілю
+        .select("id, name, role")
         .eq("id", authUser.id)
         .single();
 
@@ -64,25 +70,23 @@ function AppProvider({ children }) {
           "Error fetching user worker profile:",
           profileError.message
         );
-        // Встановлюємо користувача з даними сесії, навіть якщо профіль не знайдено
-        setUser({ ...authUser, role: null, name: authUser.email }); // Запасний варіант
+        setUser({ ...authUser, role: null, name: authUser.email || "User" });
         return;
       }
 
       if (profileData) {
         setUser({ ...authUser, ...profileData });
       } else {
-        // Це може статися, якщо користувач є в auth.users, але немає відповідного запису в 'workers'
         console.warn(
           "Worker profile not found for id:",
           authUser.id,
           "Using default role/name."
         );
-        setUser({ ...authUser, role: null, name: authUser.email }); // Або інша логіка за замовчуванням
+        setUser({ ...authUser, role: null, name: authUser.email || "User" });
       }
     } catch (e) {
       console.error("Error in fetchAndSetUserWithProfile:", e);
-      setUser({ ...authUser, role: null, name: authUser.email }); // Запасний варіант при будь-якій помилці
+      setUser({ ...authUser, role: null, name: authUser.email || "User" });
     }
   };
 
@@ -94,39 +98,43 @@ function AppProvider({ children }) {
       } = await supabase.auth.getSession();
       if (error) {
         console.error("Error getting session:", error.message);
-        setUser(null);
+        setUser(null); // Явно встановлюємо null у випадку помилки сесії
         return;
       }
       await fetchAndSetUserWithProfile(session?.user || null);
     };
-
     getSession();
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       await fetchAndSetUserWithProfile(session?.user || null);
     });
-
     return () => {
       subscription?.unsubscribe();
     };
   }, []);
 
-  const login = (u) => setUser(u); // Ця функція login тепер встановлює дані з таблиці workers
+  const login = (u) => setUser(u);
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Error signing out:", error.message);
     }
-    // setUser(null); // onAuthStateChange має спрацювати і встановити user в null
+    // setUser(null); // onAuthStateChange має це обробити
   };
   const updateSettings = (s) => setSettings((prev) => ({ ...prev, ...s }));
-  const addActivity = (msg) =>
-    setActivityLog((prev) => [
-      ...prev,
-      { message: msg, timestamp: Date.now() },
-    ]);
+
+  const addActivity = async (activityData) => {
+    // Залишаємо функцію, хоч і не використовуємо поки що збереження в БД
+    if (!user || !activityData || !activityData.message) {
+      console.warn(
+        "Skipping activity log (local): missing user or essential activity data.",
+        { user, activityData }
+      );
+      return;
+    }
+    console.log("Local Activity Log (not saved to DB):", activityData);
+  };
 
   useEffect(() => {
     document.body.setAttribute("data-theme", settings.theme);
@@ -140,7 +148,6 @@ function AppProvider({ children }) {
         logout,
         settings,
         updateSettings,
-        activityLog,
         addActivity,
       }}
     >
@@ -157,8 +164,6 @@ export default function App() {
   return (
     <AppProvider>
       <ErrorBoundary>
-        {" "}
-        {/* <--- ІНТЕГРАЦІЯ ERRORBOUNDARY */}
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -168,16 +173,17 @@ export default function App() {
                 element={
                   <ProtectedRoute
                     allowedRoles={ALL_AUTHENTICATED_ROLES}
-                    element={<Home />}
+                    element={<RoleBasedRedirect />}
                   />
                 }
               />
+              {/* Маршрут /home видалено */}
               <Route
-                path="home"
+                path="admin-dashboard"
                 element={
                   <ProtectedRoute
-                    allowedRoles={ALL_AUTHENTICATED_ROLES}
-                    element={<Home />}
+                    allowedRoles={[ADMIN_ROLE]}
+                    element={<AdminDashboard />} // Створимо цей компонент наступним
                   />
                 }
               />
@@ -195,7 +201,7 @@ export default function App() {
                 element={
                   <ProtectedRoute
                     allowedRoles={[ADMIN_ROLE]}
-                    element={<ActiveWorkers />} // Цей маршрут може потребувати jobId з URL
+                    element={<ActiveWorkers />}
                   />
                 }
               />
@@ -235,9 +241,8 @@ export default function App() {
                   />
                 }
               >
-                {/* Вкладені маршрути для JobDetails */}
                 <Route
-                  index // За замовчуванням показуємо PhotosAfter
+                  index
                   element={
                     <ProtectedRoute
                       allowedRoles={ALL_AUTHENTICATED_ROLES}
@@ -285,17 +290,17 @@ export default function App() {
                   path="invoices"
                   element={
                     <ProtectedRoute
-                      allowedRoles={ALL_AUTHENTICATED_ROLES} // Дозволено всім аутентифікованим для перегляду
+                      allowedRoles={ALL_AUTHENTICATED_ROLES}
                       element={<Invoices />}
                     />
                   }
                 />
                 <Route
-                  path="workers" // Призначені працівники для конкретного замовлення
+                  path="workers"
                   element={
                     <ProtectedRoute
-                      allowedRoles={[ADMIN_ROLE]} // Тільки адмін може керувати працівниками на замовленні
-                      element={<ActiveWorkers />} // Тут ActiveWorkers отримує jobId з URL (через JobDetails)
+                      allowedRoles={[ADMIN_ROLE]}
+                      element={<ActiveWorkers />}
                     />
                   }
                 />
@@ -318,13 +323,11 @@ export default function App() {
                   />
                 }
               />
-              {/* Будь-які інші маршрути, що не знайдені, можна перенаправити на /home або /login */}
-              <Route path="*" element={<Navigate to="/home" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
         </Router>
-      </ErrorBoundary>{" "}
-      {/* <--- КІНЕЦЬ ІНТЕГРАЦІЇ ERRORBOUNDARY */}
+      </ErrorBoundary>
     </AppProvider>
   );
 }

@@ -1,0 +1,181 @@
+/* src/Pages/AdminDashboard.module.css */
+.adminDashboardPage {
+  padding: 1.5rem;
+  font-family: var(--font-sans, "Inter", sans-serif);
+  background-color: var(
+    --bg-page-alt,
+    #f0f4f8
+  ); /* Світліший фон для дашборду */
+  min-height: 100%; /* Щоб займав усю висоту .mainContent */
+}
+
+.dashboardHeader {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light, #e2e8f0);
+}
+
+.dashboardTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--fg-header, #2d3748);
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.titleIcon {
+  margin-right: 0.75rem;
+  color: var(--accent, #3b82f6);
+}
+
+.welcomeMessage {
+  font-size: 1rem;
+  color: var(--fg-muted, #6b7280);
+}
+
+.quickActions {
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--fg-secondary-header, #4a5568);
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.actionCard {
+  background-color: var(--bg-card, #fff);
+  padding: 1.5rem 1.25rem;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+  text-decoration: none;
+  color: var(--fg-default, #333);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.75rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.actionCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  color: var(--accent-dark, #2563eb);
+}
+
+.actionCard svg {
+  width: 32px; /* Розмір іконок для карток дій */
+  height: 32px;
+  color: var(--accent, #3b82f6);
+}
+
+.actionCard span {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.notificationsSection {
+  /* Стилі для секції сповіщень */
+}
+
+.loadingMessage,
+.errorMessage,
+.noNotificationsMessage {
+  padding: 1rem;
+  text-align: center;
+  font-style: italic;
+  color: var(--fg-muted, #718096);
+  background-color: var(--bg-card, #fff);
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+.errorMessage {
+  color: var(--text-error, #e53e3e);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.notificationList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notificationItem {
+  background-color: var(--bg-card-item, #fff);
+  padding: 1rem 1.25rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.07);
+  display: flex;
+  align-items: flex-start; /* Вирівнюємо по верху */
+  gap: 1rem;
+  position: relative; /* Для кнопки видалення, якщо буде */
+}
+
+.notificationIcon {
+  flex-shrink: 0;
+  margin-top: 0.15rem; /* Для кращого візуального вирівнювання з текстом */
+}
+
+.notificationContent {
+  flex-grow: 1;
+}
+
+.notificationMessage {
+  font-size: 0.95rem;
+  color: var(--fg-default, #333);
+  margin: 0 0 0.3rem 0;
+  line-height: 1.5;
+}
+
+.jobLink {
+  color: var(--link-color, var(--accent));
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 0.3rem;
+}
+.jobLink:hover {
+  text-decoration: underline;
+}
+
+.notificationMeta {
+  font-size: 0.8rem;
+  color: var(--fg-muted-darker, #718096);
+}
+
+.deleteNotificationBtn {
+  background: none;
+  border: none;
+  color: var(--fg-muted, #9ca3af);
+  cursor: pointer;
+  padding: 0.25rem;
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+.deleteNotificationBtn:hover {
+  color: var(--text-error, #e53e3e);
+}
+
+.accessDenied {
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.2rem;
+  color: var(--text-error);
+}

@@ -1,276 +1,258 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+/* src/Pages/Orders.module.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
-:root {
-  --bg-light: #f7fafc;
-  --bg-white: #ffffff;
-  --border-light: #e2e8f0;
-  --border-primary: #3b82f6;
-  --text-dark: #1f2937;
-  --text-muted: #4b5563;
-  --text-error: #dc2626;
-  --font-family: "Inter", sans-serif;
+.newOrdersPageWrapper {
+  padding: 1.5rem; /* Загальні відступи сторінки */
+  max-width: 900px; /* Обмеження ширини для кращої читабельності форм */
+  margin: 2rem auto; /* Центрування сторінки */
+  font-family: var(--font-sans, "Inter", sans-serif);
+  background-color: var(
+    --bg-page,
+    var(--bg-light, #f3f4f6)
+  ); /* Фон сторінки, якщо відрізняється від body */
+  border-radius: 12px; /* Більш заокруглені кути для обгортки */
 }
 
-.homePage {
-  font-family: var(--font-family);
-  max-width: 960px;
-  margin: 2rem auto;
-  background-color: var(--bg-white);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  padding: 0;
+.mainTitle {
+  font-size: 2.25rem; /* Більший заголовок */
+  font-weight: 700;
+  color: var(--fg-header, var(--text-dark, #1f2937));
+  margin-bottom: 2rem;
+  text-align: center;
+  letter-spacing: -0.5px;
 }
 
-.calendarContainer {
+.newOrderForm {
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
+  gap: 2rem; /* Проміжок між секціями */
+}
+
+.formSection {
+  background-color: var(--bg-section, var(--bg-white, #fff));
+  padding: 2rem; /* Збільшено відступи всередині секції */
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* М'якша, більша тінь */
+}
+
+.sectionTitle {
+  font-size: 1.4rem; /* Розмір заголовка секції */
+  font-weight: 600;
+  color: var(--accent-dark, #3730a3);
+  margin-top: 0;
+  margin-bottom: 1.8rem; /* Більший відступ під заголовком секції */
+  padding-bottom: 0.8rem;
+  border-bottom: 2px solid var(--accent-light, #e0e7ff); /* Акцентна лінія */
+  display: flex;
   align-items: center;
-  background-color: var(--bg-light);
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-light);
+  gap: 0.5rem; /* Проміжок для іконки, якщо буде */
+}
+.sectionIcon {
+  /* Стиль для іконки в заголовку секції */
+  color: var(--accent, #6366f1);
 }
 
-.calendarContainer input[type="date"] {
-  font-family: var(--font-family);
-  padding: 0.5rem;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-}
-
-.addForm {
-  background-color: var(--bg-white);
-  padding: 2rem;
+.fieldsGrid {
+  /* Загальний грід для полів, на 2 колонки */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 300px), 1fr)
+  ); /* Адаптивні колонки */
+  gap: 1.5rem 1.8rem; /* Проміжок між рядками та колонками */
+}
+
+.fieldsGridOneCol {
+  /* Грід на одну колонку для textarea тощо */
+  display: grid;
+  gap: 1.5rem;
+}
+
+.formField {
+  /* margin-bottom: 0.5rem; -- Прибираємо, використовуємо gap гріда */
+}
+
+.formLabel {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--fg-label, var(--fg-muted, #4b5563));
+  margin-bottom: 0.6rem; /* Збільшено відступ до інпута */
 }
 
 .formInput,
 .formTextarea,
-.formSelect {
-  font-family: var(--font-family);
+.fileInput {
+  /* Загальні стилі для полів вводу */
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--border-light);
-  border-radius: 4px;
-  font-size: 0.9rem;
+  padding: 0.75rem 1rem; /* Збільшено відступи всередині інпутів */
+  border: 1px solid var(--border-input, var(--border-light, #d1d5db));
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: var(--fg-input, var(--text-dark, #1f2937));
+  background-color: var(--bg-input, #fff);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+.formInput:disabled,
+.formTextarea:disabled {
+  background-color: var(--bg-disabled, #e9ecef);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
+.formInput:focus,
+.formTextarea:focus,
+.fileInput:focus {
+  outline: none;
+  border-color: var(--accent, #3b82f6);
+  box-shadow: 0 0 0 3px var(--accent-focus-ring, rgba(59, 130, 246, 0.25));
+}
 .formTextarea {
-  min-height: 80px;
+  min-height: 90px; /* Трохи вище */
   resize: vertical;
 }
 
-.formSelect {
-  /* react-select wrapper */
-}
+/* Стилі для react-select передаються через props 'styles' у JSX */
 
-.formButton {
-  grid-column: 1 / -1;
-  align-self: end;
-  padding: 0.75rem;
-  background-color: var(--border-primary);
-  color: var(--bg-white);
+.fileInput {
+  /* Специфічні стилі для file input, якщо потрібні */
+  padding: 0.5rem; /* Свої відступи, бо кнопка всередині */
+}
+.fileInput::file-selector-button {
+  padding: 0.5rem 1rem;
+  margin-right: 0.75rem;
+  background-color: var(
+    --button-secondary-bg,
+    #6c757d
+  ); /* Інший колір для кнопки вибору файлу */
+  color: var(--button-secondary-fg, #fff);
   border: none;
   border-radius: 4px;
-  font-weight: 600;
+  font-weight: 500; /* Менш жирний */
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
-
-.formButton:hover {
-  background-color: #2563eb;
+.fileInput::file-selector-button:hover {
+  background-color: var(--button-secondary-hover-bg, #5a6268);
 }
-
-.error,
-.loading {
-  font-family: var(--font-family);
-  color: var(--text-muted);
+.previewContainer {
   text-align: center;
-  margin: 1rem 0;
-}
-
-.error {
-  color: var(--text-error);
-  font-weight: 600;
-}
-
-.tableList {
-  background-color: var(--bg-light);
-  padding: 2rem;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-.tableCard {
-  display: block;
-  background: var(--bg-white);
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border: 2px dashed var(--border-dashed, var(--border-light, #e2e8f0)); /* Більш помітна рамка */
   padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  text-decoration: none;
-  color: inherit;
-  transition: box-shadow 0.2s ease;
+  border-radius: 6px;
+  background-color: var(--surface, #f8f9fa); /* Легкий фон для зони прев'ю */
 }
-
-.tableCard:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-.tableHeader {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: var(--text-dark);
-}
-
-.tableSub {
-  font-size: 0.9rem;
-  margin-bottom: 0.75rem;
-  color: var(--text-muted);
-}
-
-.workerTag {
-  display: inline-block;
-  margin-right: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  background-color: var(--bg-light);
+.previewImg {
+  max-width: 100%; /* Дозволяємо зображенню бути більшим, якщо контейнер дозволяє */
+  max-height: 200px; /* Обмеження висоти */
+  object-fit: contain;
   border-radius: 4px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  /* box-shadow: 0 2px 4px rgba(0,0,0,0.1); -- Можна прибрати, якщо є фон контейнера */
 }
 
-@media (max-width: 640px) {
-  .addForm {
-    grid-template-columns: 1fr;
+.formActions {
+  margin-top: 2rem; /* Більший відступ перед кнопкою */
+  padding-top: 1.5rem; /* Відступ зверху від останньої секції */
+  border-top: 1px solid var(--border-light, #e9ecef); /* Лінія-розділювач */
+  display: flex;
+  justify-content: flex-end; /* Кнопка справа */
+}
+
+.submitButton {
+  padding: 0.8rem 2rem; /* Збільшено кнопку */
+  font-size: 1rem;
+  font-weight: 600;
+  background-color: var(--accent, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.submitButton:hover {
+  background-color: var(--accent-hover, #2563eb);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+.submitButton:disabled {
+  background-color: var(--button-disabled-bg, #adb5bd);
+  color: var(--button-disabled-fg, #f8f9fa);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.loadingMessage,
+.errorMessage {
+  font-family: var(--font-family);
+  color: var(--fg-muted);
+  text-align: center;
+  padding: 1rem;
+  margin: 0 0 1.5rem 0; /* Розміщуємо над формою */
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+.errorMessage {
+  color: var(--text-error);
+  background-color: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+.loadingMessage {
+  font-style: italic;
+}
+
+/* Адаптивність */
+@media (max-width: 768px) {
+  .newOrdersPageWrapper {
+    padding: 1rem;
+    margin: 1rem auto;
+    border-radius: 8px;
+  }
+  .mainTitle {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+  }
+  .formSection {
+    padding: 1.5rem; /* Менші відступи на планшетах */
+  }
+  .sectionTitle {
+    font-size: 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+  .fieldsGrid {
+    grid-template-columns: 1fr; /* Завжди одна колонка на менших екранах */
+    gap: 1.2rem; /* Трохи менший проміжок */
+  }
+  .formInput,
+  .formTextarea {
+    padding: 0.7rem 0.9rem;
+  }
+  .submitButton {
+    width: 100%;
+    padding: 0.9rem;
+  }
+  .formActions {
+    justify-content: center; /* Кнопка по центру на мобільних */
   }
 }
-.selectWrapper {
-  margin-bottom: 1rem;
-  width: 100%;
-  /* якщо потрібно, можна задати max-width */
-}
 
-/* Додатковий z-index для меню, якщо потрібно */
-.selectWrapper .react-select__menu {
-  z-index: 9999;
-}
-.formLabel {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
-  color: var(
-    --fg-accent,
-    #374151
-  ); /* Використовуйте змінну, якщо є, або колір за замовчуванням */
-}
-
-.fileInput {
-  width: 100%;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--border, #d1d5db); /* Використовуйте змінну, якщо є, або колір за замовчуванням /
-border-radius: 0.375rem;
-box-sizing: border-box;
-font-size: 0.875rem;
-color: var(--fg-muted, #6b7280); / Використовуйте змінну, якщо є, або колір за замовчуванням */
-}
-
-.fileInput:focus {
-  outline: none;
-  border-color: var(
-    --primary,
-    #2563eb
-  ); /* Використовуйте вашу основну колірну змінну /
-box-shadow: 0 0 0 0.125rem var(--primary-focus, rgba(37, 99, 235, 0.25)); / Використовуйте змінну для фокусу */
-}
-
-.previewContainer {
-  margin-top: 1rem;
-  border: 1px dashed var(--border-dashed, #9ca3af); /* Використовуйте змінну, якщо є, або колір за замовчуванням */
-  border-radius: 0.375rem;
-  padding: 0.5rem;
-  text-align: center;
-}
-
-.previewImg {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.375rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.noPreview {
-  font-style: italic;
-  color: var(
-    --fg-muted,
-    #6b7280
-  ); /* Використовуйте змінну, якщо є, або колір за замовчуванням */
-}
-.formLabel {
-  /* Додаємо стиль для лейбла, якщо його немає, або оновлюємо */
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600; /* Зробимо трохи жирнішим, як у формах */
-  color: var(--fg, #1f2937); /* Адаптуйте до ваших змінних */
-}
-
-.fileInput {
-  font-family: "Inter", sans-serif; /* Або var(--font-sans) */
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-light, #e2e8f0); /* Адаптуйте до ваших змінних */
-  border-radius: 4px; /* Або var(--border-radius-md) */
-  font-size: 0.9rem;
-  color: var(--fg, #1f2937);
-  background-color: var(--bg-light, #f7fafc); /* Адаптуйте до ваших змінних */
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  box-sizing: border-box; /* Додано для узгодження з іншими інпутами */
-}
-
-.fileInput:focus {
-  outline: none;
-  border-color: var(--accent, #3b82f6); /* Адаптуйте до ваших змінних */
-  box-shadow: 0 0 0 2px var(--accent-focus-ring, rgba(59, 130, 246, 0.3)); /* Адаптуйте */
-}
-
-.fileInput::file-selector-button {
-  padding: 0.5rem 1rem; /* Зменшено вертикальний padding для кращої відповідності інпуту */
-  margin-right: 0.75rem; /* Додано відступ справа від кнопки */
-  background-color: var(--accent, #3b82f6);
-  color: var(--bg, #ffffff); /* Текст кнопки білий */
-  border: none;
-  border-radius: 4px; /* Або var(--border-radius-sm) */
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.fileInput::file-selector-button:hover {
-  background-color: var(--accent-hover, #2563eb); /* Адаптуйте */
-}
-
-.previewContainer {
-  text-align: center; /* Залишаємо як є, якщо це підходить */
-  margin-top: 1rem; /* Додаємо відступ зверху */
-  margin-bottom: 1rem; /* І знизу, щоб відокремити від наступного поля */
-  border: 1px dashed var(--border-light, #e2e8f0); /* Легка рамка для позначення зони прев'ю */
-  padding: 1rem;
-  border-radius: 4px; /* Або var(--border-radius-md) */
-}
-
-.previewImg {
-  max-width: 200px; /* Зберігаємо розміри з PhotosAfter */
-  max-height: 150px;
-  object-fit: contain;
-  border: 1px solid var(--border-light, #ddd); /* Рамка для самого зображення */
-  border-radius: 4px; /* Або var(--border-radius-sm) */
-  margin: 0 auto; /* Центрування, якщо контейнер ширший */
-}
-
-/* Можна додати обгортку для секції завантаження фото, якщо потрібно її відокремити */
-.uploadPhotoSection {
-  grid-column: 1 / -1; /* Якщо ваша .addForm використовує grid, це розтягне секцію на всю ширину */
-  margin-bottom: 1rem; /* Відступ знизу */
+@media (max-width: 480px) {
+  .newOrdersPageWrapper {
+    margin: 0.5rem auto;
+    padding: 0.75rem;
+    border-radius: 0; /* Без заокруглення на дуже малих екранах */
+  }
+  .mainTitle {
+    font-size: 1.6rem;
+  }
+  .formSection {
+    padding: 1rem;
+  }
+  .sectionTitle {
+    font-size: 1.1rem;
+  }
 }

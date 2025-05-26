@@ -1,191 +1,382 @@
 /* src/Pages/PhotoGallery.module.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 .galleryPage {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 1.5rem;
+  font-family: var(--font-sans, "Inter", sans-serif);
+  background-color: var(--bg-page-alt, #f0f4f8);
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.accessDeniedContainer {
+  /* Для центрування повідомлення про доступ */
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
 }
 
+.pageHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light, #e2e8f0);
+}
+.headerIcon {
+  color: var(--accent-dark, #2563eb);
+}
 .pageTitle {
   font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 1.5rem;
-  color: var(--fg);
-  text-align: center;
+  font-weight: 700;
+  color: var(--fg-header, #2d3748);
+  margin: 0;
 }
 
-.subTitle {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: var(--fg-accent, #333);
-  text-align: center;
+.searchBarContainer {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-white, #fff);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-input, var(--border-light));
+  margin-bottom: 2rem; /* Збільшено відступ */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
 }
-
-.accessDenied,
-.noPhotos,
-.loading,
-.error {
-  text-align: center;
-  font-size: 1.1rem;
-  color: var(--muted);
-  margin-top: 2rem;
+.searchBarContainer:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-focus-ring, rgba(59, 130, 246, 0.2));
 }
-
-.error {
-  color: var(--color-error, #e53e3e);
+.searchIcon {
+  color: var(--fg-muted, #6b7280);
+  margin-right: 0.75rem;
+  flex-shrink: 0;
 }
-
 .searchInput {
   width: 100%;
-  max-width: 600px;
-  display: block;
-  margin: 0 auto 2rem auto;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-light, #ccc);
-  border-radius: 6px;
+  padding: 0.5rem 0; /* Вертикальний padding */
+  border: none;
+  background-color: transparent;
   font-size: 1rem;
+  color: var(--text-dark);
 }
 .searchInput:focus {
   outline: none;
-  border-color: var(--accent, #3b82f6);
-  box-shadow: 0 0 0 2px var(--accent-focus-ring, rgba(59, 130, 246, 0.2));
 }
 
-/* Сітка для папок замовлень та для підпапок типів фото */
+/* Повідомлення про стан */
+.statusMessageContainer,
+.statusMessageContainerError {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
+  color: var(--fg-muted-darker, #4a5568);
+  font-size: 1.1rem;
+  background-color: var(--bg-card, #fff); /* Фон для блоку повідомлення */
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+.statusMessageContainer svg,
+.statusMessageContainerError svg {
+  margin-bottom: 1rem;
+  color: var(--fg-muted, #718096);
+  width: 48px; /* Збільшено іконки */
+  height: 48px;
+}
+.statusMessageContainerError svg {
+  color: var(--text-error, #e53e3e);
+}
+.loadingText,
+.errorText,
+.emptyText {
+  /* Загальні для тексту */
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+.errorText {
+  color: var(--text-error, #e53e3e);
+  font-weight: 500;
+}
+
+/* Рівень 1: Список замовлень (папок) */
 .folderGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 1.5rem; /* Збільшено gap */
 }
 
 .folderCard {
-  background-color: var(--surface, #fff);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 1.5rem;
+  background-color: var(--bg-card, #fff);
+  border-radius: 10px; /* Більш заокруглені */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  padding: 1.75rem 1.5rem; /* Збільшено padding */
   text-align: center;
   cursor: pointer;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  border: 1px solid var(--border-card-subtle, transparent); /* Для ховер ефекту */
 }
 
 .folderCard:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent-light, #a5b4fc);
 }
 
-.folderIcon {
-  font-size: 3rem; /* Розмір іконки папки */
-  margin-bottom: 0.75rem;
+.folderIcon svg {
   color: var(--accent, #3b82f6);
-}
-
-.folderName {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--fg);
+  width: 44px; /* Збільшено іконку папки */
+  height: 44px;
   margin-bottom: 0.25rem;
 }
 
-.folderDate {
-  font-size: 0.8rem;
-  color: var(--muted);
+.folderName {
+  font-size: 1.1rem; /* Збільшено */
+  font-weight: 600;
+  color: var(--fg-header, #2d3748);
+  line-height: 1.4;
 }
 
-/* Стилі для PhotoGridDisplay */
-.photoGridContainer {
-  padding: 1rem 0;
+.folderDate {
+  font-size: 0.85rem; /* Збільшено */
+  color: var(--fg-muted-darker, #5a6572);
+}
+
+/* Рівні 2 та 3: Категорії фото та сітка фото */
+.jobPhotoTypesContainer,
+.photoGridDisplayContainer {
+  padding: 0; /* Відступи тепер керуються з .galleryPage */
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Проміжок між кнопкою "Назад" та заголовком/сіткою */
+  width: 100%; /* Займає всю ширину .galleryPage */
 }
 
 .backButton {
-  display: inline-block;
-  margin-bottom: 1.5rem;
-  padding: 0.6rem 1.2rem;
-  background-color: var(--bg-light, #f0f0f0);
-  color: var(--fg-accent, #333);
-  border: 1px solid var(--border-light, #ccc);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.3rem; /* Збільшено кнопку */
+  background-color: var(--button-secondary-bg, #f8f9fa);
+  color: var(--button-secondary-fg, var(--text-dark));
+  border: 1px solid var(--button-secondary-border, var(--border-light));
   border-radius: 6px;
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  align-self: flex-start;
+  margin-bottom: 1rem; /* Відступ від заголовка */
 }
 .backButton:hover {
-  background-color: var(--border-light, #e0e0e0);
+  background-color: var(--surface-hover, #e9ecef);
+  color: var(--accent, #3b82f6);
+  border-color: var(--accent-light, #a5b4fc);
 }
 
+.sectionTitle {
+  /* Для заголовків "Photo Categories for..." та "Photos for..." */
+  font-size: 1.75rem; /* Збільшено */
+  font-weight: 600;
+  color: var(--fg-header, #2d3748);
+  margin: 0 auto 1.5rem auto; /* Центрування та відступ */
+  text-align: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  width: fit-content; /* Щоб лінія була по ширині тексту */
+  max-width: 90%;
+}
+
+/* Рівень 3: Сітка фотографій */
 .photoGrid {
   display: grid;
   grid-template-columns: repeat(
     auto-fill,
     minmax(200px, 1fr)
-  ); /* Менші картки для фото */
-  gap: 1rem;
-  margin-bottom: 2rem;
+  ); /* Більші мініатюри */
+  gap: 1.25rem; /* Збільшено проміжок */
 }
 
 .photoCard {
-  background-color: var(--surface, #fff);
+  background-color: var(--bg-card, #fff);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-card-subtle, transparent);
 }
-
 .photoCard:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+  border-color: var(--accent-light, #a5b4fc);
 }
-
-.photoThumb {
+.photoThumbWrapper {
+  /* Обгортка для контролю aspect-ratio, якщо потрібно */
   width: 100%;
-  height: 150px;
+  padding-top: 75%; /* Aspect ratio 4:3 ( (3/4)*100% ) */
+  position: relative;
+  background-color: var(
+    --surface-subtle,
+    #f1f3f5
+  ); /* Фон для порожніх зображень */
+}
+.photoThumb {
+  position: absolute; /* Для aspect-ratio */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   display: block;
+  border-bottom: 1px solid var(--border-subtle, #f1f3f5);
 }
-
 .photoInfo {
-  padding: 0.75rem;
-  min-height: 80px; /* Щоб картки були приблизно однакової висоти */
+  padding: 0.85rem 1rem;
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-height: 70px; /* Збільшено */
 }
-
 .caption {
-  font-size: 0.8rem;
-  color: var(--fg-muted, #4b5563);
-  margin-bottom: 0.3rem;
+  font-size: 0.9rem; /* Збільшено */
+  color: var(--fg-default, #495057);
+  line-height: 1.45;
+  margin-bottom: 0.4rem;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3; /* Більше рядків для підпису */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex-grow: 1;
 }
-
 .date {
-  font-size: 0.7rem;
-  color: var(--muted-more, #9ca3af);
+  font-size: 0.8rem;
+  color: var(--fg-muted-darker, #5a6572);
   text-align: right;
   margin-top: 0.25rem;
 }
 
-.loadMoreButton {
-  /* ... (стилі як раніше) ... */
-}
-
 /* Модальне вікно */
 .modalOverlay {
-  /* ... (стилі як раніше) ... */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(30, 41, 59, 0.85); /* Темніший, менш прозорий фон */
+  backdrop-filter: blur(4px); /* Ефект розмиття */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 .modalContent {
-  /* ... (стилі як раніше) ... */
+  position: relative;
+  background: var(--bg-white, #fff);
+  padding: 1.5rem; /* Більший padding */
+  border-radius: 10px; /* Більш заокруглені кути */
+  max-width: 85vw;
+  max-height: 85vh;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .modalImg {
-  /* ... (стилі як раніше) ... */
+  max-width: 100%;
+  max-height: calc(85vh - 80px); /* Враховуємо padding та кнопку */
+  display: block;
+  margin: 0 auto;
+  border-radius: 6px;
+  object-fit: contain;
 }
-.closeBtn {
-  /* ... (стилі як раніше) ... */
+.modalCloseBtn {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.2s;
+}
+.modalCloseBtn:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Адаптивність */
+@media (max-width: 768px) {
+  .galleryPage {
+    padding: 1rem;
+  }
+  .pageHeader {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+  .pageTitle {
+    font-size: 1.75rem;
+  }
+  .searchBarContainer {
+    margin-bottom: 1.5rem;
+    padding: 0.4rem 0.8rem;
+  }
+  .searchInput {
+    font-size: 0.95rem;
+  }
+  .folderGrid {
+    gap: 1rem;
+  }
+  .folderCard,
+  .photoCard {
+    padding: 1rem;
+  }
+  .folderName {
+    font-size: 1rem;
+  }
+  .sectionSubtitle {
+    font-size: 1.3rem;
+  }
+  .photoGrid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+  } /* Трохи більші */
+  .photoThumbWrapper {
+    padding-top: 75%;
+  } /* Зберігаємо пропорції */
+}
+
+@media (max-width: 480px) {
+  .folderGrid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  } /* Папки можуть бути ширшими */
+  .photoGrid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  } /* Ще менші фото */
+  .caption {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 2;
+  }
+  .date {
+    font-size: 0.75rem;
+  }
 }

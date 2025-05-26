@@ -4,11 +4,92 @@ import Select from "react-select";
 import { AppContext } from "../components/App/App";
 import { supabase } from "../lib/supabase";
 import styles from "./Orders.module.css";
-import { useToast } from "@chakra-ui/react"; // <--- НОВИЙ ІМПОРТ
+import { useToast } from "@chakra-ui/react";
+// import { Briefcase, Settings, FileText, Paperclip, Users, Info, DollarSign, CalendarDays, MapPin } from 'lucide-react';
+
+const customSelectStyles = {
+  control: (provided, state) => ({
+    ...provided,
+    backgroundColor: "var(--bg-input, #fff)",
+    borderColor: state.isFocused
+      ? "var(--accent, #3b82f6)"
+      : "var(--border-light, #e2e8f0)",
+    borderRadius: "6px",
+    padding: "0.27rem 0.3rem",
+    minHeight: "calc(0.65rem * 2 + 0.9rem * 1.5 + 2px)",
+    boxShadow: state.isFocused
+      ? `0 0 0 3px var(--accent-focus-ring, rgba(59, 130, 246, 0.2))`
+      : "none",
+    "&:hover": {
+      borderColor: state.isFocused
+        ? "var(--accent, #3b82f6)"
+        : "var(--border-medium, #ced4da)",
+    },
+    fontSize: "0.95rem",
+    color: "var(--text-dark, #1f2937)",
+  }),
+  input: (provided) => ({
+    ...provided,
+    color: "var(--text-dark, #1f2937)",
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: "var(--bg-white, #fff)",
+    borderRadius: "6px",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+    zIndex: 10000,
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    backgroundColor: state.isSelected
+      ? "var(--accent, #3b82f6)"
+      : state.isFocused
+      ? "var(--surface-hover, #f1f5f9)"
+      : "var(--bg-white, #fff)",
+    color: state.isSelected ? "white" : "var(--text-dark, #1f2937)",
+    "&:active": {
+      backgroundColor: "var(--accent-dark, #2563eb)",
+    },
+    fontSize: "0.9rem",
+    padding: "0.6rem 0.9rem",
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: "var(--text-dark, #1f2937)",
+    fontSize: "0.95rem",
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: "var(--fg-muted, #6b7280)",
+    fontSize: "0.95rem",
+  }),
+  multiValue: (provided) => ({
+    ...provided,
+    backgroundColor: "var(--accent-bg-light, #e0e7ff)",
+    borderRadius: "4px",
+  }),
+  multiValueLabel: (provided) => ({
+    ...provided,
+    color: "var(--accent-dark, #3730a3)",
+    fontWeight: "500",
+    fontSize: "0.85rem",
+    paddingLeft: "0.5rem",
+    paddingRight: "0.3rem",
+  }),
+  multiValueRemove: (provided) => ({
+    ...provided,
+    color: "var(--accent-dark, #3730a3)",
+    "&:hover": {
+      backgroundColor: "var(--accent-hover-light, #c7d2fe)",
+      color: "var(--accent-dark, #3730a3)",
+    },
+  }),
+};
 
 export default function Orders() {
+  // <--- ПЕРЕКОНАЙТЕСЯ, ЩО 'export default' ТУТ ПРИСУТНІЙ
   const { user, addActivity } = useContext(AppContext);
-  const toast = useToast(); // <--- ІНІЦІАЛІЗАЦІЯ TOAST
+  const toast = useToast();
 
   const [workers, setWorkers] = useState([]);
   const [address, setAddress] = useState("");
@@ -27,9 +108,9 @@ export default function Orders() {
   const [jobOrderPhotoFile, setJobOrderPhotoFile] = useState(null);
   const [jobOrderPhotoPreview, setJobOrderPhotoPreview] = useState(null);
 
-  const [loading, setLoading] = useState(false); // Загальне завантаження даних (worker, companies)
-  const [formSubmitting, setFormSubmitting] = useState(false); // Для процесу відправки форми
-  const [error, setError] = useState(null); // Для відображення помилок під формою, якщо потрібно
+  const [loading, setLoading] = useState(false);
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const uuidRegex =
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -57,7 +138,7 @@ export default function Orders() {
         setCompanies(companiesRes.data || []);
       } catch (err) {
         const errorMsg = `Failed to load initial data: ${err.message}`;
-        setError(errorMsg); // Встановлюємо помилку для можливого відображення під формою
+        setError(errorMsg);
         toast({
           title: "Error Loading Data",
           description: errorMsg,
@@ -73,7 +154,7 @@ export default function Orders() {
       }
     };
     fetchData();
-  }, [toast]); // Додаємо toast до залежностей, хоча він стабільний, але для повноти
+  }, [toast]);
 
   const handleJobOrderPhotoChange = (e) => {
     const file = e.target.files[0];
@@ -94,11 +175,11 @@ export default function Orders() {
     e.preventDefault();
     if (!address.trim() || !date) {
       const errorMsg = "Address and Date are required.";
-      setError(errorMsg); // Залишаємо для можливого локального відображення помилки
+      setError(errorMsg);
       toast({
         title: "Validation Error",
         description: errorMsg,
-        status: "warning", // 'warning' для помилок валідації
+        status: "warning",
         duration: 5000,
         isClosable: true,
         position: "top-right",
@@ -172,7 +253,6 @@ export default function Orders() {
       if (newJob && newJob.id) {
         const sfValue = parseFloat(newJob.sf);
         const rateValue = parseFloat(newJob.rate);
-
         if (
           !isNaN(sfValue) &&
           !isNaN(rateValue) &&
@@ -181,7 +261,6 @@ export default function Orders() {
         ) {
           const calculatedInvoiceAmount = sfValue * rateValue;
           const currentDateForInvoice = new Date().toISOString().slice(0, 10);
-
           const { error: invoiceInsertError } = await supabase
             .from("invoices")
             .insert([
@@ -191,16 +270,12 @@ export default function Orders() {
                 amount: calculatedInvoiceAmount,
               },
             ]);
-
           if (invoiceInsertError) {
             console.error(
               "Failed to create automatic invoice:",
               invoiceInsertError.message
             );
             invoiceCreationMessage = ` Auto-invoice creation failed.`;
-            addActivity(
-              `Order #${newJob.id} created. Auto-invoice creation failed: ${invoiceInsertError.message}`
-            );
             toast({
               title: "Invoice Warning",
               description: `Order #${newJob.id} created, but auto-invoice creation failed: ${invoiceInsertError.message}`,
@@ -213,40 +288,17 @@ export default function Orders() {
             invoiceCreationMessage = ` Auto-invoice for $${calculatedInvoiceAmount.toFixed(
               2
             )} generated.`;
-            addActivity(
-              `Order #${
-                newJob.id
-              } created. Auto-invoice for $${calculatedInvoiceAmount.toFixed(
-                2
-              )} generated.`
-            );
           }
         } else {
           invoiceCreationMessage = ` Auto-invoice not generated (invalid SF/Rate).`;
-          addActivity(
-            `Order #${newJob.id} created. Auto-invoice not generated (invalid sf/rate).`
-          );
         }
       }
 
       if (selectedWorkers.length > 0 && newJob) {
-        const relations = selectedWorkers.map((workerOption) => {
-          if (
-            !workerOption ||
-            typeof workerOption.value !== "string" ||
-            !uuidRegex.test(workerOption.value)
-          ) {
-            throw new Error(
-              `Invalid worker ID found: ${
-                workerOption?.value || "undefined"
-              }. Cannot assign worker.`
-            );
-          }
-          return {
-            job_id: newJob.id,
-            worker_id: workerOption.value,
-          };
-        });
+        const relations = selectedWorkers.map((workerOption) => ({
+          job_id: newJob.id,
+          worker_id: workerOption.value,
+        }));
         const { error: relError } = await supabase
           .from("job_workers")
           .insert(relations);
@@ -275,11 +327,26 @@ export default function Orders() {
         isClosable: true,
         position: "top-right",
       });
-      addActivity(
-        `User ${user.name || user.id} created new order #${
-          newJob.id
-        }: ${address}.${invoiceCreationMessage}`
-      );
+
+      const creationLogMessage = `User ${
+        user.name || user.email || user.id
+      } created new order #${newJob.id}: ${address}.`;
+      // Перевіряємо, чи addActivity - функція, перед її викликом (якщо ви вирішили її не передавати з AppContext)
+      if (typeof addActivity === "function") {
+        addActivity({
+          message: `${creationLogMessage}${
+            invoiceCreationMessage
+              ? invoiceCreationMessage
+              : " No invoice generated."
+          }`,
+          jobId: newJob.id,
+          details: {
+            address: newJob.address,
+            client: newJob.client,
+            invoice_info: invoiceCreationMessage || "Not applicable",
+          },
+        });
+      }
     } catch (err) {
       console.error("Error in handleAddJob:", err);
       const errorMsg =
@@ -301,162 +368,224 @@ export default function Orders() {
   const workerOptions = workers.map((w) => ({ value: w.id, label: w.name }));
   const companyOptions = companies.map((c) => ({ value: c.id, label: c.name }));
 
-  if (loading) {
-    // Показуємо завантаження, поки вантажаться працівники/компанії
-    return <div className={styles.loading}>Loading initial data...</div>;
-  }
-
   return (
-    <div className={styles.homePage}>
-      <h1 className={styles.title}>Create New Order</h1>
-      {error && !formSubmitting && <p className={styles.error}>{error}</p>}{" "}
-      {/* Помилка завантаження даних */}
-      <form onSubmit={handleAddJob} className={styles.addForm}>
-        <input
-          type="text"
-          placeholder="Address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          required
-          className={styles.formInput}
-        />
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-          className={styles.formInput}
-        />
-        <input
-          type="number"
-          placeholder="Square Footage (Optional)"
-          value={sf}
-          onChange={(e) => setSf(e.target.value)}
-          className={styles.formInput}
-          step="any"
-        />
-        <input
-          type="number"
-          placeholder="Rate (Optional)"
-          value={rate}
-          onChange={(e) => setRate(e.target.value)}
-          className={styles.formInput}
-          step="any"
-        />
-        <input
-          type="text"
-          placeholder="Builder (Optional)"
-          value={client}
-          onChange={(e) => setClient(e.target.value)}
-          className={styles.formInput}
-        />
-        <input
-          type="text"
-          placeholder="Work Order # (Optional)"
-          value={workOrderNumber}
-          onChange={(e) => setWorkOrderNumber(e.target.value)}
-          className={styles.formInput}
-        />
-        <textarea
-          placeholder="Storage Info (Optional)"
-          value={storageInfo}
-          onChange={(e) => setStorageInfo(e.target.value)}
-          className={styles.formTextarea}
-        />
-        <textarea
-          placeholder="Admin Instructions (Optional)"
-          value={adminInstructions}
-          onChange={(e) => setAdminInstructions(e.target.value)}
-          className={styles.formTextarea}
-        />
-        <div>
-          <label htmlFor="jobOrderPhoto" className={styles.formLabel}>
-            Job Order Photo (Optional):
-          </label>
-          <input
-            type="file"
-            id="jobOrderPhoto"
-            accept="image/*"
-            onChange={handleJobOrderPhotoChange}
-            className={styles.fileInput}
-          />
-          {jobOrderPhotoPreview && (
-            <div className={styles.previewContainer}>
-              <img
-                src={jobOrderPhotoPreview}
-                alt="Job Order Preview"
-                className={styles.previewImg}
+    <div className={styles.newOrdersPageWrapper}>
+      <h1 className={styles.mainTitle}>Create New Order</h1>
+
+      {loading && (
+        <p className={styles.loadingMessage}>
+          Loading initial data for selects...
+        </p>
+      )}
+      {error && !loading && !formSubmitting && (
+        <p className={styles.errorMessage}>{error}</p>
+      )}
+
+      <form onSubmit={handleAddJob} className={styles.newOrderForm}>
+        <section className={styles.formSection}>
+          <h2 className={styles.sectionTitle}>Primary Order Information</h2>
+          <div className={styles.fieldsGrid}>
+            <div className={styles.formField}>
+              <label htmlFor="address" className={styles.formLabel}>
+                Address*
+              </label>
+              <input
+                id="address"
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                required
+                className={styles.formInput}
+                disabled={formSubmitting}
               />
             </div>
-          )}
+            <div className={styles.formField}>
+              <label htmlFor="date" className={styles.formLabel}>
+                Date*
+              </label>
+              <input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+                className={styles.formInput}
+                disabled={formSubmitting}
+              />
+            </div>
+            <div className={styles.formField}>
+              <label htmlFor="client" className={styles.formLabel}>
+                Builder (Client)
+              </label>
+              <input
+                id="client"
+                type="text"
+                value={client}
+                onChange={(e) => setClient(e.target.value)}
+                className={styles.formInput}
+                disabled={formSubmitting}
+              />
+            </div>
+            <div className={styles.formField}>
+              <label htmlFor="workOrderNumber" className={styles.formLabel}>
+                Work Order #
+              </label>
+              <input
+                id="workOrderNumber"
+                type="text"
+                value={workOrderNumber}
+                onChange={(e) => setWorkOrderNumber(e.target.value)}
+                className={styles.formInput}
+                disabled={formSubmitting}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.formSection}>
+          <h2 className={styles.sectionTitle}>Job Details & Assignment</h2>
+          <div className={styles.fieldsGrid}>
+            <div className={styles.formField}>
+              <label htmlFor="sf" className={styles.formLabel}>
+                Square Footage
+              </label>
+              <input
+                id="sf"
+                type="number"
+                value={sf}
+                onChange={(e) => setSf(e.target.value)}
+                className={styles.formInput}
+                step="any"
+                disabled={formSubmitting}
+              />
+            </div>
+            <div className={styles.formField}>
+              <label htmlFor="rate" className={styles.formLabel}>
+                Rate
+              </label>
+              <input
+                id="rate"
+                type="number"
+                value={rate}
+                onChange={(e) => setRate(e.target.value)}
+                className={styles.formInput}
+                step="any"
+                disabled={formSubmitting}
+              />
+            </div>
+            <div className={styles.formField}>
+              <label htmlFor="company" className={styles.formLabel}>
+                Company
+              </label>
+              <Select
+                id="company"
+                options={companyOptions}
+                value={selectedCompany}
+                onChange={setSelectedCompany}
+                placeholder="Select Company..."
+                isClearable
+                isLoading={loading}
+                isDisabled={formSubmitting}
+                styles={customSelectStyles}
+                menuPosition="fixed"
+              />
+            </div>
+            <div className={styles.formField}>
+              <label htmlFor="workers" className={styles.formLabel}>
+                Assign Workers
+              </label>
+              <Select
+                id="workers"
+                isMulti
+                options={workerOptions}
+                value={selectedWorkers}
+                onChange={(opts) => setSelectedWorkers(opts || [])}
+                placeholder="Select workers..."
+                isLoading={loading}
+                isDisabled={formSubmitting}
+                styles={customSelectStyles}
+                menuPosition="fixed"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.formSection}>
+          <h2 className={styles.sectionTitle}>Additional Notes & Files</h2>
+          <div className={styles.fieldsGridOneCol}>
+            <div className={styles.formField}>
+              <label htmlFor="storageInfo" className={styles.formLabel}>
+                Storage Info
+              </label>
+              <textarea
+                id="storageInfo"
+                value={storageInfo}
+                onChange={(e) => setStorageInfo(e.target.value)}
+                className={styles.formTextarea}
+                rows="3"
+                disabled={formSubmitting}
+              ></textarea>
+            </div>
+            <div className={styles.formField}>
+              <label htmlFor="adminInstructions" className={styles.formLabel}>
+                Admin Instructions
+              </label>
+              <textarea
+                id="adminInstructions"
+                value={adminInstructions}
+                onChange={(e) => setAdminInstructions(e.target.value)}
+                className={styles.formTextarea}
+                rows="3"
+                disabled={formSubmitting}
+              ></textarea>
+            </div>
+            <div className={styles.formField}>
+              <label htmlFor="notes" className={styles.formLabel}>
+                General Notes
+              </label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className={styles.formTextarea}
+                rows="3"
+                disabled={formSubmitting}
+              ></textarea>
+            </div>
+            <div className={styles.formField}>
+              <label htmlFor="jobOrderPhoto" className={styles.formLabel}>
+                Job Order Photo
+              </label>
+              <input
+                id="jobOrderPhoto"
+                type="file"
+                accept="image/*"
+                onChange={handleJobOrderPhotoChange}
+                className={styles.fileInput}
+                disabled={formSubmitting}
+              />
+              {jobOrderPhotoPreview && (
+                <div className={styles.previewContainer}>
+                  <img
+                    src={jobOrderPhotoPreview}
+                    alt="Job Order Preview"
+                    className={styles.previewImg}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <div className={styles.formActions}>
+          <button
+            type="submit"
+            className={styles.submitButton}
+            disabled={formSubmitting || loading}
+          >
+            {formSubmitting ? "Creating Order…" : "Create Order"}
+          </button>
         </div>
-        <textarea
-          placeholder="Notes (Optional)"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className={styles.formTextarea}
-        />
-        <div className={styles.selectWrapper}>
-          <Select
-            options={companyOptions}
-            value={selectedCompany}
-            onChange={(selectedOption) => setSelectedCompany(selectedOption)}
-            placeholder="Select Company (Optional)"
-            isClearable
-            isLoading={loading}
-            menuPortalTarget={document.body}
-            menuPosition="fixed"
-            styles={{
-              control: (base) => ({
-                ...base,
-                minHeight: 40,
-                fontSize: "0.9rem",
-              }),
-              menu: (base) => ({ ...base, width: "100%", zIndex: 9998 }),
-              menuList: (base) => ({
-                ...base,
-                maxHeight: "50vh",
-                overflowY: "auto",
-              }),
-              menuPortal: (base) => ({ ...base, zIndex: 9998 }),
-            }}
-          />
-        </div>
-        <div className={styles.selectWrapper}>
-          <Select
-            isMulti
-            options={workerOptions}
-            value={selectedWorkers}
-            onChange={(selectedOptions) =>
-              setSelectedWorkers(selectedOptions || [])
-            }
-            placeholder="Select workers (Optional)"
-            isLoading={loading}
-            menuPortalTarget={document.body}
-            menuPosition="fixed"
-            styles={{
-              control: (base) => ({
-                ...base,
-                minHeight: 40,
-                fontSize: "0.9rem",
-              }),
-              menu: (base) => ({ ...base, width: "100%", zIndex: 9999 }),
-              menuList: (base) => ({
-                ...base,
-                maxHeight: "50vh",
-                overflowY: "auto",
-              }),
-              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-            }}
-          />
-        </div>
-        <button
-          type="submit"
-          className={styles.formButton}
-          disabled={formSubmitting || loading} // Також деактивуємо, якщо йде завантаження початкових даних
-        >
-          {formSubmitting ? "Adding Job…" : "Add Job"}
-        </button>
       </form>
     </div>
   );

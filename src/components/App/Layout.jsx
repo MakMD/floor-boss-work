@@ -2,8 +2,16 @@
 import React, { useContext, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { AppContext } from "./App";
-import styles from "./App.module.css"; // Використовуємо App.module.css для узгодженості
-// Layout.module.css може бути видалений або його стилі перенесені, якщо він не використовується для іншого
+import styles from "./App.module.css";
+import {
+  LayoutDashboard, // Для дашбордів
+  LogOut,
+  CalendarDays,
+  Users,
+  ClipboardPlus, // Для New Order (більш релевантно)
+  Image as ImageIconLucide, // Для Photo Gallery
+  Settings as SettingsIcon, // Для Admin Dashboard
+} from "lucide-react";
 
 export default function Layout() {
   const { user, logout } = useContext(AppContext);
@@ -19,25 +27,53 @@ export default function Layout() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  // Оновлено іконки для відповідності
   const navLinks = [
-    // Посилання "Home" тепер тільки для адміна
-    { to: "/home", text: "Home", roles: ["admin"] },
-
-    // Посилання для кабінету працівника
-    { to: "/my-dashboard", text: "My Dashboard", roles: ["worker"] },
-
-    // Посилання тільки для адміна
-    { to: "/orders", text: "New Order", roles: ["admin"] },
-    { to: "/workers", text: "Workers List", roles: ["admin"] },
-    { to: "/photo-gallery", text: "Photo Gallery", roles: ["admin"] },
-
-    // Спільне посилання
-    { to: "/calendar", text: "Calendar", roles: ["admin", "worker"] },
+    {
+      to: "/admin-dashboard",
+      text: "Admin Dashboard",
+      roles: ["admin"],
+      icon: <SettingsIcon size={18} strokeWidth={2.25} />,
+    },
+    {
+      to: "/my-dashboard",
+      text: "My Dashboard",
+      roles: ["worker"],
+      icon: <LayoutDashboard size={18} strokeWidth={2.25} />,
+    },
+    {
+      to: "/orders",
+      text: "New Order",
+      roles: ["admin"],
+      icon: <ClipboardPlus size={18} strokeWidth={2.25} />,
+    },
+    {
+      to: "/workers",
+      text: "Workers List",
+      roles: ["admin"],
+      icon: <Users size={18} strokeWidth={2.25} />,
+    },
+    {
+      to: "/photo-gallery",
+      text: "Photo Gallery",
+      roles: ["admin"],
+      icon: <ImageIconLucide size={18} strokeWidth={2.25} />,
+    },
+    {
+      to: "/calendar",
+      text: "Calendar",
+      roles: ["admin", "worker"],
+      icon: <CalendarDays size={18} strokeWidth={2.25} />,
+    },
   ];
 
   return (
     <div className={styles.layoutContainer}>
-      <button className={styles.mobileMenuButton} onClick={toggleSidebar}>
+      <button
+        className={styles.mobileMenuButton}
+        onClick={toggleSidebar}
+        aria-label="Open menu"
+      >
         ☰
       </button>
 
@@ -45,17 +81,25 @@ export default function Layout() {
         className={`${styles.sidebar} ${
           isSidebarOpen ? styles.sidebarOpen : ""
         }`}
+        aria-hidden={
+          !isSidebarOpen &&
+          typeof window !== "undefined" &&
+          window.innerWidth <= 768
+        }
       >
-        <button className={styles.sidebarCloseButton} onClick={toggleSidebar}>
+        <button
+          className={styles.sidebarCloseButton}
+          onClick={toggleSidebar}
+          aria-label="Close menu"
+        >
           &times;
         </button>
 
         <div className={styles.sidebarHeader}>Flooring Boss</div>
 
-        <nav className={styles.nav}>
+        <nav className={styles.nav} aria-label="Main navigation">
           <div className={styles.navMenu}>
             {navLinks.map((link) => {
-              // Перевіряємо, чи користувач існує, чи має роль, і чи ця роль дозволена для посилання
               if (user && user.role && link.roles.includes(user.role)) {
                 return (
                   <NavLink
@@ -66,11 +110,16 @@ export default function Layout() {
                         ? `${styles.navLink} ${styles.activeNavLink}`
                         : styles.navLink
                     }
-                    onClick={() => setIsSidebarOpen(false)} // Закриваємо сайдбар при кліку на посилання
-                    // `end` для `/home` та `/my-dashboard` щоб вони були активні тільки при точному співпадінні шляху
-                    end={link.to === "/home" || link.to === "/my-dashboard"}
+                    onClick={() => setIsSidebarOpen(false)}
+                    end={
+                      link.to === "/admin-dashboard" ||
+                      link.to === "/my-dashboard"
+                    }
                   >
-                    {link.text}
+                    {link.icon && (
+                      <span className={styles.navLinkIcon}>{link.icon}</span>
+                    )}
+                    <span className={styles.navLinkText}>{link.text}</span>
                   </NavLink>
                 );
               }
@@ -78,9 +127,14 @@ export default function Layout() {
             })}
           </div>
         </nav>
-        {user && ( // Показуємо кнопку Logout тільки якщо користувач залогінений
+        {user && (
           <button className={styles.logoutBtn} onClick={handleLogout}>
-            Logout
+            <LogOut
+              size={18}
+              strokeWidth={2.25}
+              className={styles.logoutIcon}
+            />
+            <span className={styles.logoutBtnText}>Logout</span>
           </button>
         )}
       </aside>
