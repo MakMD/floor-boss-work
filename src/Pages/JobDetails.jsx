@@ -17,7 +17,7 @@ import {
   CalendarDays,
   UserCircle,
   FileText,
-  Info as InfoIcon, // Перейменовано Info на InfoIcon для уникнення конфлікту
+  Info as InfoIcon,
   Settings,
   DollarSign,
   Users,
@@ -28,7 +28,7 @@ import {
   AlertTriangle,
   PlayCircle,
   StopCircle,
-  MapPin as MapPinIcon, // Додано MapPinIcon та перейменовано Info
+  MapPin as MapPinIcon,
 } from "lucide-react";
 
 export default function JobDetails() {
@@ -44,30 +44,27 @@ export default function JobDetails() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const updateField = async (field, value) => {
+  const updateStatus = async (fieldsToUpdate) => {
     setActionLoading(true);
     setError(null);
 
     try {
       const { error: jobErr } = await supabase
         .from("jobs")
-        .update({ [field]: value })
+        .update(fieldsToUpdate)
         .eq("id", jobId);
 
       if (jobErr) throw jobErr;
 
-      const currentJobState = job;
-      setJob((prevJob) => ({
-        ...prevJob,
-        ...(field === "worker_status" ? { workerStatus: value } : {}),
-        ...(field === "admin_status" ? { adminStatus: value } : {}),
-      }));
+      setJob((prevJob) => ({ ...prevJob, ...fieldsToUpdate }));
+
+      const updatedFieldsString = Object.entries(fieldsToUpdate)
+        .map(([key, value]) => `${key} to "${value}"`)
+        .join(", ");
 
       toast({
         title: "Status Updated",
-        description: `${
-          field === "worker_status" ? "Worker" : "Admin"
-        } status changed to "${value}".`,
+        description: `Job status updated: ${updatedFieldsString}.`,
         status: "success",
         duration: 4000,
         isClosable: true,
@@ -75,54 +72,26 @@ export default function JobDetails() {
       });
 
       const actor = user?.name || user?.email || `User ID: ${user?.id}`;
-      const statusType =
-        field === "worker_status" ? "Worker status" : "Admin status";
-      const activityMessage = `${actor} set ${statusType.toLowerCase()} to "${value}" for order #${jobId}`;
+      const activityMessage = `${actor} updated job #${jobId}: set ${updatedFieldsString}`;
 
       if (typeof addActivity === "function") {
         addActivity({
           message: activityMessage,
           jobId: jobId,
           details: {
-            fieldUpdated: field,
-            newValue: value,
-            previousStatus:
-              currentJobState[
-                field === "worker_status" ? "workerStatus" : "adminStatus"
-              ],
+            ...fieldsToUpdate,
+            action: "status_update",
           },
         });
       }
 
-      if (field === "worker_status" && value === "in_progress" && user?.id) {
+      if (fieldsToUpdate.worker_status === "in_progress" && user?.id) {
         const startWorkMessage = `Worker ${actor} started order #${jobId}`;
-        const { error: updErr } = await supabase.from("job_updates").insert([
-          {
-            job_id: jobId,
-            worker_id: user.id,
-            message: startWorkMessage,
-          },
-        ]);
-        if (updErr) {
-          console.error("Failed to add job_update for starting work:", updErr);
-          toast({
-            title: "Activity Log Warning",
-            description:
-              "Could not log work start to job_updates, but status was updated.",
-            status: "warning",
-            duration: 5000,
-            isClosable: true,
-            position: "top-right",
-          });
-        } else {
-          if (typeof addActivity === "function") {
-            addActivity({
-              message: startWorkMessage,
-              jobId: jobId,
-              details: { action: "work_started_in_job_updates" },
-            });
-          }
-        }
+        await supabase
+          .from("job_updates")
+          .insert([
+            { job_id: jobId, worker_id: user.id, message: startWorkMessage },
+          ]);
       }
     } catch (jobErr) {
       const errorMsg = `Failed to update status: ${jobErr.message}`;
@@ -160,8 +129,8 @@ export default function JobDetails() {
         if (data) {
           setJob({
             ...data,
-            workerStatus: data.worker_status || "not_started",
-            adminStatus: data.admin_status || "pending",
+            worker_status: data.worker_status || "not_started",
+            admin_status: data.admin_status || "pending",
           });
 
           if (data.company_id) {
@@ -227,7 +196,7 @@ export default function JobDetails() {
       ? [{ path: "workers", label: "Workers", icon: <Users size={16} /> }]
       : []),
     { path: "invoices", label: "Invoices", icon: <DollarSign size={16} /> },
-    { path: "materials", label: "Materials", icon: <Briefcase size={16} /> }, // <--- ВИПРАВЛЕНО НА Briefcase
+    { path: "materials", label: "Materials", icon: <Briefcase size={16} /> },
   ];
 
   const defaultActiveTabPath = "photos-after";
@@ -266,7 +235,7 @@ export default function JobDetails() {
             <p className={styles.detail}>
               <Briefcase size={18} className={styles.icon} />
               <strong>Work Order #:</strong> {job.work_order_number}
-            </p> // <--- ВИПРАВЛЕНО НА Briefcase
+            </p>
           )}
           {companyName && (
             <p className={styles.detail}>
@@ -297,26 +266,26 @@ export default function JobDetails() {
               <span className={styles.statusGroupTitle}>Worker Status</span>
               <div
                 className={`${styles.badge} ${
-                  job.workerStatus === "not_started"
+                  job.worker_status === "not_started"
                     ? styles.badgeNotStarted
-                    : job.workerStatus === "in_progress"
+                    : job.worker_status === "in_progress"
                     ? styles.badgeInProgress
                     : styles.badgeDoneGrey
                 }`}
               >
-                {job.workerStatus === "not_started"
+                {job.worker_status === "not_started"
                   ? "Not Started"
-                  : job.workerStatus === "in_progress"
+                  : job.worker_status === "in_progress"
                   ? "In Progress"
                   : "Work Done"}
               </div>
               <div className={styles.statusActions}>
                 {user.role === "worker" &&
-                  job.workerStatus === "not_started" && (
+                  job.worker_status === "not_started" && (
                     <button
                       className={styles.actionBtn}
                       onClick={() =>
-                        updateField("worker_status", "in_progress")
+                        updateStatus({ worker_status: "in_progress" })
                       }
                       disabled={actionLoading || loading}
                     >
@@ -324,10 +293,10 @@ export default function JobDetails() {
                     </button>
                   )}
                 {user.role === "worker" &&
-                  job.workerStatus === "in_progress" && (
+                  job.worker_status === "in_progress" && (
                     <button
                       className={styles.actionBtn}
-                      onClick={() => updateField("worker_status", "done")}
+                      onClick={() => updateStatus({ worker_status: "done" })}
                       disabled={actionLoading || loading}
                     >
                       <StopCircle size={16} /> Finish Work
@@ -341,31 +310,33 @@ export default function JobDetails() {
                 <span className={styles.statusGroupTitle}>Admin Status</span>
                 <div
                   className={`${styles.badge} ${
-                    job.adminStatus === "pending" && job.workerStatus === "done"
+                    job.admin_status === "pending" &&
+                    job.worker_status === "done"
                       ? styles.badgeInProgress
-                      : job.adminStatus === "approved"
+                      : job.admin_status === "approved"
                       ? styles.badgeDoneGreen
-                      : job.adminStatus === "rejected"
+                      : job.admin_status === "rejected"
                       ? styles.badgeError
                       : styles.badgeNotStarted
                   }`}
                 >
-                  {job.adminStatus === "pending" && job.workerStatus === "done"
+                  {job.admin_status === "pending" &&
+                  job.worker_status === "done"
                     ? "Pending Approval"
-                    : job.adminStatus === "approved"
+                    : job.admin_status === "approved"
                     ? "Approved"
-                    : job.adminStatus === "rejected"
+                    : job.admin_status === "rejected"
                     ? "Rejected"
                     : "Awaiting Worker Action"}
                 </div>
                 <div className={styles.statusActions}>
-                  {job.workerStatus === "done" &&
-                    job.adminStatus === "pending" && (
+                  {job.worker_status === "done" &&
+                    job.admin_status === "pending" && (
                       <>
                         <button
                           className={styles.actionBtn}
                           onClick={() =>
-                            updateField("admin_status", "approved")
+                            updateStatus({ admin_status: "approved" })
                           }
                           disabled={actionLoading || loading}
                         >
@@ -374,7 +345,10 @@ export default function JobDetails() {
                         <button
                           className={styles.rejectBtn}
                           onClick={() =>
-                            updateField("admin_status", "rejected")
+                            updateStatus({
+                              admin_status: "rejected",
+                              worker_status: "in_progress",
+                            })
                           }
                           disabled={actionLoading || loading}
                         >
@@ -382,25 +356,27 @@ export default function JobDetails() {
                         </button>
                       </>
                     )}
-                  {job.adminStatus === "rejected" && (
+                  {job.admin_status === "rejected" && (
                     <button
                       className={styles.actionBtn}
-                      onClick={() => {
-                        updateField("worker_status", "not_started");
-                        updateField("admin_status", "pending");
-                      }}
+                      onClick={() =>
+                        updateStatus({
+                          worker_status: "not_started",
+                          admin_status: "pending",
+                        })
+                      }
                       disabled={actionLoading || loading}
                     >
                       <AlertTriangle size={16} /> Re-open Job
                     </button>
                   )}
                   {user.role === "admin" &&
-                    job.workerStatus !== "done" &&
-                    job.adminStatus !== "approved" && (
+                    job.worker_status !== "done" &&
+                    job.admin_status !== "approved" && (
                       <button
                         className={styles.actionBtn}
                         style={{ backgroundColor: "#ffc107", color: "#212529" }}
-                        onClick={() => updateField("worker_status", "done")}
+                        onClick={() => updateStatus({ worker_status: "done" })}
                         disabled={actionLoading || loading}
                       >
                         Force Worker Done

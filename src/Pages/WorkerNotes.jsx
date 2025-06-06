@@ -1,9 +1,9 @@
 // src/Pages/WorkerNotes.jsx
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { AppContext } from "../components/App/App";
-import styles from "./WorkerNotes.module.css"; // Створимо цей файл
+import styles from "./WorkerNotes.module.css";
 
 export default function WorkerNotes() {
   const { id: jobId } = useParams();
@@ -15,30 +15,52 @@ export default function WorkerNotes() {
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     if (!jobId) return;
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fetchError } = await supabase
-        .from("job_notes") // Припускаємо назву таблиці 'job_notes'
-        .select("id, content, created_at, worker_id, workers (name)") // Завантажуємо ім'я працівника
+      const { data: notesData, error: notesError } = await supabase
+        .from("job_notes")
+        .select("id, content, created_at, worker_id")
         .eq("job_id", jobId)
         .order("created_at", { ascending: false });
 
-      if (fetchError) throw fetchError;
-      setNotes(data || []);
+      if (notesError) throw notesError;
+      if (!notesData || notesData.length === 0) {
+        setNotes([]);
+        return;
+      }
+
+      const workerIds = [...new Set(notesData.map((note) => note.worker_id))];
+      const { data: workersData, error: workersError } = await supabase
+        .from("workers")
+        .select("id, name")
+        .in("id", workerIds);
+
+      if (workersError) throw workersError;
+
+      const workersMap = new Map(
+        workersData.map((worker) => [worker.id, worker.name])
+      );
+
+      const combinedNotes = notesData.map((note) => ({
+        ...note,
+        authorName: workersMap.get(note.worker_id) || "Unknown User",
+      }));
+
+      setNotes(combinedNotes);
     } catch (err) {
       setError(`Failed to load notes: ${err.message}`);
       setNotes([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [jobId]);
 
   useEffect(() => {
     fetchNotes();
-  }, [jobId]);
+  }, [fetchNotes]);
 
   const handleAddNote = async (e) => {
     e.preventDefault();
@@ -54,17 +76,24 @@ export default function WorkerNotes() {
         .insert([
           { job_id: jobId, worker_id: user.id, content: newNote.trim() },
         ])
-        .select()
+        .select("id, content, created_at, worker_id")
         .single();
 
       if (insertError) throw insertError;
 
-      // setNotes(prevNotes => [data, ...prevNotes]); // Додаємо на початок списку
-      addActivity(
-        `User ${user.name || user.id} added a note to order #${jobId}`
-      );
+      const newCompleteNote = {
+        ...data,
+        authorName: user.name || "Unknown User",
+      };
+
+      setNotes((prevNotes) => [newCompleteNote, ...prevNotes]);
+
+      addActivity({
+        message: `User ${user.name || user.id} added a note to order #${jobId}`,
+        jobId: jobId,
+      });
+
       setNewNote("");
-      await fetchNotes(); // Оновлюємо список з сервера для консистентності
     } catch (err) {
       setError(`Failed to add note: ${err.message}`);
     } finally {
@@ -80,7 +109,6 @@ export default function WorkerNotes() {
 
       {error && <p className={styles.error}>{error}</p>}
 
-      {/* Форма для додавання нотатки доступна лише працівникам та адмінам */}
       {(user?.role === "worker" || user?.role === "admin") && (
         <form onSubmit={handleAddNote} className={styles.noteForm}>
           <textarea
@@ -108,8 +136,8 @@ export default function WorkerNotes() {
               <p className={styles.noteContent}>{note.content}</p>
               <div className={styles.noteMeta}>
                 <span className={styles.noteAuthor}>
-                  By: {note.workers?.name || "Unknown User"} (ID:{" "}
-                  {note.worker_id.substring(0, 8)}...)
+                  {/* ЗМІНА: Видалено відображення ID */}
+                  By: {note.authorName}
                 </span>
                 <span className={styles.noteDate}>
                   On: {new Date(note.created_at).toLocaleString()}

@@ -1,108 +1,129 @@
-// src/config/routesConfig.jsx
 import React from "react";
-import Home from "../Pages/Home";
+
+// Сторінки
 import Login from "../Pages/Login";
-import Dashboard from "../components/Dashboard/Dashboard"; // Примітка: цей компонент може не використовуватися повною мірою
 import ActiveWorkers from "../Pages/ActiveWorkers";
 import Workers from "../Pages/Workers";
 import WorkerProfile from "../Pages/WorkerProfile";
-import Invoices from "../Pages/Invoices";
-// CompanyInvoices видалено
 import Orders from "../Pages/Orders";
 import JobDetails from "../Pages/JobDetails";
 import Materials from "../Pages/Materials";
 import PhotosAfter from "../Pages/PhotosAfter";
+import Invoices from "../Pages/Invoices";
 import Calendar from "../Pages/Calendar";
-// WorkOrderPhotos імпорт та пов'язаний маршрут видалено
+import JobOrderPhoto from "../Pages/JobOrderPhoto";
+import WorkerNotes from "../Pages/WorkerNotes";
+import PhotoGallery from "../Pages/PhotoGallery";
+import WorkerDashboard from "../Pages/WorkerDashboard";
+import AdminDashboard from "../Pages/AdminDashboard";
+import RoleBasedRedirect from "../components/RoleBasedRedirect/RoleBasedRedirect";
+
+export const ROLES = {
+  ADMIN: "admin",
+  WORKER: "worker",
+};
+
+const ALL_AUTHENTICATED_ROLES = [ROLES.ADMIN, ROLES.WORKER];
 
 export const routesConfig = [
-  // Public route
-  { path: "/login", element: <Login />, public: true },
-
-  // Protected routes under Layout
+  // Публічний маршрут
   {
-    public: false,
+    path: "/login",
+    element: <Login />,
+    isPublic: true,
+  },
+  // Захищені маршрути всередині Layout
+  {
+    path: "/",
+    isLayout: true,
     children: [
       {
-        path: "",
-        element: <Home />,
         index: true,
-        allowedRoles: ["admin", "user"], // "company" видалено
+        element: <RoleBasedRedirect />,
+        allowedRoles: ALL_AUTHENTICATED_ROLES,
       },
       {
-        path: "home",
-        element: <Home />,
-        allowedRoles: ["admin", "user"], // "company" видалено
+        path: "admin-dashboard",
+        element: <AdminDashboard />,
+        allowedRoles: [ROLES.ADMIN],
       },
       {
-        path: "dashboard",
-        element: <Dashboard />,
-        allowedRoles: ["admin", "user"], // "company" видалено
-      },
-      {
-        path: "workers/active",
-        element: <ActiveWorkers />,
-        allowedRoles: ["admin"], // "company" видалено
+        path: "my-dashboard",
+        element: <WorkerDashboard />,
+        allowedRoles: [ROLES.WORKER],
       },
       {
         path: "workers",
         element: <Workers />,
-        allowedRoles: ["admin", "user"], // "company" видалено
+        allowedRoles: [ROLES.ADMIN],
       },
       {
         path: "workers/:id",
         element: <WorkerProfile />,
-        allowedRoles: ["admin"], // "company" видалено
+        allowedRoles: [ROLES.ADMIN],
       },
-      {
-        path: "invoices", // Маршрут для інвойсів верхнього рівня
-        element: <Invoices />,
-        allowedRoles: ["admin"], // "company" видалено
-      },
-      // Об'єкт маршруту company-invoices видалено
       {
         path: "orders",
         element: <Orders />,
-        allowedRoles: ["admin", "user"], // "company" видалено
+        allowedRoles: [ROLES.ADMIN],
       },
       {
         path: "orders/:id",
         element: <JobDetails />,
-        allowedRoles: ["admin", "user"], // "company" видалено
+        allowedRoles: ALL_AUTHENTICATED_ROLES,
         children: [
           {
             index: true,
             element: <PhotosAfter />,
-            allowedRoles: ["admin", "user"], // "company" видалено
-          },
-          // Маршрут work-order-photos видалено
-          {
-            path: "materials",
-            element: <Materials />,
-            allowedRoles: ["admin", "user"], // "company" видалено
+            allowedRoles: ALL_AUTHENTICATED_ROLES,
           },
           {
             path: "photos-after",
             element: <PhotosAfter />,
-            allowedRoles: ["admin", "user"], // "company" видалено
+            allowedRoles: ALL_AUTHENTICATED_ROLES,
           },
           {
-            path: "invoices", // Вкладений маршрут для інвойсів
+            path: "job-order-photo",
+            element: <JobOrderPhoto />,
+            allowedRoles: [ROLES.ADMIN],
+          },
+          {
+            path: "worker-notes",
+            element: <WorkerNotes />,
+            allowedRoles: ALL_AUTHENTICATED_ROLES,
+          },
+          {
+            path: "materials",
+            element: <Materials />,
+            allowedRoles: ALL_AUTHENTICATED_ROLES,
+          },
+          {
+            path: "invoices",
             element: <Invoices />,
-            allowedRoles: ["admin", "user"], // "company" видалено
+            allowedRoles: ALL_AUTHENTICATED_ROLES,
           },
-          // Вкладений маршрут company-invoices видалено
           {
-            path: "workers", // Вкладений маршрут для працівників (ймовірно, призначених на замовлення)
-            element: <Workers />, // Можливо, тут має бути ActiveWorkers або подібний компонент, якщо контекст прив'язаний до замовлення
-            allowedRoles: ["admin"],
+            path: "workers",
+            element: <ActiveWorkers />,
+            allowedRoles: [ROLES.ADMIN],
           },
         ],
       },
       {
+        path: "photo-gallery",
+        element: <PhotoGallery />,
+        allowedRoles: [ROLES.ADMIN],
+      },
+      {
         path: "calendar",
         element: <Calendar />,
-        allowedRoles: ["admin", "user"], // "company" видалено
+        allowedRoles: ALL_AUTHENTICATED_ROLES,
+      },
+      // Перенаправлення для всіх інших шляхів
+      {
+        path: "*",
+        element: <RoleBasedRedirect />,
+        allowedRoles: ALL_AUTHENTICATED_ROLES,
       },
     ],
   },

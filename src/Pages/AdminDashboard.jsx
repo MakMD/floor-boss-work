@@ -1,5 +1,5 @@
 // src/Pages/AdminDashboard.jsx
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AppContext } from "../components/App/App";
 import { supabase } from "../lib/supabase";
@@ -15,8 +15,12 @@ import {
   PlayCircle,
   CheckCircle,
   Info as InfoIcon,
-  Trash2, // <--- ДОДАНО PlayCircle, CheckCircle, InfoIcon, Trash2
+  Trash2,
+  Search,
 } from "lucide-react";
+
+const INITIAL_ITEMS_COUNT = 4;
+const INCREMENT_COUNT = 4; // Кількість елементів для додавання при кліці
 
 export default function AdminDashboard() {
   const { user } = useContext(AppContext);
@@ -26,50 +30,53 @@ export default function AdminDashboard() {
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchNotifications = async () => {
-    setLoadingNotifications(true);
-    setError(null);
-    try {
-      const { data, error: fetchError } = await supabase
-        .from("job_updates")
-        .select(
-          `
-          id,
-          created_at,
-          message,
-          job_id,
-          jobs (address, client),
-          worker_id,
-          workers (name) 
-        `
-        )
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (fetchError) throw fetchError;
-      setNotifications(data || []);
-    } catch (err) {
-      const errorMsg = `Failed to load notifications: ${err.message}`;
-      setError(errorMsg);
-      toast({
-        title: "Error Loading Notifications",
-        description: errorMsg,
-        status: "error",
-        duration: 7000,
-        isClosable: true,
-        position: "top-right",
-      });
-      setNotifications([]);
-    } finally {
-      setLoadingNotifications(false);
-    }
-  };
+  const [searchTerm, setSearchTerm] = useState("");
+  // ЗМІНА: Замість showAll, використовуємо лічильник видимих елементів
+  const [visibleCount, setVisibleCount] = useState(INITIAL_ITEMS_COUNT);
 
   useEffect(() => {
+    const fetchNotifications = async () => {
+      setLoadingNotifications(true);
+      setError(null);
+      try {
+        const { data, error: fetchError } = await supabase
+          .from("job_updates")
+          .select(
+            `
+            id,
+            created_at,
+            message,
+            job_id,
+            jobs (address, client, work_order_number),
+            worker_id,
+            workers (name)
+          `
+          )
+          .order("created_at", { ascending: false });
+
+        if (fetchError) throw fetchError;
+        setNotifications(data || []);
+      } catch (err) {
+        const errorMsg = `Failed to load notifications: ${err.message}`;
+        setError(errorMsg);
+        toast({
+          title: "Error Loading Notifications",
+          description: errorMsg,
+          status: "error",
+          duration: 7000,
+          isClosable: true,
+          position: "top-right",
+        });
+        setNotifications([]);
+      } finally {
+        setLoadingNotifications(false);
+      }
+    };
+
     if (user?.role === "admin") {
       fetchNotifications();
     }
-  }, [user]); // Перезавантажуємо, якщо змінився користувач або компонент завантажився
+  }, [user, toast]);
 
   const handleDeleteNotification = async (notificationId) => {
     if (
@@ -79,10 +86,6 @@ export default function AdminDashboard() {
     )
       return;
 
-    // Оскільки ми не зберігаємо addActivity в БД, видалення з job_updates може бути нелогічним,
-    // якщо addActivity мало б бути основним логом.
-    // Якщо ж job_updates і є основним логом активності, то видалення має сенс.
-    // Припустимо, що ми хочемо видалити запис з job_updates.
     try {
       const { error: deleteError } = await supabase
         .from("job_updates")
@@ -91,14 +94,14 @@ export default function AdminDashboard() {
 
       if (deleteError) throw deleteError;
 
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+
       toast({
         title: "Notification Removed",
-        description: `Notification #${notificationId} has been removed.`,
         status: "success",
         duration: 3000,
         isClosable: true,
       });
-      fetchNotifications(); // Оновлюємо список
     } catch (err) {
       toast({
         title: "Error Removing Notification",
@@ -109,6 +112,38 @@ export default function AdminDashboard() {
       });
     }
   };
+
+  const filteredNotifications = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return notifications;
+    }
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return notifications.filter((notification) => {
+      const address = notification.jobs?.address?.toLowerCase() || "";
+      const workOrder =
+        notification.jobs?.work_order_number?.toLowerCase() || "";
+      const workerName = notification.workers?.name?.toLowerCase() || "";
+      const clientName = notification.jobs?.client?.toLowerCase() || "";
+      const message = notification.message?.toLowerCase() || "";
+
+      return (
+        address.includes(lowercasedTerm) ||
+        workOrder.includes(lowercasedTerm) ||
+        workerName.includes(lowercasedTerm) ||
+        clientName.includes(lowercasedTerm) ||
+        message.includes(lowercasedTerm)
+      );
+    });
+  }, [searchTerm, notifications]);
+
+  // ЗМІНА: При зміні пошукового запиту скидаємо лічильник до початкового
+  useEffect(() => {
+    setVisibleCount(INITIAL_ITEMS_COUNT);
+  }, [searchTerm]);
+
+  const displayedNotifications = useMemo(() => {
+    return filteredNotifications.slice(0, visibleCount);
+  }, [filteredNotifications, visibleCount]);
 
   if (user?.role !== "admin") {
     return (
@@ -159,6 +194,18 @@ export default function AdminDashboard() {
           <Bell size={24} className={styles.titleIcon} />
           Recent Activity
         </h2>
+
+        <div className={styles.searchBarContainer}>
+          <Search size={18} className={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Search activity..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={styles.searchInput}
+          />
+        </div>
+
         {loadingNotifications && (
           <p className={styles.loadingMessage}>Loading notifications...</p>
         )}
@@ -168,61 +215,90 @@ export default function AdminDashboard() {
             No recent activity to display.
           </p>
         )}
-        {!loadingNotifications && !error && notifications.length > 0 && (
-          <ul className={styles.notificationList}>
-            {notifications.map((notification) => (
-              <li key={notification.id} className={styles.notificationItem}>
-                <div className={styles.notificationIcon}>
-                  {notification.message.toLowerCase().includes("started") ? (
-                    <PlayCircle size={20} className={styles.iconStarted} />
-                  ) : notification.message.toLowerCase().includes("finished") ||
-                    notification.message.toLowerCase().includes("completed") ||
-                    notification.message.toLowerCase().includes("done") ? (
-                    <CheckCircle size={20} className={styles.iconCompleted} />
-                  ) : (
-                    <InfoIcon size={20} className={styles.iconInfo} />
-                  )}
-                </div>
-                <div className={styles.notificationContent}>
-                  <p className={styles.notificationMessage}>
-                    {/* Відображаємо ім'я працівника, якщо є, інакше worker_id */}
-                    <strong>
-                      {notification.workers?.name ||
-                        `Worker ID: ${notification.worker_id?.substring(
-                          0,
-                          8
-                        )}...`}
-                    </strong>{" "}
-                    {/* Решта повідомлення після імені працівника, якщо воно починається з "Worker ... " */}
-                    {notification.message.replace(/^Worker [^ ]+ /, "")}
-                    {notification.jobs && ( // Перевіряємо, чи є дані про замовлення
-                      <Link
-                        to={`/orders/${notification.job_id}`}
-                        className={styles.jobLink}
-                      >
-                        (Order #{notification.job_id}:{" "}
-                        {notification.jobs.client ||
-                          notification.jobs.address ||
-                          "Details N/A"}
-                        )
-                      </Link>
+        {!loadingNotifications &&
+          !error &&
+          filteredNotifications.length > 0 &&
+          displayedNotifications.length === 0 && (
+            <p className={styles.noResults}>No results match your search.</p>
+          )}
+
+        {!loadingNotifications &&
+          !error &&
+          displayedNotifications.length > 0 && (
+            <ul className={styles.notificationList}>
+              {displayedNotifications.map((notification) => (
+                <li key={notification.id} className={styles.notificationItem}>
+                  <div className={styles.notificationIcon}>
+                    {notification.message.toLowerCase().includes("started") ? (
+                      <PlayCircle size={20} />
+                    ) : notification.message
+                        .toLowerCase()
+                        .includes("finished") ||
+                      notification.message
+                        .toLowerCase()
+                        .includes("completed") ||
+                      notification.message.toLowerCase().includes("done") ? (
+                      <CheckCircle size={20} />
+                    ) : (
+                      <InfoIcon size={20} />
                     )}
-                  </p>
-                  <span className={styles.notificationMeta}>
-                    {new Date(notification.created_at).toLocaleString()}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleDeleteNotification(notification.id)}
-                  className={styles.deleteNotificationBtn}
-                  title="Delete notification"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                  </div>
+                  <div className={styles.notificationContent}>
+                    <p className={styles.notificationMessage}>
+                      <strong>
+                        {notification.workers?.name ||
+                          `Worker ID: ${notification.worker_id?.substring(
+                            0,
+                            8
+                          )}...`}
+                      </strong>{" "}
+                      {notification.message.replace(/^Worker [^ ]+ /, "")}
+                      {notification.jobs && (
+                        <Link
+                          to={`/orders/${notification.job_id}`}
+                          className={styles.jobLink}
+                        >
+                          (Order #{notification.job_id})
+                        </Link>
+                      )}
+                    </p>
+                    <span className={styles.notificationMeta}>
+                      {new Date(notification.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteNotification(notification.id)}
+                    className={styles.deleteNotificationBtn}
+                    title="Delete notification"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+        {/* ЗМІНА: Оновлена логіка кнопок пагінації */}
+        <div className={styles.paginationControls}>
+          {visibleCount > INITIAL_ITEMS_COUNT && (
+            <button
+              className={styles.showMoreBtn}
+              onClick={() => setVisibleCount(INITIAL_ITEMS_COUNT)}
+            >
+              Collapse
+            </button>
+          )}
+          {visibleCount < filteredNotifications.length && (
+            <button
+              className={styles.showMoreBtn}
+              onClick={() =>
+                setVisibleCount((prevCount) => prevCount + INCREMENT_COUNT)
+              }
+            >
+              Show More
+            </button>
+          )}
+        </div>
       </section>
     </div>
   );
