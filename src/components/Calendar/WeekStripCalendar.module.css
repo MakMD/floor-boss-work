@@ -11,20 +11,19 @@
 
 .weekStripHeader {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* Залишаємо, щоб рознести navigationGroup та todayButton */
   align-items: center;
-  padding: 0.6rem 0.8rem; /* Зменшено padding для компактності */
+  padding: 0.6rem 0.8rem;
   background-color: var(--surface, #f8f9fa);
   border-bottom: 1px solid var(--border-light, #e2e8f0);
+  flex-wrap: nowrap; /* Забороняємо перенос для основного хедера на великих екранах */
 }
 
-.weekTitle {
-  font-weight: 600;
-  font-size: 1rem; /* Трохи менший */
-  color: var(--fg-header, var(--text-dark));
-  text-align: center;
-  flex-grow: 1;
-  margin: 0 0.5rem;
+.navigationGroup {
+  display: flex;
+  align-items: center;
+  flex-grow: 1; /* Дозволяє цій групі зайняти основний простір */
+  justify-content: center; /* Центруємо стрілки та дату всередині цієї групи */
 }
 
 .navButton {
@@ -41,7 +40,6 @@
   line-height: 1; /* Для кращого вирівнювання іконок */
 }
 .navButtonIcon {
-  /* Специфічний клас для кнопок з іконками */
   padding: 0.5rem 0.6rem;
 }
 
@@ -50,16 +48,27 @@
   color: var(--accent, #3b82f6);
 }
 
+.weekTitle {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--fg-header, var(--text-dark));
+  text-align: center;
+  margin: 0 0.75rem; /* Збільшуємо відступи для кращого вигляду */
+  white-space: nowrap; /* Запобігаємо переносу тексту дати */
+}
+
 .todayButton {
   font-size: 0.875rem;
   font-weight: 500;
-  padding: 0.5rem 0.8rem; /* Трохи більший padding для кнопки з текстом */
+  padding: 0.5rem 0.8rem;
   border: 1px solid var(--border-light, #ccc);
+  flex-shrink: 0;
+  margin-left: 0.75rem; /* Відступ від центральної групи */
 }
+
 .todayButton:hover {
   border-color: var(--accent-light, #a5b4fc);
 }
-.todayButton.active, /* Якщо будемо додавати активний стан для "Сьогодні" */
 .todayButton:focus {
   background-color: var(--accent-bg-light, #e0e7ff);
   color: var(--accent-dark, #3730a3);
@@ -74,7 +83,7 @@
 }
 
 .dayCell {
-  padding: 0.5rem 0.25rem; /* Зменшено padding */
+  padding: 0.5rem 0.25rem;
   text-align: center;
   border-right: 1px solid var(--border-light, #e9ecef);
   cursor: pointer;
@@ -86,7 +95,7 @@
   justify-content: center;
   align-items: center;
   position: relative;
-  gap: 0.2rem; /* Менший проміжок */
+  gap: 0.2rem;
 }
 
 .dayCell:last-child {
@@ -94,19 +103,15 @@
 }
 
 .dayCell:hover:not(.selected) {
-  /* Ховер тільки якщо не обрано */
-  background-color: var(
-    --surface-subtle-hover,
-    #f8f9fa
-  ); /* Дуже легкий ховер */
+  background-color: var(--surface-subtle-hover, #f8f9fa);
 }
 
 .dayName {
-  font-size: 0.65rem; /* Менший */
+  font-size: 0.65rem;
   font-weight: 500;
   color: var(--fg-muted, #6b7280);
   text-transform: uppercase;
-  margin-bottom: 0.1rem; /* Менший відступ */
+  margin-bottom: 0.1rem;
 }
 
 .dayNumberContainer {
@@ -117,7 +122,7 @@
   height: 26px;
   border-radius: 50%;
   transition: background-color 0.2s ease, color 0.2s ease, border 0.2s ease;
-  border: 2px solid transparent; /* Для плавного переходу при виборі */
+  border: 2px solid transparent;
 }
 
 .dayNumber {
@@ -127,25 +132,29 @@
   line-height: 1;
 }
 
+/* ЗМІНА: Оновлено стилі для індикатора, щоб він міг відображати число */
 .jobEventIndicator {
-  /* Новий стиль для індикатора */
-  width: 6px;
-  height: 6px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background-color: var(--accent-medium, #7c8ee6); /* Колір індикатора */
+  background-color: var(--accent, #3b82f6);
+  color: white;
   margin-top: 0.2rem;
-  /* transition: transform 0.2s ease; */
-}
-.dayCell:hover .jobEventIndicator {
-  /* transform: scale(1.3); */ /* Легке збільшення при ховері на комірку */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Стани дня */
 .dayCell.today .dayNumberContainer {
-  border: 2px solid var(--accent-light, #a5b4fc); /* Тонка рамка для сьогодні */
+  border: 2px solid var(--accent-light, #a5b4fc);
 }
 .dayCell.today .dayNumber {
-  color: var(--accent-dark, #2563eb); /* Акцентний колір для числа "сьогодні" */
+  color: var(--accent-dark, #2563eb);
   font-weight: 700;
 }
 
@@ -154,17 +163,18 @@
   border-color: var(--accent, #3b82f6);
 }
 .dayCell.selected .dayName {
-  color: var(
-    --accent-dark,
-    #2563eb
-  ); /* Можна змінити колір назви дня для обраного */
+  color: var(--accent-dark, #2563eb);
 }
 .dayCell.selected .dayNumber {
-  color: white; /* Білий текст на акцентному фоні */
+  color: white;
   font-weight: 700;
 }
+
+/* ЗМІНА: Оновлено стилі індикатора для обраного дня */
 .dayCell.selected .jobEventIndicator {
-  background-color: white; /* Білий індикатор на акцентному фоні */
+  background-color: white;
+  color: var(--accent-dark, #2563eb);
+  border: 1px solid var(--accent, #3b82f6);
 }
 
 /* Адаптивність */
@@ -176,7 +186,7 @@
     font-size: 0.9rem;
   }
   .navButton {
-    padding: 0.4rem; /* Зменшуємо padding для іконок */
+    padding: 0.4rem;
   }
   .navButtonIcon {
     padding: 0.4rem 0.5rem;
@@ -200,37 +210,31 @@
     font-size: 0.85rem;
   }
   .jobEventIndicator {
-    width: 5px;
-    height: 5px;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
   }
 }
 
 @media (max-width: 480px) {
   .weekStripHeader {
-    padding: 0.4rem;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .navigationGroup {
+    width: 100%;
+    justify-content: space-between;
   }
   .weekTitle {
-    font-size: 0.8rem;
-    margin: 0.2rem 0.2rem;
-    order: 1;
-    width: 100%;
-  }
-  .navButton:nth-child(1) {
-    order: 0;
-  }
-  .navButton:nth-child(3) {
-    order: 2;
+    margin: 0 0.25rem;
+    font-size: 0.85rem;
   }
   .todayButton {
-    order: 3;
-    margin-top: 0.25rem;
-    width: calc(60% - 0.25rem);
-    font-size: 0.75rem;
-    padding: 0.3rem 0.5rem;
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.5rem;
+    justify-content: center;
   }
-
   .dayCell {
     min-height: 55px;
     gap: 0.1rem;
@@ -244,69 +248,5 @@
   }
   .dayNumber {
     font-size: 0.8rem;
-  }
-}
-/* src/components/Calendar/WeekStripCalendar.module.css */
-/* ... (існуючі стилі для .weekStripContainer, .navButton, .todayButton, .weekTitle тощо) ... */
-
-.weekStripHeader {
-  display: flex;
-  justify-content: space-between; /* Залишаємо, щоб рознести navigationGroup та todayButton */
-  align-items: center;
-  padding: 0.6rem 0.8rem;
-  background-color: var(--surface, #f8f9fa);
-  border-bottom: 1px solid var(--border-light, #e2e8f0);
-  flex-wrap: nowrap; /* Забороняємо перенос для основного хедера на великих екранах */
-}
-
-.navigationGroup {
-  /* <--- НОВИЙ КЛАС */
-  display: flex;
-  align-items: center;
-  flex-grow: 1; /* Дозволяє цій групі зайняти основний простір */
-  justify-content: center; /* Центруємо стрілки та дату всередині цієї групи */
-}
-
-.navigationGroup .navButtonIcon {
-  /* Стиль для стрілок всередині групи */
-  /* Можна додати відступи, якщо потрібно, хоча .weekTitle вже має margin */
-}
-
-.weekTitle {
-  font-weight: 600;
-  font-size: 1rem;
-  color: var(--fg-header, var(--text-dark));
-  text-align: center;
-  /* flex-grow: 1; -- Прибираємо, оскільки тепер він всередині .navigationGroup */
-  margin: 0 0.75rem; /* Збільшуємо відступи для кращого вигляду */
-  white-space: nowrap; /* Запобігаємо переносу тексту дати */
-}
-
-.todayButton {
-  /* Стилі для кнопки "Today" */
-  /* Можна додати flex-shrink: 0; якщо вона не повинна стискатися */
-  flex-shrink: 0;
-  margin-left: 0.75rem; /* Відступ від центральної групи */
-}
-
-/* Адаптивність для .weekStripHeader */
-@media (max-width: 480px) {
-  .weekStripHeader {
-    flex-direction: column; /* На дуже малих екранах все в стовпчик */
-    gap: 0.5rem; /* Проміжок між блоками */
-  }
-  .navigationGroup {
-    width: 100%; /* Група навігації на всю ширину */
-    justify-content: space-between; /* Стрілки по краях, дата по центру */
-  }
-  .weekTitle {
-    margin: 0 0.25rem; /* Менші відступи для дати */
-    font-size: 0.85rem;
-  }
-  .todayButton {
-    width: 100%; /* Кнопка "Сьогодні" на всю ширину */
-    margin-left: 0; /* Прибираємо відступ зліва */
-    margin-top: 0.5rem; /* Відступ зверху */
-    justify-content: center; /* Центруємо текст та іконку в кнопці */
   }
 }

@@ -61,7 +61,8 @@ const WeekStripCalendar = ({
       <div className={styles.weekStripDays}>
         {daysInStrip.map((day) => {
           const dayString = day.toDateString();
-          const hasJobs = (jobsByDate[dayString] || 0) > 0;
+          const jobCount = jobsByDate[dayString] || 0; // Отримуємо кількість робіт
+          const hasJobs = jobCount > 0;
           const isSelected = isSameDay(day, selectedDate);
           const isCurrentToday = isToday(day);
 
@@ -72,7 +73,6 @@ const WeekStripCalendar = ({
                 ${styles.dayCell} 
                 ${isSelected ? styles.selected : ""} 
                 ${isCurrentToday ? styles.today : ""}
-                ${hasJobs ? styles.hasJobs : ""}
               `}
               onClick={() => onDateSelect(day)}
               role="button"
@@ -87,7 +87,10 @@ const WeekStripCalendar = ({
               <div className={styles.dayNumberContainer}>
                 <span className={styles.dayNumber}>{day.getDate()}</span>
               </div>
-              {hasJobs && <div className={styles.jobEventIndicator}></div>}
+              {/* ЗМІНА: Тепер індикатор показує кількість робіт */}
+              {hasJobs && (
+                <div className={styles.jobEventIndicator}>{jobCount}</div>
+              )}
             </div>
           );
         })}
