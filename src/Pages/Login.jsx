@@ -1,49 +1,49 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import styles from "./Login.module.css";
-import { AppContext } from "../components/App/App";
 import { supabase } from "../lib/supabase";
+import { AppContext } from "../components/App/App";
 
 export default function Login() {
-  const { login } = useContext(AppContext);
+  const { user } = useContext(AppContext);
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const { data: userData, error: fetchError } = await supabase
-        .from("workers")
-        .select("id, name, username, role")
-        .eq("username", username)
-        .eq("password", password)
-        .maybeSingle();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
 
-      if (fetchError) {
-        setError(fetchError.message);
-        setLoading(false);
-        return;
-      }
-      if (!userData) {
-        setError("Неправильне ім'я користувача або пароль");
-        setLoading(false);
-        return;
-      }
-
-      login(userData);
-      navigate("/home");
+      if (signInError) throw signInError;
+      // Успішний вхід. `onAuthStateChange` в App.jsx оновить стан.
+      // Редірект відбудеться в `useEffect`.
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  // Повертаємо null, якщо користувач вже є, щоб уникнути
+  // рендерингу форми під час асинхронного редіректу.
+  if (user) {
+    return null;
+  }
 
   return (
     <div className={styles.loginPage}>
@@ -54,18 +54,17 @@ export default function Login() {
         transition={{ duration: 0.5 }}
         className={styles.loginCard}
       >
-        {/* <img src={logo} alt="Logo" className={styles.logo} /> */}
         <h2 className={styles.loginTitle}>Login</h2>
 
         {error && <p className={styles.loginError}>{error}</p>}
 
-        <label htmlFor="username">Username</label>
+        <label htmlFor="email">Email</label>
         <input
-          id="username"
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          id="email"
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className={styles.loginInput}
           required
         />

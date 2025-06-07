@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext } from "react";
 import {
   useParams,
   useNavigate,
@@ -8,8 +8,7 @@ import {
 } from "react-router-dom";
 import styles from "./JobDetails.module.css";
 import { AppContext } from "../components/App/App";
-import { supabase } from "../lib/supabase";
-import { useToast } from "@chakra-ui/react";
+import { useJobDetails } from "../hooks/useJobDetails"; // <-- ІМПОРТ ХУКА
 import {
   ArrowLeft,
   Briefcase,
@@ -17,7 +16,6 @@ import {
   UserCircle,
   FileText,
   Info as InfoIcon,
-  Settings,
   DollarSign,
   Users,
   Image as ImageIcon,
@@ -33,133 +31,12 @@ import {
 export default function JobDetails() {
   const { id: jobId } = useParams();
   const navigate = useNavigate();
-  const { user, addActivity } = useContext(AppContext);
   const location = useLocation();
-  const toast = useToast();
+  const { user } = useContext(AppContext);
 
-  const [job, setJob] = useState(null);
-  const [companyName, setCompanyName] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const updateStatus = async (fieldsToUpdate) => {
-    setActionLoading(true);
-    setError(null);
-
-    const oldStatus = {
-      worker_status: job.worker_status,
-      admin_status: job.admin_status,
-    };
-
-    try {
-      const { error: jobErr } = await supabase
-        .from("jobs")
-        .update(fieldsToUpdate)
-        .eq("id", jobId);
-
-      if (jobErr) throw jobErr;
-
-      setJob((prevJob) => ({ ...prevJob, ...fieldsToUpdate }));
-
-      const updatedFieldsString = Object.entries(fieldsToUpdate)
-        .map(([key, value]) => `${key} to "${value}"`)
-        .join(", ");
-
-      toast({
-        title: "Status Updated",
-        description: `Job status updated: ${updatedFieldsString}.`,
-        status: "success",
-        duration: 4000,
-        isClosable: true,
-        position: "top-right",
-      });
-
-      if (typeof addActivity === "function") {
-        addActivity({
-          action_type: "STATUS_CHANGED",
-          jobId: jobId,
-          details: {
-            changes: fieldsToUpdate,
-            previous_status: oldStatus,
-          },
-        });
-      }
-    } catch (jobErr) {
-      const errorMsg = `Failed to update status: ${jobErr.message}`;
-      setError(errorMsg);
-      toast({
-        title: "Error Updating Status",
-        description: errorMsg,
-        status: "error",
-        duration: 7000,
-        isClosable: true,
-        position: "top-right",
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const fetchJobDetails = async () => {
-      if (!jobId) return;
-      setLoading(true);
-      setError(null);
-      setCompanyName("");
-      try {
-        const { data, error: fetchErr } = await supabase
-          .from("jobs")
-          .select(
-            `*, company_id, work_order_number, storage_info, admin_instructions, job_order_photo_url`
-          )
-          .eq("id", jobId)
-          .single();
-
-        if (fetchErr) throw fetchErr;
-
-        if (data) {
-          setJob({
-            ...data,
-            worker_status: data.worker_status || "not_started",
-            admin_status: data.admin_status || "pending",
-          });
-
-          if (data.company_id) {
-            const { data: companyData, error: companyError } = await supabase
-              .from("companies")
-              .select("name")
-              .eq("id", data.company_id)
-              .single();
-            if (companyError) {
-              console.error(
-                "Error fetching company name:",
-                companyError.message
-              );
-            } else if (companyData) {
-              setCompanyName(companyData.name);
-            }
-          }
-        } else {
-          setError("Job not found.");
-        }
-      } catch (err) {
-        const errorMsg = `Failed to load job details: ${err.message}`;
-        setError(errorMsg);
-        toast({
-          title: "Error Loading Job Details",
-          description: errorMsg,
-          status: "error",
-          duration: 7000,
-          isClosable: true,
-          position: "top-right",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchJobDetails();
-  }, [jobId, toast]);
+  // Використовуємо кастомний хук для всієї логіки
+  const { job, companyName, loading, actionLoading, error, updateStatus } =
+    useJobDetails(jobId);
 
   if (loading && !job)
     return <div className={styles.loading}>Loading job details...</div>;

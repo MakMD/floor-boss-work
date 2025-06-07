@@ -1,22 +1,37 @@
 // src/components/App/Layout.jsx
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useRef, useEffect } from "react"; // <-- Додано useRef та useEffect
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { AppContext } from "./App";
 import styles from "./App.module.css";
 import {
-  LayoutDashboard, // Для дашбордів
+  LayoutDashboard,
   LogOut,
   CalendarDays,
   Users,
-  ClipboardPlus, // Для New Order (більш релевантно)
-  Image as ImageIconLucide, // Для Photo Gallery
-  Settings as SettingsIcon, // Для Admin Dashboard
+  ClipboardPlus,
+  Image as ImageIconLucide,
+  Settings as SettingsIcon,
 } from "lucide-react";
 
 export default function Layout() {
   const { user, logout } = useContext(AppContext);
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Створюємо ref для кнопки мобільного меню
+  const mobileMenuButtonRef = useRef(null);
+
+  // ЗМІНА: Додано useEffect для керування фокусом
+  useEffect(() => {
+    // Коли меню закривається, повертаємо фокус на кнопку, яка його відкрила.
+    if (!isSidebarOpen) {
+      // Невелика затримка, щоб дозволити DOM оновитися
+      const timer = setTimeout(() => {
+        mobileMenuButtonRef.current?.focus();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isSidebarOpen]);
 
   const handleLogout = () => {
     logout();
@@ -27,7 +42,6 @@ export default function Layout() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // Оновлено іконки для відповідності
   const navLinks = [
     {
       to: "/admin-dashboard",
@@ -70,6 +84,7 @@ export default function Layout() {
   return (
     <div className={styles.layoutContainer}>
       <button
+        ref={mobileMenuButtonRef} // <-- Прив'язуємо ref до кнопки
         className={styles.mobileMenuButton}
         onClick={toggleSidebar}
         aria-label="Open menu"
@@ -81,11 +96,7 @@ export default function Layout() {
         className={`${styles.sidebar} ${
           isSidebarOpen ? styles.sidebarOpen : ""
         }`}
-        aria-hidden={
-          !isSidebarOpen &&
-          typeof window !== "undefined" &&
-          window.innerWidth <= 768
-        }
+        aria-hidden={!isSidebarOpen} // Спрощено для надійності
       >
         <button
           className={styles.sidebarCloseButton}
@@ -110,7 +121,7 @@ export default function Layout() {
                         ? `${styles.navLink} ${styles.activeNavLink}`
                         : styles.navLink
                     }
-                    onClick={() => setIsSidebarOpen(false)}
+                    onClick={() => setIsSidebarOpen(false)} // Просто закриваємо меню
                     end={
                       link.to === "/admin-dashboard" ||
                       link.to === "/my-dashboard"

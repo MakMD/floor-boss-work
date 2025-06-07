@@ -69,7 +69,8 @@ function AppProvider({ children }) {
   const [user, setUser] = useState(undefined);
   const [settings, setSettings] = useState({ theme: "light" });
 
-  const fetchAndSetUserWithProfile = async (authUser) => {
+  // ЗМІНА: Обертаємо функцію в useCallback для стабільності
+  const fetchAndSetUserWithProfile = useCallback(async (authUser) => {
     if (!authUser) {
       setUser(null);
       return;
@@ -81,34 +82,45 @@ function AppProvider({ children }) {
         .eq("id", authUser.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        throw profileError;
+      }
 
-      setUser({ ...authUser, ...profileData });
+      if (profileData) {
+        setUser({ ...authUser, ...profileData });
+      } else {
+        console.warn(`No worker profile found for user ID: ${authUser.id}`);
+        setUser({ ...authUser, role: null, name: authUser.email || "User" });
+      }
     } catch (e) {
       console.error("Error fetching user worker profile:", e.message);
+      // У випадку будь-якої помилки (RLS тощо), ми все одно встановлюємо користувача,
+      // але з роллю null, щоб вийти зі стану "Loading session..."
       setUser({ ...authUser, role: null, name: authUser.email || "User" });
     }
-  };
+  }, []); // Пустий масив залежностей, оскільки setUser стабільний
 
+  // ЗМІНА: Додаємо fetchAndSetUserWithProfile в масив залежностей
   useEffect(() => {
     const getSession = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      await fetchAndSetUserWithProfile(session?.user || null);
+      fetchAndSetUserWithProfile(session?.user ?? null);
     };
     getSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      await fetchAndSetUserWithProfile(session?.user || null);
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      fetchAndSetUserWithProfile(session?.user ?? null);
     });
 
-    return () => subscription?.unsubscribe();
-  }, []);
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [fetchAndSetUserWithProfile]);
 
-  const login = (u) => setUser(u);
   const logout = async () => {
     await supabase.auth.signOut();
   };
@@ -123,8 +135,6 @@ function AppProvider({ children }) {
         );
         return;
       }
-
-      // ЗМІНА: Записуємо структуровані дані замість простого повідомлення
       try {
         const { error } = await supabase.from("job_updates").insert([
           {
@@ -132,9 +142,6 @@ function AppProvider({ children }) {
             worker_id: user.id,
             action_type: activityData.action_type,
             details: activityData.details || null,
-            // Старе поле `message` більше не використовується для нових записів.
-            // Ми можемо генерувати його тут для зворотної сумісності, якщо потрібно.
-            // message: generateLegacyMessage(activityData),
           },
         ]);
         if (error) {
@@ -155,7 +162,6 @@ function AppProvider({ children }) {
     <AppContext.Provider
       value={{
         user,
-        login,
         logout,
         settings,
         updateSettings,
