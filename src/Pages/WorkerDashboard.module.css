@@ -1,4 +1,3 @@
-/* src/Pages/WorkerDashboard.module.css */
 .dashboardPage {
   padding: 1.5rem;
   max-width: 1000px;
@@ -117,32 +116,12 @@
 .jobStatus {
   margin-top: 0.75rem;
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.statusBadge {
-  padding: 0.2em 0.6em;
-  border-radius: 10px;
-  font-size: 0.8em;
-  font-weight: 600;
-  color: var(--bg-white);
-  display: inline-block;
-}
-
-.statusNotStarted {
-  background-color: #a0aec0;
-}
-.statusInProgress {
-  background-color: #4299e1;
-}
-.statusPending {
-  background-color: #f59e0b;
-}
-.statusApproved {
-  background-color: #48bb78;
-}
-.statusRejected {
-  background-color: #ef4444;
-}
+/* ВИДАЛЕНО: Усі класи .statusBadge... перенесено в StatusBadge.module.css */
 
 .loading,
 .errorPage,

@@ -1,8 +1,8 @@
 // src/Pages/WorkerProfile.jsx
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { AppContext } from "../components/App/App";
+import StatusBadge from "../components/common/StatusBadge"; // <-- ІМПОРТ
 import styles from "./WorkerProfile.module.css";
 import {
   ArrowLeft,
@@ -13,12 +13,11 @@ import {
   ServerCrash,
   UserX,
   ListChecks,
-} from "lucide-react"; // Іконки
+} from "lucide-react";
 
 export default function WorkerProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  // const { user } = useContext(AppContext); // user з AppContext тут не використовується для логіки прав, але може знадобитися для інших цілей
 
   const [worker, setWorker] = useState(null);
   const [jobs, setJobs] = useState([]);
@@ -28,7 +27,6 @@ export default function WorkerProfile() {
 
   useEffect(() => {
     const fetchWorkerProfileData = async () => {
-      // Перейменовано для ясності
       setLoading(true);
       setError(null);
       try {
@@ -41,7 +39,6 @@ export default function WorkerProfile() {
         setWorker(workerData);
 
         if (workerData) {
-          // Завантажуємо роботи тільки якщо працівника знайдено
           const { data: jobRelations, error: relationsError } = await supabase
             .from("job_workers")
             .select("job_id")
@@ -53,7 +50,7 @@ export default function WorkerProfile() {
           if (jobIds.length > 0) {
             const { data: jobsData, error: jobsError } = await supabase
               .from("jobs")
-              .select("id, address, date, client, worker_status, admin_status") // Додаємо статуси
+              .select("id, address, date, client, worker_status, admin_status")
               .in("id", jobIds)
               .order("date", { ascending: false });
             if (jobsError) throw jobsError;
@@ -61,7 +58,6 @@ export default function WorkerProfile() {
           }
           setJobs(assignedJobsData);
         } else {
-          // Якщо працівника не знайдено, jobs залишаться порожнім масивом
           setJobs([]);
         }
       } catch (e) {
@@ -88,34 +84,7 @@ export default function WorkerProfile() {
     );
   });
 
-  // Функція для отримання JSX бейджа статусу
-  const getStatusBadge = (job) => {
-    let statusText = "Unknown";
-    let statusClassKey = "statusBadgeUnknown";
-
-    if (job.admin_status === "approved") {
-      statusText = "Approved";
-      statusClassKey = "statusBadgeApproved";
-    } else if (job.admin_status === "rejected") {
-      statusText = "Rejected";
-      statusClassKey = "statusBadgeRejected";
-    } else if (job.worker_status === "done") {
-      statusText = "Pending Approval";
-      statusClassKey = "statusBadgePending";
-    } else if (job.worker_status === "in_progress") {
-      statusText = "In Progress";
-      statusClassKey = "statusBadgeInProgress";
-    } else if (job.worker_status === "not_started") {
-      statusText = "Not Started";
-      statusClassKey = "statusBadgeNotStarted";
-    }
-    const badgeClass = styles[statusClassKey] || styles.statusBadgeUnknown;
-    return (
-      <span className={`${styles.statusBadge} ${badgeClass}`}>
-        {statusText}
-      </span>
-    );
-  };
+  // ВИДАЛЕНО: Локальна функція getStatusBadge
 
   if (loading) {
     return (
@@ -198,7 +167,11 @@ export default function WorkerProfile() {
                 <div className={styles.jobCardContent}>
                   <div className={styles.jobCardHeader}>
                     <h3 className={styles.jobId}>Order #{job.id}</h3>
-                    {getStatusBadge(job)}
+                    {/* ЗМІНА: Використовуємо новий компонент */}
+                    <StatusBadge
+                      workerStatus={job.worker_status}
+                      adminStatus={job.admin_status}
+                    />
                   </div>
                   <p className={styles.jobAddress}>
                     {job.address || "No Address Specified"}

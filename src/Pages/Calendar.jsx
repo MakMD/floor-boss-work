@@ -12,8 +12,9 @@ import { AppContext } from "../components/App/App";
 import { supabase } from "../lib/supabase";
 import { useToast } from "@chakra-ui/react";
 import WeekStripCalendar from "../components/Calendar/WeekStripCalendar";
+import StatusBadge from "../components/common/StatusBadge"; // <-- ІМПОРТ
 import { getStartOfWeek, addDays, isSameDay } from "../utils/dateUtils";
-import { Edit3, Trash2, Eye, EyeOff, XCircle } from "lucide-react"; // Іконки для дій
+import { Edit3, Trash2, Eye, EyeOff, XCircle } from "lucide-react";
 
 function parseDateStringSafe(dateString) {
   if (!dateString) return null;
@@ -37,7 +38,7 @@ export default function CalendarPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
-  const [editingId, setEditingId] = useState(null); // ID замовлення, для якого відкриті дії
+  const [editingId, setEditingId] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchJobs = useCallback(async () => {
@@ -47,7 +48,7 @@ export default function CalendarPage() {
       let query = supabase
         .from("jobs")
         .select(
-          "id, address, date, client, worker_status, admin_status, is_hidden, job_workers!inner(worker_id)" // <--- ДОДАНО worker_status, admin_status
+          "id, address, date, client, worker_status, admin_status, is_hidden, job_workers!inner(worker_id)"
         )
         .order("date", { ascending: true });
 
@@ -144,9 +145,8 @@ export default function CalendarPage() {
       });
       if (typeof addActivity === "function") {
         addActivity({
-          message: `Admin ${user?.name || user?.id} deleted order #${jobId}`,
+          action_type: "ORDER_DELETED",
           jobId: jobId,
-          details: { action: "delete_order_calendar" },
         });
       }
       await fetchJobs();
@@ -183,11 +183,8 @@ export default function CalendarPage() {
       });
       if (typeof addActivity === "function") {
         addActivity({
-          message: `Admin ${
-            user?.name || user?.id
-          } ${actionText}d order #${jobId}`,
+          action_type: currentIsHidden ? "ORDER_UNHIDDEN" : "ORDER_HIDDEN",
           jobId: jobId,
-          details: { action: `${actionText}_order_calendar` },
         });
       }
       await fetchJobs();
@@ -205,32 +202,7 @@ export default function CalendarPage() {
     }
   };
 
-  const getStatusBadge = (job) => {
-    let statusText = "Unknown";
-    let statusClass = styles.statusBadgeUnknown;
-
-    if (job.admin_status === "approved") {
-      statusText = "Approved";
-      statusClass = styles.statusBadgeApproved;
-    } else if (job.admin_status === "rejected") {
-      statusText = "Rejected";
-      statusClass = styles.statusBadgeRejected;
-    } else if (job.worker_status === "done") {
-      statusText = "Pending Approval";
-      statusClass = styles.statusBadgePending;
-    } else if (job.worker_status === "in_progress") {
-      statusText = "In Progress";
-      statusClass = styles.statusBadgeInProgress;
-    } else if (job.worker_status === "not_started") {
-      statusText = "Not Started";
-      statusClass = styles.statusBadgeNotStarted;
-    }
-    return (
-      <span className={`${styles.statusBadge} ${statusClass}`}>
-        {statusText}
-      </span>
-    );
-  };
+  // ВИДАЛЕНО: Локальна функція getStatusBadge
 
   const searchedJobs = useMemo(
     () =>
@@ -256,10 +228,8 @@ export default function CalendarPage() {
     });
   }, [searchedJobs, selectedDate, showAll]);
 
-  // Групуємо замовлення за датою для відображення, якщо showAll true
   const groupedByDateJobs = useMemo(() => {
     if (!showAll) {
-      // Якщо не показуємо всі, то не групуємо за датою, бо вже є заголовок для selectedDate
       return { [selectedDate.toDateString()]: dateFilteredJobs };
     }
     return dateFilteredJobs.reduce((acc, job) => {
@@ -283,7 +253,6 @@ export default function CalendarPage() {
       Object.keys(groupedByDateJobs).sort((a, b) => {
         if (a === "Jobs with Unspecified Date") return 1;
         if (b === "Jobs with Unspecified Date") return -1;
-        // Якщо не showAll, то ключ буде один - selectedDate.toDateString(), сортування не потрібне
         if (!showAll) return 0;
         return new Date(a) - new Date(b);
       }),
@@ -371,28 +340,23 @@ export default function CalendarPage() {
 
         {loading && <p className={styles.loadingMessage}>Loading orders...</p>}
         {error && !loading && <p className={styles.errorMessage}>{error}</p>}
-        {!loading &&
-          dateFilteredJobs.length === 0 &&
-          !error && ( // Використовуємо dateFilteredJobs.length
-            <p className={styles.noResultsMessage}>
-              {showAll && searchTerm
-                ? "No orders match your search criteria."
-                : showAll
-                ? "No orders to display."
-                : "No orders for the selected date."}
-            </p>
-          )}
+        {!loading && dateFilteredJobs.length === 0 && !error && (
+          <p className={styles.noResultsMessage}>
+            {showAll && searchTerm
+              ? "No orders match your search criteria."
+              : showAll
+              ? "No orders to display."
+              : "No orders for the selected date."}
+          </p>
+        )}
 
         {(showAll ? sortedDateKeys : [selectedDate.toDateString()]).map(
           (dateKeyOrHeader) => {
-            // Якщо не showAll, то dateKeyOrHeader фактично не використовується для отримання групи,
-            // бо dateFilteredJobs вже містить тільки потрібні замовлення.
-            // groupedByDateJobs[dateKeyOrHeader] буде містити jobs для дати, якщо showAll
             const jobsToDisplay = showAll
               ? groupedByDateJobs[dateKeyOrHeader] || []
               : dateFilteredJobs;
 
-            if (jobsToDisplay.length === 0 && showAll) return null; // Не рендеримо групу, якщо вона порожня в режимі showAll
+            if (jobsToDisplay.length === 0 && showAll) return null;
 
             return (
               <div key={dateKeyOrHeader} className={styles.dateGroup}>
@@ -412,7 +376,11 @@ export default function CalendarPage() {
                             >
                               Order #{job.id}
                             </Link>
-                            {getStatusBadge(job)}
+                            {/* ЗМІНА: Використовуємо новий компонент */}
+                            <StatusBadge
+                              workerStatus={job.worker_status}
+                              adminStatus={job.admin_status}
+                            />
                           </div>
                           <p className={styles.jobDetailText}>
                             {job.client || "N/A Client"} -{" "}

@@ -1,4 +1,3 @@
-// src/Pages/JobDetails.jsx
 import React, { useState, useEffect, useContext } from "react";
 import {
   useParams,
@@ -48,6 +47,11 @@ export default function JobDetails() {
     setActionLoading(true);
     setError(null);
 
+    const oldStatus = {
+      worker_status: job.worker_status,
+      admin_status: job.admin_status,
+    };
+
     try {
       const { error: jobErr } = await supabase
         .from("jobs")
@@ -71,27 +75,15 @@ export default function JobDetails() {
         position: "top-right",
       });
 
-      const actor = user?.name || user?.email || `User ID: ${user?.id}`;
-      const activityMessage = `${actor} updated job #${jobId}: set ${updatedFieldsString}`;
-
       if (typeof addActivity === "function") {
         addActivity({
-          message: activityMessage,
+          action_type: "STATUS_CHANGED",
           jobId: jobId,
           details: {
-            ...fieldsToUpdate,
-            action: "status_update",
+            changes: fieldsToUpdate,
+            previous_status: oldStatus,
           },
         });
-      }
-
-      if (fieldsToUpdate.worker_status === "in_progress" && user?.id) {
-        const startWorkMessage = `Worker ${actor} started order #${jobId}`;
-        await supabase
-          .from("job_updates")
-          .insert([
-            { job_id: jobId, worker_id: user.id, message: startWorkMessage },
-          ]);
       }
     } catch (jobErr) {
       const errorMsg = `Failed to update status: ${jobErr.message}`;

@@ -24,7 +24,6 @@
 .loadingText,
 .errorText,
 .noResultsText {
-  /* .noResultsText замість .empty */
   font-size: 1.1rem;
   margin-top: 1rem;
 }
@@ -45,12 +44,12 @@
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
   margin-bottom: 2rem;
   display: flex;
-  flex-direction: column; /* Кнопка назад зверху, потім інфо */
+  flex-direction: column;
   gap: 1rem;
 }
 
 .backButton {
-  display: inline-flex; /* Щоб іконка була поруч з текстом */
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 1.2rem;
@@ -63,7 +62,7 @@
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease,
     border-color 0.2s ease;
-  align-self: flex-start; /* Кнопка зліва */
+  align-self: flex-start;
 }
 .backButton:hover {
   background-color: var(--surface-hover, #e9ecef);
@@ -91,21 +90,18 @@
   flex-shrink: 0;
 }
 .avatarPlaceholder svg {
-  /* Якщо використовується іконка */
   width: 32px;
   height: 32px;
 }
 
 .workerNameTitle {
-  /* Перейменовано з .title */
-  font-size: 1.8rem; /* Більший розмір для імені */
+  font-size: 1.8rem;
   font-weight: 700;
   color: var(--fg-header, #2d3748);
   margin: 0 0 0.25rem 0;
 }
 
 .workerRoleDetail {
-  /* Перейменовано з .detail */
   font-size: 1rem;
   color: var(--fg-muted-darker, #5a6572);
   display: flex;
@@ -122,7 +118,7 @@
   padding: 1.5rem 2rem;
   border-radius: 8px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
-  flex-grow: 1; /* Щоб секція займала решту висоти */
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
 }
@@ -132,13 +128,12 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  flex-wrap: wrap; /* Для переносу на малих екранах */
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
 .sectionSubtitle {
-  /* Перейменовано з .subtitle */
-  font-size: 1.3rem; /* Розмір підзаголовка */
+  font-size: 1.3rem;
   font-weight: 600;
   color: var(--fg-secondary-header, #4a5568);
   margin: 0;
@@ -153,15 +148,12 @@
 .searchInputContainer {
   display: flex;
   align-items: center;
-  background-color: var(
-    --bg-input-alt,
-    #f8f9fa
-  ); /* Фон для контейнера пошуку */
+  background-color: var(--bg-input-alt, #f8f9fa);
   border-radius: 6px;
   padding: 0.3rem 0.6rem;
   border: 1px solid var(--border-input, var(--border-light));
-  flex-grow: 1; /* Дозволяє зайняти доступний простір */
-  max-width: 400px; /* Обмеження ширини */
+  flex-grow: 1;
+  max-width: 400px;
 }
 .searchInputContainer:focus-within {
   border-color: var(--accent);
@@ -174,9 +166,9 @@
 }
 .searchInput {
   width: 100%;
-  padding: 0.4rem 0; /* Вертикальний padding вже є в контейнері */
+  padding: 0.4rem 0;
   border: none;
-  background-color: transparent; /* Прозорий фон, бо є фон контейнера */
+  background-color: transparent;
   font-size: 0.9rem;
   color: var(--text-dark);
 }
@@ -189,15 +181,14 @@
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: 1fr; /* Один стовпець для карток */
-  gap: 1rem; /* Проміжок між картками */
-  overflow-y: auto; /* Додаємо скрол, якщо список довгий */
-  flex-grow: 1; /* Щоб список займав доступну висоту */
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  overflow-y: auto;
+  flex-grow: 1;
 }
 
 .jobItemCard {
-  /* Перейменовано з .jobItem */
-  background-color: var(--surface, #f8f9fa); /* Трохи інший фон для карток */
+  background-color: var(--surface, #f8f9fa);
   border: 1px solid var(--border-subtle, #e9ecef);
   border-radius: 6px;
   padding: 1rem 1.25rem;
@@ -218,7 +209,7 @@
 .jobCardHeader {
   display: flex;
   justify-content: space-between;
-  align-items: baseline; /* Вирівнювання по базовій лінії */
+  align-items: center; /* Змінено для кращого вирівнювання з бейджем */
   margin-bottom: 0.3rem;
 }
 .jobId {
@@ -237,47 +228,16 @@
   font-style: italic;
 }
 
-/* Стилі для статусних бейджів (якщо використовуються) */
-.statusBadge {
-  padding: 0.25em 0.6em;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 12px;
-  color: white;
-  line-height: 1;
-  white-space: nowrap;
-  margin-left: 0.5rem; /* Відступ від ID */
-}
-.statusBadgeNotStarted {
-  background-color: #a0aec0;
-}
-.statusBadgeInProgress {
-  background-color: #4299e1;
-}
-.statusBadgePending {
-  background-color: #f6e05e;
-  color: #744210;
-}
-.statusBadgeApproved {
-  background-color: #48bb78;
-}
-.statusBadgeRejected {
-  background-color: #f56565;
-}
-.statusBadgeUnknown {
-  background-color: #cbd5e0;
-  color: #2d3748;
-}
+/* ВИДАЛЕНО: Усі класи .statusBadge... перенесено в StatusBadge.module.css */
 
 .viewJobLink {
-  /* Перейменовано з .jobLink */
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   padding: 0.4rem 0.8rem;
   background-color: transparent;
   color: var(--accent, #3b82f6);
-  border: 1px solid transparent; /* Для консистенції, якщо буде рамка при ховері */
+  border: 1px solid transparent;
   border-radius: 6px;
   text-decoration: none;
   font-weight: 500;
@@ -291,7 +251,6 @@
   text-decoration: none;
 }
 
-/* Адаптивність */
 @media (max-width: 768px) {
   .profilePage {
     padding: 1rem;

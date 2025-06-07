@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { AppContext } from "../components/App/App";
+import StatusBadge from "../components/common/StatusBadge"; // <-- ІМПОРТ
 import styles from "./WorkerDashboard.module.css";
 
 export default function WorkerDashboard() {
@@ -16,14 +17,13 @@ export default function WorkerDashboard() {
     const fetchAssignedJobs = async () => {
       if (!user || !user.id) {
         setLoading(false);
-        setAssignedJobs([]); // Очищаємо, якщо немає користувача
+        setAssignedJobs([]);
         return;
       }
 
       setLoading(true);
       setError(null);
       try {
-        // Отримуємо job_id, призначені цьому worker_id, через проміжну таблицю job_workers
         const { data: jobWorkerRels, error: relError } = await supabase
           .from("job_workers")
           .select("job_id")
@@ -39,7 +39,6 @@ export default function WorkerDashboard() {
           return;
         }
 
-        // Тепер отримуємо деталі цих робіт, включаючи назву компанії
         let jobsQuery = supabase
           .from("jobs")
           .select(
@@ -83,43 +82,12 @@ export default function WorkerDashboard() {
     fetchAssignedJobs();
   }, [user, filterStatus]);
 
-  const getStatusText = (workerStatus, adminStatus) => {
-    if (adminStatus === "approved")
-      return (
-        <span className={`${styles.statusBadge} ${styles.statusApproved}`}>
-          Completed
-        </span>
-      );
-    if (adminStatus === "rejected")
-      return (
-        <span className={`${styles.statusBadge} ${styles.statusRejected}`}>
-          Rejected (Re-do)
-        </span>
-      );
-    if (workerStatus === "done")
-      return (
-        <span className={`${styles.statusBadge} ${styles.statusPending}`}>
-          Pending Admin Approval
-        </span>
-      );
-    if (workerStatus === "in_progress")
-      return (
-        <span className={`${styles.statusBadge} ${styles.statusInProgress}`}>
-          In Progress
-        </span>
-      );
-    return (
-      <span className={`${styles.statusBadge} ${styles.statusNotStarted}`}>
-        Not Started
-      </span>
-    );
-  };
+  // ВИДАЛЕНО: Локальна функція getStatusText, оскільки тепер є компонент
 
   if (loading && !user)
-    return <p className={styles.loading}>Authenticating...</p>; // Якщо користувач ще не завантажений
+    return <p className={styles.loading}>Authenticating...</p>;
   if (loading) return <p className={styles.loading}>Loading your jobs...</p>;
 
-  // Якщо користувач не worker, хоча ProtectedRoute має це обробити
   if (user && user.role !== "worker") {
     return <p className={styles.errorPage}>This page is for workers only.</p>;
   }
@@ -189,14 +157,17 @@ export default function WorkerDashboard() {
                 {job.client && (
                   <p className={styles.jobClient}>Builder: {job.client}</p>
                 )}
-                {/* Перевіряємо, чи job.companies існує і чи є в ньому name */}
                 {job.companies && job.companies.name && (
                   <p className={styles.jobCompany}>
                     Company: {job.companies.name}
                   </p>
                 )}
                 <div className={styles.jobStatus}>
-                  Status: {getStatusText(job.worker_status, job.admin_status)}
+                  Status: {/* ЗМІНА: Використовуємо новий компонент */}
+                  <StatusBadge
+                    workerStatus={job.worker_status}
+                    adminStatus={job.admin_status}
+                  />
                 </div>
               </Link>
             </li>

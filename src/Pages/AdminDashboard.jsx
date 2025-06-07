@@ -1,10 +1,9 @@
-// src/Pages/AdminDashboard.jsx
-import React, { useState, useEffect, useMemo, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AppContext } from "../components/App/App";
-import { supabase } from "../lib/supabase";
 import styles from "./AdminDashboard.module.css";
 import { useToast } from "@chakra-ui/react";
+import { useAdminNotifications } from "../hooks/useAdminNotifications";
 import {
   Bell,
   Briefcase,
@@ -19,138 +18,114 @@ import {
   Search,
 } from "lucide-react";
 
-const INITIAL_ITEMS_COUNT = 4;
-const INCREMENT_COUNT = 4; // Кількість елементів для додавання при кліці
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+const ActivityMessage = ({ notification }) => {
+  const { action_type, details, message } = notification;
+
+  if (!action_type) {
+    return (
+      <span className={styles.notificationMessageText}>
+        {message || "Legacy update"}
+      </span>
+    );
+  }
+
+  switch (action_type) {
+    case "STATUS_CHANGED":
+      const changeEntries = Object.entries(details.changes || {});
+      return (
+        <span className={styles.notificationMessageText}>
+          змінив статус
+          {changeEntries.map(([field, value]) => (
+            <span key={field}>
+              {" "}
+              <strong>{field.replace("_", " ")}</strong> на "
+              <strong>{value}</strong>"
+            </span>
+          ))}
+          .
+        </span>
+      );
+    case "NOTE_ADDED":
+      return (
+        <span className={styles.notificationMessageText}>
+          додав нову нотатку.
+        </span>
+      );
+    default:
+      return (
+        <span className={styles.notificationMessageText}>
+          {message || action_type.replace(/_/g, " ").toLowerCase()}
+        </span>
+      );
+  }
+};
 
 export default function AdminDashboard() {
   const { user } = useContext(AppContext);
   const toast = useToast();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [inputValue, setInputValue] = useState("");
+  const debouncedSearchTerm = useDebounce(inputValue, 500);
 
-  const [notifications, setNotifications] = useState([]);
-  const [loadingNotifications, setLoadingNotifications] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  // ЗМІНА: Замість showAll, використовуємо лічильник видимих елементів
-  const [visibleCount, setVisibleCount] = useState(INITIAL_ITEMS_COUNT);
+  const {
+    notifications,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    setSearchTerm,
+    fetchMore,
+    deleteNotificationById,
+  } = useAdminNotifications();
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      setLoadingNotifications(true);
-      setError(null);
+    setCurrentPage(0);
+    setSearchTerm(debouncedSearchTerm);
+  }, [debouncedSearchTerm, setSearchTerm]);
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this notification?")) {
       try {
-        const { data, error: fetchError } = await supabase
-          .from("job_updates")
-          .select(
-            `
-            id,
-            created_at,
-            message,
-            job_id,
-            jobs (address, client, work_order_number),
-            worker_id,
-            workers (name)
-          `
-          )
-          .order("created_at", { ascending: false });
-
-        if (fetchError) throw fetchError;
-        setNotifications(data || []);
-      } catch (err) {
-        const errorMsg = `Failed to load notifications: ${err.message}`;
-        setError(errorMsg);
+        await deleteNotificationById(id);
         toast({
-          title: "Error Loading Notifications",
-          description: errorMsg,
-          status: "error",
-          duration: 7000,
+          title: "Notification deleted",
+          status: "success",
+          duration: 3000,
           isClosable: true,
-          position: "top-right",
         });
-        setNotifications([]);
-      } finally {
-        setLoadingNotifications(false);
+      } catch (err) {
+        toast({
+          title: "Error deleting notification",
+          description: err.message,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
       }
-    };
-
-    if (user?.role === "admin") {
-      fetchNotifications();
-    }
-  }, [user, toast]);
-
-  const handleDeleteNotification = async (notificationId) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this notification? This will only remove it from this list."
-      )
-    )
-      return;
-
-    try {
-      const { error: deleteError } = await supabase
-        .from("job_updates")
-        .delete()
-        .eq("id", notificationId);
-
-      if (deleteError) throw deleteError;
-
-      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-
-      toast({
-        title: "Notification Removed",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (err) {
-      toast({
-        title: "Error Removing Notification",
-        description: `Could not remove notification: ${err.message}`,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
     }
   };
 
-  const filteredNotifications = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return notifications;
-    }
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return notifications.filter((notification) => {
-      const address = notification.jobs?.address?.toLowerCase() || "";
-      const workOrder =
-        notification.jobs?.work_order_number?.toLowerCase() || "";
-      const workerName = notification.workers?.name?.toLowerCase() || "";
-      const clientName = notification.jobs?.client?.toLowerCase() || "";
-      const message = notification.message?.toLowerCase() || "";
-
-      return (
-        address.includes(lowercasedTerm) ||
-        workOrder.includes(lowercasedTerm) ||
-        workerName.includes(lowercasedTerm) ||
-        clientName.includes(lowercasedTerm) ||
-        message.includes(lowercasedTerm)
-      );
-    });
-  }, [searchTerm, notifications]);
-
-  // ЗМІНА: При зміні пошукового запиту скидаємо лічильник до початкового
-  useEffect(() => {
-    setVisibleCount(INITIAL_ITEMS_COUNT);
-  }, [searchTerm]);
-
-  const displayedNotifications = useMemo(() => {
-    return filteredNotifications.slice(0, visibleCount);
-  }, [filteredNotifications, visibleCount]);
+  const handleLoadMore = () => {
+    const nextPage = currentPage + 1;
+    fetchMore(nextPage);
+    setCurrentPage(nextPage);
+  };
 
   if (user?.role !== "admin") {
-    return (
-      <p className={styles.accessDenied}>
-        Access Denied. This dashboard is for administrators only.
-      </p>
-    );
+    return <p className={styles.accessDenied}>Access Denied.</p>;
   }
 
   return (
@@ -160,11 +135,7 @@ export default function AdminDashboard() {
           <Settings size={28} className={styles.titleIcon} />
           Admin Dashboard
         </h1>
-        {user && (
-          <p className={styles.welcomeMessage}>
-            Welcome, {user.name || user.email}!
-          </p>
-        )}
+        {user && <p className={styles.welcomeMessage}>Welcome, {user.name}!</p>}
       </header>
 
       <section className={styles.quickActions}>
@@ -200,102 +171,64 @@ export default function AdminDashboard() {
           <input
             type="text"
             placeholder="Search activity..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
             className={styles.searchInput}
           />
         </div>
 
-        {loadingNotifications && (
-          <p className={styles.loadingMessage}>Loading notifications...</p>
-        )}
+        {loading && <p className={styles.loadingMessage}>Loading...</p>}
         {error && <p className={styles.errorMessage}>{error}</p>}
-        {!loadingNotifications && !error && notifications.length === 0 && (
+        {!loading && notifications.length === 0 && (
           <p className={styles.noNotificationsMessage}>
-            No recent activity to display.
+            {debouncedSearchTerm
+              ? "No results match your search."
+              : "No recent activity."}
           </p>
         )}
-        {!loadingNotifications &&
-          !error &&
-          filteredNotifications.length > 0 &&
-          displayedNotifications.length === 0 && (
-            <p className={styles.noResults}>No results match your search.</p>
-          )}
 
-        {!loadingNotifications &&
-          !error &&
-          displayedNotifications.length > 0 && (
-            <ul className={styles.notificationList}>
-              {displayedNotifications.map((notification) => (
-                <li key={notification.id} className={styles.notificationItem}>
-                  <div className={styles.notificationIcon}>
-                    {notification.message.toLowerCase().includes("started") ? (
-                      <PlayCircle size={20} />
-                    ) : notification.message
-                        .toLowerCase()
-                        .includes("finished") ||
-                      notification.message
-                        .toLowerCase()
-                        .includes("completed") ||
-                      notification.message.toLowerCase().includes("done") ? (
-                      <CheckCircle size={20} />
-                    ) : (
-                      <InfoIcon size={20} />
-                    )}
-                  </div>
-                  <div className={styles.notificationContent}>
-                    <p className={styles.notificationMessage}>
-                      <strong>
-                        {notification.workers?.name ||
-                          `Worker ID: ${notification.worker_id?.substring(
-                            0,
-                            8
-                          )}...`}
-                      </strong>{" "}
-                      {notification.message.replace(/^Worker [^ ]+ /, "")}
-                      {notification.jobs && (
-                        <Link
-                          to={`/orders/${notification.job_id}`}
-                          className={styles.jobLink}
-                        >
-                          (Order #{notification.job_id})
-                        </Link>
-                      )}
-                    </p>
-                    <span className={styles.notificationMeta}>
-                      {new Date(notification.created_at).toLocaleString()}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteNotification(notification.id)}
-                    className={styles.deleteNotificationBtn}
-                    title="Delete notification"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+        <ul className={styles.notificationList}>
+          {notifications.map((notification) => (
+            <li key={notification.id} className={styles.notificationItem}>
+              <div className={styles.notificationIcon}>
+                <InfoIcon size={20} />
+              </div>
+              <div className={styles.notificationContent}>
+                <div className={styles.notificationMessage}>
+                  <strong>{notification.workers?.name || "System"}</strong>
+                  <ActivityMessage notification={notification} />
+                  {notification.jobs && (
+                    <Link
+                      to={`/orders/${notification.job_id}`}
+                      className={styles.jobLink}
+                    >
+                      (Order #{notification.job_id})
+                    </Link>
+                  )}
+                </div>
+                <span className={styles.notificationMeta}>
+                  {new Date(notification.created_at).toLocaleString()}
+                </span>
+              </div>
+              <button
+                onClick={() => handleDelete(notification.id)}
+                className={styles.deleteNotificationBtn}
+                title="Delete notification"
+              >
+                <Trash2 size={16} />
+              </button>
+            </li>
+          ))}
+        </ul>
 
-        {/* ЗМІНА: Оновлена логіка кнопок пагінації */}
         <div className={styles.paginationControls}>
-          {visibleCount > INITIAL_ITEMS_COUNT && (
+          {hasMore && (
             <button
               className={styles.showMoreBtn}
-              onClick={() => setVisibleCount(INITIAL_ITEMS_COUNT)}
+              onClick={handleLoadMore}
+              disabled={loadingMore}
             >
-              Collapse
-            </button>
-          )}
-          {visibleCount < filteredNotifications.length && (
-            <button
-              className={styles.showMoreBtn}
-              onClick={() =>
-                setVisibleCount((prevCount) => prevCount + INCREMENT_COUNT)
-              }
-            >
-              Show More
+              {loadingMore ? "Loading..." : "Load More"}
             </button>
           )}
         </div>

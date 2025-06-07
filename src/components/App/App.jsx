@@ -3,7 +3,7 @@ import React, {
   useState,
   useEffect,
   useContext,
-  useCallback, // <-- ІМПОРТ useCallback
+  useCallback,
 } from "react";
 import {
   HashRouter as Router,
@@ -114,23 +114,27 @@ function AppProvider({ children }) {
   };
   const updateSettings = (s) => setSettings((prev) => ({ ...prev, ...s }));
 
-  // ЗМІНА: Функцію обгорнуто в useCallback
   const addActivity = useCallback(
     async (activityData) => {
-      if (!user || !activityData || !activityData.message) {
+      if (!user || !activityData || !activityData.action_type) {
         console.warn(
-          "Skipping activity log to DB: missing user or message.",
-          { user, activityData } // Лог залишаємо для діагностики
+          "Skipping activity log to DB: missing user or action_type.",
+          { user, activityData }
         );
         return;
       }
 
+      // ЗМІНА: Записуємо структуровані дані замість простого повідомлення
       try {
         const { error } = await supabase.from("job_updates").insert([
           {
             job_id: activityData.jobId,
             worker_id: user.id,
-            message: activityData.message,
+            action_type: activityData.action_type,
+            details: activityData.details || null,
+            // Старе поле `message` більше не використовується для нових записів.
+            // Ми можемо генерувати його тут для зворотної сумісності, якщо потрібно.
+            // message: generateLegacyMessage(activityData),
           },
         ]);
         if (error) {
@@ -140,7 +144,7 @@ function AppProvider({ children }) {
         console.error("Failed to save activity log to DB:", err.message);
       }
     },
-    [user] // Залежність від 'user', щоб функція завжди мала актуальні дані
+    [user]
   );
 
   useEffect(() => {
